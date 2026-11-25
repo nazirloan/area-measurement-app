@@ -1,0 +1,4114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Area Measurement</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23174f3f'/%3E%3Ccircle cx='46' cy='18' r='6' fill='%23f4c430'/%3E%3Cpath d='M8 48 L24 24 L37 40 L45 30 L56 48 Z' fill='%2334d399'/%3E%3Cpath d='M8 48 L24 24 L31 33 L21 48 Z' fill='%23a7f3d0'/%3E%3Cpath d='M6 48 H58' stroke='%23ffffff' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+<style>
+:root{
+  --bg-page:#f3f6f8;
+  --bg-card:#ffffff;
+  --bg-subtle:#f4f7f8;
+  --bg-table-head:#edf2f3;
+  --text-main:#18212a;
+  --text-muted:#5b6670;
+  --border-color:#d6dde1;
+  --canvas-bg:#fafafa;
+  --canvas-grid:#e8edef;
+  --accent-primary:#176b4f;
+  --accent-header:#174f3f;
+  --accent-nav:#103a2e;
+  --input-bg:#ffffff;
+  --input-text:#18212a;
+}
+body.dark-mode{
+  --bg-page:#0f172a;
+  --bg-card:#1e293b;
+  --bg-subtle:#0f172a;
+  --bg-table-head:#334155;
+  --text-main:#f1f5f9;
+  --text-muted:#94a3b8;
+  --border-color:#334155;
+  --canvas-bg:#0b1120;
+  --canvas-grid:#1e293b;
+  --input-bg:#0f172a;
+  --input-text:#f8fafc;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;background:var(--bg-page);color:var(--text-main);
+  font-family:Arial,Helvetica,sans-serif;
+  transition:background .2s, color .2s;
+}
+header{
+  background:var(--accent-header);color:#fff;padding:13px 14px;
+}
+.headerInner{
+  max-width:1200px;margin:auto;display:flex;align-items:center;
+  justify-content:space-between;flex-wrap:wrap;gap:10px;
+}
+.brandBox{
+  display:flex;align-items:center;gap:11px;
+}
+.brandIcon{
+  width:42px;height:42px;border-radius:11px;background:rgba(255,255,255,0.14);
+  border:1.5px solid rgba(255,255,255,0.32);display:flex;align-items:center;
+  justify-content:center;flex-shrink:0;
+}
+header h1{margin:0;font-size:21px;letter-spacing:.2px}
+header p{margin:3px 0 0;font-size:12px;opacity:.92}
+
+/* Theme & Color Adjustment Bar in Header */
+.themeControls{
+  display:flex;align-items:center;gap:7px;flex-wrap:wrap;
+  background:rgba(0,0,0,0.22);padding:6px 10px;border-radius:10px;
+}
+.themeControls label{
+  font-size:11.5px;font-weight:700;color:#e2e8f0;display:flex;align-items:center;gap:4px;
+}
+.themeControls input[type=color]{
+  width:26px;height:24px;padding:0;border:1px solid #fff;border-radius:5px;cursor:pointer;background:none;
+}
+.themeBtn{
+  background:#f4c430;color:#18212a;border:0;border-radius:7px;
+  padding:6px 10px;font-size:12px;font-weight:800;cursor:pointer;margin:0;
+}
+
+/* Top Navigation Tabs for APK-friendly UX */
+.navTabs{
+  display:flex;background:var(--accent-nav);position:sticky;top:0;z-index:20;
+  box-shadow:0 2px 6px rgba(0,0,0,.18);overflow-x:auto;
+}
+.navTab{
+  flex:1;min-width:95px;padding:12px 6px;border:0;border-radius:0;margin:0;
+  background:transparent;color:#cde3dc;font-size:12.5px;font-weight:700;
+  border-bottom:3px solid transparent;cursor:pointer;text-align:center;
+  white-space:nowrap;
+}
+.navTab.active{
+  background:var(--accent-primary);color:#fff;border-bottom-color:#f4c430;
+}
+.tabSection{display:none}
+.tabSection.active{display:block}
+
+.container{max-width:1200px;margin:auto;padding:12px}
+.card{
+  background:var(--bg-card);border-radius:14px;padding:14px;margin-bottom:12px;
+  box-shadow:0 2px 8px rgba(0,0,0,.08);
+}
+h2{font-size:18px;margin:0 0 10px;color:var(--accent-primary)}
+h3{font-size:15px;margin:12px 0 8px;color:var(--text-main)}
+.instructions{
+  background:#eef7f3;border-left:5px solid #174f3f;padding:12px 14px;
+  border-radius:8px;line-height:1.6;font-size:13.5px;
+}
+.step{margin:7px 0}
+button{
+  border:0;border-radius:8px;padding:10px 14px;font-weight:600;
+  cursor:pointer;margin:4px 3px 4px 0;font-size:13px;
+}
+.primary{background:var(--accent-primary);color:#fff}
+.accent{background:#1d4ed8;color:#fff}
+.secondary{background:#e7ecef;color:#18212a}
+.danger{background:#b42318;color:#fff}
+.warning{background:#f4c430;color:#222}
+.exportBtn{background:#0f766e;color:#fff}
+button:disabled{opacity:.42;cursor:not-allowed}
+.status{
+  margin-top:8px;padding:9px 11px;border-radius:8px;background:var(--bg-subtle);border:1px solid var(--border-color);
+  font-size:13px;line-height:1.45;
+}
+.status.adjusted{
+  background:#ecfdf5;border-left:4px solid #176b4f;color:#065f46;
+}
+.status.warn{
+  background:#fef2f2;border-left:4px solid #b42318;color:#991b1b;
+}
+.canvasWrap{
+  width:100%;overflow:hidden;border:1px solid var(--border-color);border-radius:10px;
+  background:var(--canvas-bg);position:relative;
+}
+canvas{display:block;width:100%;height:auto;touch-action:none}
+
+/* Floating Sketch Action Overlay on TOP-RIGHT of Canvas */
+.canvasOverlayTopRight{
+  position:absolute;
+  right:12px;
+  top:12px;
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:6px;
+  z-index:10;
+  max-width:58%;
+}
+.canvasAreaReadout{
+  background:rgba(15, 23, 42, 0.88);
+  color:#f8fafc;
+  border:1.5px solid rgba(255,255,255,0.35);
+  border-radius:9px;
+  padding:7px 10px;
+  font-size:11.5px;
+  line-height:1.45;
+  text-align:right;
+  box-shadow:0 2px 8px rgba(0,0,0,.28);
+  min-width:152px;
+  pointer-events:none;
+}
+.canvasAreaReadout .areaTitle{
+  font-size:10px;
+  text-transform:uppercase;
+  letter-spacing:.5px;
+  color:#93c5fd;
+  font-weight:800;
+  margin-bottom:2px;
+}
+.canvasAreaReadout .areaMain{
+  font-size:13.5px;
+  font-weight:800;
+  color:#34d399;
+}
+.canvasAreaReadout .areaSub{
+  font-size:10.5px;
+  color:#e2e8f0;
+}
+.canvasActionRow{
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  gap:5px;
+  min-width:142px;
+}
+.canvasActionRow .overlayBtn{
+  width:100%;
+  text-align:center;
+}
+.overlayBtn{
+  border:1.5px solid #fff;
+  box-shadow:0 2px 7px rgba(0,0,0,.25);
+  border-radius:8px;
+  padding:7px 11px;
+  font-weight:700;
+  font-size:12px;
+  margin:0;
+}
+.scaleBadge{
+  background:rgba(24,33,42,0.85);
+  color:#fff;
+  padding:5px 9px;
+  border-radius:6px;
+  font-size:11px;
+  font-weight:700;
+  pointer-events:none;
+}
+.scaleBadge.trueScale{
+  background:rgba(23,107,79,0.94);
+}
+.scaleBadge.complete{
+  background:rgba(29,78,216,0.92);
+}
+
+/* On-Sketch Floating Side Length Editor */
+.sketchSideEditor{
+  position:absolute;
+  display:none;
+  z-index:25;
+  background:var(--bg-card);
+  color:var(--text-main);
+  border:2px solid var(--accent-primary);
+  border-radius:11px;
+  padding:10px 12px;
+  box-shadow:0 6px 20px rgba(0,0,0,.32);
+  min-width:235px;
+  max-width:270px;
+}
+.sketchSideEditor.visible{display:block}
+.sketchSideEditor .edHeader{
+  display:flex;justify-content:space-between;align-items:center;
+  font-size:13px;font-weight:800;color:var(--accent-primary);
+  margin-bottom:7px;padding-bottom:4px;border-bottom:1px solid var(--border-color);
+}
+.sketchSideEditor .edClose{
+  background:transparent;color:var(--text-muted);border:0;padding:2px 6px;
+  font-size:15px;font-weight:800;cursor:pointer;margin:0;
+}
+.sketchSideEditor .edRow{
+  display:flex;flex-direction:column;gap:3px;margin-bottom:7px;
+}
+.sketchSideEditor .edRow label{
+  font-size:11px;font-weight:700;color:var(--text-muted);
+}
+.sketchSideEditor .edSplit{
+  display:flex;gap:6px;align-items:center;
+}
+.sketchSideEditor input[type=number]{
+  width:100%;padding:6px 8px;font-size:13px;
+}
+.sketchSideEditor .edActions{
+  display:flex;gap:6px;margin-top:4px;
+}
+.sketchSideEditor .edActions button{
+  flex:1;padding:7px 8px;font-size:12px;margin:0;
+}
+
+/* Compact Table Side Cell with Complete ft + Feet & Inches */
+.sideInputGroup{
+  display:flex;flex-direction:column;gap:4px;align-items:center;min-width:118px;
+}
+.sideInputGroup .compInput{
+  width:108px;padding:5px 6px;font-size:12.5px;font-weight:700;
+}
+.sideInputGroup .ftInRow{
+  display:flex;gap:3px;align-items:center;justify-content:center;
+}
+.sideInputGroup .ftInRow input{
+  width:49px;padding:4px 4px;font-size:11.5px;text-align:center;
+}
+.sideInputGroup .ftInRow span{
+  font-size:10.5px;color:var(--text-muted);font-weight:700;
+}
+
+/* Triangle Zoom/Select Bar shown after shape adjustment */
+.triZoomBar{
+  display:none;
+  margin-top:9px;
+  padding:9px 11px;
+  background:#eff6ff;
+  border:1px solid #bfdbfe;
+  border-radius:10px;
+}
+.triZoomBar.visible{display:block}
+.triZoomChips{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  margin-top:6px;
+  align-items:center;
+}
+.triChip{
+  padding:7px 11px;
+  border-radius:7px;
+  font-size:12px;
+  font-weight:700;
+  border:2px solid transparent;
+  background:#fff;
+  color:#18212a;
+  box-shadow:0 1px 3px rgba(0,0,0,.12);
+  margin:0;
+}
+.triChip.active{
+  color:#fff;
+  transform:scale(1.03);
+}
+
+/* Export Bar */
+.exportBar{
+  display:flex;flex-wrap:wrap;gap:6px;align-items:center;
+  padding:10px;background:#f0fdf4;border:1px solid #bbf7d0;
+  border-radius:10px;margin-top:10px;
+}
+
+.note{font-size:12px;color:var(--text-muted);margin-top:7px;line-height:1.45}
+.controls{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+.mode{
+  padding:9px 11px;border-radius:8px;background:#e7ecef;
+  display:inline-block;font-size:13px;font-weight:700;
+}
+.mode.active{background:#174f3f;color:#fff}
+table{
+  width:100%;border-collapse:collapse;font-size:12px;min-width:1040px;
+}
+th,td{border:1px solid var(--border-color);padding:7px;text-align:center;vertical-align:middle}
+th{background:var(--bg-table-head)}
+td.left{text-align:left}
+input[type=number], select{
+  width:92px;padding:7px;border:1px solid var(--border-color);background:var(--input-bg);color:var(--input-text);border-radius:6px;font-size:13px;
+}
+.tableWrap{overflow-x:auto}
+.bad{color:#b42318;font-weight:700}
+.good{color:#176b4f;font-weight:700}
+.totalBox{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:8px;margin-top:10px;
+}
+.total{
+  background:var(--bg-subtle);border:1px solid var(--border-color);border-radius:10px;padding:11px;text-align:center;
+}
+.total .value{font-size:20px;font-weight:800;color:var(--accent-primary)}
+.total .label{font-size:12px;color:var(--text-muted);margin-top:3px}
+.smallBtn{font-size:11px;padding:6px 9px}
+#pointList{font-size:13px;line-height:1.6}
+.empty{color:#68737a;font-size:13px}
+
+/* Saved Fields Manager (Persistent LocalStorage + Named Field Projects) */
+.fieldManagerBar{
+  display:flex;flex-wrap:wrap;gap:7px;align-items:center;
+  margin-top:8px;padding:9px 11px;border-radius:10px;
+  background:var(--bg-subtle);border:1px solid var(--border-color);
+}
+.fieldManagerBar input[type=text]{
+  padding:8px 10px;border:1px solid var(--border-color);
+  background:var(--input-bg);color:var(--input-text);
+  border-radius:7px;font-size:13px;font-weight:700;min-width:170px;flex:1;max-width:260px;
+}
+.savedFieldsGrid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(235px,1fr));
+  gap:8px;margin-top:10px;
+}
+.savedFieldCard{
+  background:var(--bg-subtle);border:1.5px solid var(--border-color);
+  border-radius:10px;padding:9px 11px;display:flex;flex-direction:column;gap:5px;
+}
+.savedFieldCard.activeField{
+  border-color:var(--accent-primary);background:rgba(23,107,79,0.08);
+}
+.savedFieldCard .sfTop{
+  display:flex;justify-content:space-between;align-items:center;gap:6px;
+}
+.savedFieldCard .sfName{
+  font-size:13.5px;font-weight:800;color:var(--accent-primary);word-break:break-word;
+}
+.savedFieldCard .sfMeta{
+  font-size:11.5px;color:var(--text-muted);line-height:1.4;
+}
+.savedFieldCard .sfBtns{
+  display:flex;gap:5px;margin-top:3px;
+}
+.savedFieldCard .sfBtns button{
+  flex:1;padding:5px 8px;font-size:11.5px;margin:0;
+}
+
+/* Standalone Triangle Calculator Styling */
+.calcGrid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+  gap:12px;margin-top:10px;
+}
+.fieldGroup{
+  display:flex;flex-direction:column;gap:5px;
+}
+.fieldGroup label{
+  font-size:13px;font-weight:700;color:#18212a;
+}
+.fieldGroup input{
+  width:100%;padding:10px;font-size:15px;border:1px solid #b8c3c9;border-radius:8px;
+}
+.resultRow{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:10px;margin-top:12px;
+}
+.resCard{
+  background:#eef7f3;border:1px solid #bfd9ce;border-radius:10px;padding:12px;
+}
+.resCard.kahan{
+  background:#eff6ff;border-color:#bfdbfe;
+}
+.resCard .title{font-size:12px;font-weight:700;color:#475569;text-transform:uppercase}
+.resCard .bigVal{font-size:21px;font-weight:800;color:#174f3f;margin:4px 0}
+.resCard.kahan .bigVal{color:#1e40af}
+.resCard .subVal{font-size:12px;color:#334155}
+
+/* Formulas Reference Section Styling */
+.formulaSelector{
+  display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;
+}
+.fChip{
+  padding:8px 12px;border-radius:20px;background:#e7ecef;color:#18212a;
+  font-size:12.5px;font-weight:700;border:0;cursor:pointer;margin:0;
+}
+.fChip.active{background:#174f3f;color:#fff}
+.formulaBox{
+  background:#f8fafc;border:1px solid #cbd5e1;border-radius:10px;
+  padding:13px;margin-bottom:10px;
+}
+.formulaBox h3{margin:0 0 6px;color:#174f3f;font-size:16px}
+.formulaDef{font-size:13px;color:#334155;line-height:1.5;margin-bottom:6px}
+.formulaApp{
+  font-size:12.5px;color:#065f46;background:#ecfdf5;
+  padding:6px 10px;border-radius:6px;margin-bottom:8px;line-height:1.45;
+}
+.mathBlock{
+  background:#fff;border-left:4px solid #176b4f;padding:10px 12px;
+  border-radius:6px;font-family:"Cambria Math","Times New Roman",Georgia,serif;
+  font-size:15.5px;line-height:1.7;color:#0f172a;margin:6px 0;
+  overflow-x:auto;
+}
+.mathBlock .varList{
+  font-family:Arial,Helvetica,sans-serif;font-size:12.5px;color:#475569;margin-top:4px;
+}
+.sqrt{
+  display:inline-block;border-top:1.5px solid #0f172a;padding-top:1px;margin-left:1px;
+}
+.frac{
+  display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;
+  font-size:0.88em;margin:0 3px;
+}
+.frac > span:first-child{border-bottom:1.3px solid #0f172a;padding:0 3px}
+.frac > span:last-child{padding:0 3px}
+
+footer{font-size:11px;color:#66727a;text-align:center;padding:12px}
+
+/* Print / PDF Stylesheet */
+@media print {
+  .navTabs, .controls, .canvasOverlayTopRight, .triZoomBar, .exportBar, footer, button {
+    display:none !important;
+  }
+  body { background:#fff; }
+  .card { box-shadow:none; border:1px solid #ccc; break-inside:avoid; }
+  #fieldTab { display:block !important; }
+  #standaloneTab, #formulasTab, #howtoTab { display:none !important; }
+}
+
+/* Global Fluid & Adaptive Layout Rules for Mobile, Tablet & Desktop */
+html, body {
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+header {
+  padding-top: calc(12px + env(safe-area-inset-top, 0px));
+  padding-left: calc(14px + env(safe-area-inset-left, 0px));
+  padding-right: calc(14px + env(safe-area-inset-right, 0px));
+}
+
+.navTabs {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.navTabs::-webkit-scrollbar {
+  display: none;
+}
+
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: auto;
+  padding: clamp(8px, 2vw, 16px);
+}
+
+.card {
+  padding: clamp(10px, 2.2vw, 16px);
+  border-radius: clamp(10px, 1.8vw, 14px);
+}
+
+h2 {
+  font-size: clamp(15.5px, 2.5vw, 18.5px);
+}
+
+/* Fluid Typography & Touch Targets */
+button, .navTab, .fChip, .triChip {
+  min-height: 36px;
+}
+
+/* Tablet Portrait & Small Laptop (601px - 960px) */
+@media (min-width: 601px) and (max-width: 960px) {
+  .headerInner {
+    gap: 8px;
+  }
+  header h1 {
+    font-size: 19.5px;
+  }
+  .canvasOverlayTopRight {
+    max-width: 46%;
+  }
+  .canvasActionRow {
+    min-width: 132px;
+  }
+  .totalBox {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .savedFieldsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  table {
+    min-width: 820px;
+    font-size: 11.5px;
+  }
+}
+
+/* Mobile Portrait & Small Screens (<= 600px) */
+@media (max-width: 600px) {
+  .headerInner {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  .brandBox {
+    justify-content: flex-start;
+  }
+  header h1 {
+    font-size: 17.5px;
+  }
+  header p {
+    font-size: 11px;
+  }
+  .themeControls {
+    justify-content: space-between;
+    width: 100%;
+    padding: 5px 8px;
+  }
+  .navTab {
+    min-width: 78px;
+    padding: 10px 4px;
+    font-size: 11.5px;
+  }
+  .controls {
+    gap: 5px;
+  }
+  .controls > button {
+    flex: 1 1 auto;
+    min-width: 110px;
+    padding: 9px 8px;
+    font-size: 12px;
+    text-align: center;
+  }
+  .fieldManagerBar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .fieldManagerBar input[type=text] {
+    max-width: 100%;
+    width: 100%;
+  }
+  .fieldManagerBar button, .fieldManagerBar label.smallBtn {
+    width: 100%;
+    text-align: center;
+  }
+
+  /* Adapt Top-Right Canvas Overlay for Narrow Phone Screens so it never blocks the sketch */
+  .canvasOverlayTopRight {
+    position: static;
+    max-width: 100%;
+    width: 100%;
+    background: var(--bg-subtle);
+    border-bottom: 1px solid var(--border-color);
+    padding: 8px;
+    align-items: stretch;
+    gap: 6px;
+  }
+  .scaleBadge {
+    text-align: center;
+    font-size: 11px;
+  }
+  .canvasActionRow {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 5px;
+    min-width: 0;
+    width: 100%;
+  }
+  .canvasActionRow .overlayBtn {
+    padding: 8px 6px;
+    font-size: 11.5px;
+    border: 0;
+    box-shadow: 0 1px 3px rgba(0,0,0,.15);
+  }
+  .canvasAreaReadout {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    text-align: left;
+    padding: 7px 10px;
+    min-width: 0;
+    width: 100%;
+  }
+  .canvasAreaReadout .areaTitle {
+    margin-bottom: 0;
+    font-size: 10px;
+  }
+  .canvasAreaReadout .areaMain {
+    font-size: 13px;
+  }
+  .canvasAreaReadout .areaSub {
+    font-size: 10px;
+  }
+
+  /* Responsive On-Sketch Side Editor */
+  .sketchSideEditor {
+    left: 50% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    max-width: 300px;
+  }
+
+  /* Compact Tables & Totals on Mobile */
+  table {
+    min-width: 760px;
+    font-size: 11.5px;
+  }
+  th, td {
+    padding: 5px 4px;
+  }
+  .sideInputGroup {
+    min-width: 104px;
+  }
+  .sideInputGroup .compInput {
+    width: 96px;
+    font-size: 12px;
+  }
+  .sideInputGroup .ftInRow input {
+    width: 44px;
+    font-size: 11px;
+  }
+  .totalBox {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+  }
+  .total .value {
+    font-size: 17px;
+  }
+  .exportBar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .exportBar button {
+    width: 100%;
+    margin: 0;
+  }
+  .savedFieldsGrid {
+    grid-template-columns: 1fr;
+  }
+  .calcGrid {
+    grid-template-columns: 1fr;
+  }
+  .resultRow {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Mobile Landscape Orientation (short viewport height) */
+@media (max-height: 520px) and (orientation: landscape) {
+  header {
+    padding: 7px 12px;
+  }
+  header h1 {
+    font-size: 16px;
+  }
+  header p {
+    display: none;
+  }
+  .navTab {
+    padding: 8px 6px;
+    font-size: 12px;
+  }
+  .canvasOverlayTopRight {
+    position: absolute;
+    right: 8px;
+    top: 8px;
+    max-width: 44%;
+    background: transparent;
+    border: 0;
+    padding: 0;
+  }
+  .canvasActionRow {
+    display: flex;
+    flex-direction: column;
+    min-width: 128px;
+  }
+  .canvasActionRow .overlayBtn {
+    padding: 5px 8px;
+    font-size: 11px;
+  }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="headerInner">
+    <div class="brandBox">
+      <div class="brandIcon" title="Area Measurement">
+        <!-- Landscape Icon SVG -->
+        <svg width="28" height="28" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="46" cy="17" r="6.5" fill="#f4c430"/>
+          <path d="M6 50 L23 23 L36 39 L45 28 L58 50 Z" fill="#34d399"/>
+          <path d="M6 50 L23 23 L30 32 L19 50 Z" fill="#a7f3d0"/>
+          <line x1="4" y1="50" x2="60" y2="50" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div>
+        <h1>Area Measurement</h1>
+        <p>Offline Field Survey • Triangulation &amp; True-Scale Geometry</p>
+      </div>
+    </div>
+
+    <div class="themeControls">
+      <button id="darkModeBtn" class="themeBtn" type="button">Dark Mode</button>
+      <label title="Theme Accent Color">Accent <input type="color" id="accentColorPicker" value="#176b4f"></label>
+      <label title="Sketch Canvas Background">Canvas <input type="color" id="canvasBgPicker" value="#fafafa"></label>
+    </div>
+  </div>
+</header>
+
+<nav class="navTabs">
+  <button class="navTab active" data-tab="fieldTab">1. Field Sketch</button>
+  <button class="navTab" data-tab="standaloneTab">2. Triangle Calc</button>
+  <button class="navTab" data-tab="formulasTab">3. Shape Formulas</button>
+  <button class="navTab" data-tab="howtoTab">4. How to Use</button>
+</nav>
+
+<!-- =====================================================================
+     TAB 1: FIELD BOUNDARY & MULTI-TRIANGLE SURVEYOR
+     ===================================================================== -->
+<div id="fieldTab" class="tabSection active">
+<div class="container">
+
+<div class="card">
+<h2>1. Field Boundary &amp; Sketch</h2>
+<div class="controls">
+  <button id="startBtn" class="primary">Start / Redraw Field</button>
+  <button id="nextSketchBtn" class="warning">New Field (+ Save Current)</button>
+  <button id="clearBtn" class="danger">Clear Current</button>
+</div>
+
+<!-- Named Field Save & Auto-Save Bar -->
+<div class="fieldManagerBar">
+  <label for="fieldNameInput" style="font-size:12.5px;font-weight:800;color:var(--accent-primary)">Field Name:</label>
+  <input type="text" id="fieldNameInput" value="Field 1" placeholder="e.g. Field 1, Orchard Plot">
+  <button id="saveFieldBtn" class="primary smallBtn" type="button">Save Field Details</button>
+  <button id="saveAsNewFieldBtn" class="accent smallBtn" type="button">Save Copy to Memory</button>
+  <label for="importFieldFileInput" class="secondary smallBtn" style="cursor:pointer;border-radius:8px;padding:6px 9px;font-weight:600;font-size:11px;margin:0;display:inline-block;">Load Copy File</label>
+  <input type="file" id="importFieldFileInput" accept=".json,application/json" style="display:none">
+  <span id="autoSaveBadge" style="font-size:11.5px;color:var(--text-muted);font-weight:700">Auto-saves in mobile memory</span>
+</div>
+
+<div id="sketchHistoryContainer" style="display:none;margin-top:8px">
+  <div style="font-size:12.5px;font-weight:800;color:var(--accent-primary)">Saved Fields (Tap to Open &amp; Modify Anytime):</div>
+  <div id="sketchTabs" class="savedFieldsGrid"></div>
+</div>
+
+<div class="status" id="fieldStatus">Start drawing the field boundary.</div>
+
+<div class="canvasWrap" id="canvasWrap">
+  <!-- All sketch-related buttons & Total Area readout stacked VERTICALLY at TOP-RIGHT of the canvas -->
+  <div class="canvasOverlayTopRight">
+    <div class="scaleBadge" id="scaleBadge">Mode: Rough Sketch (Not to Scale)</div>
+    <div class="canvasActionRow">
+      <button id="undoPointBtn" class="secondary overlayBtn" disabled>Undo Point</button>
+      <button id="finishBtn" class="primary overlayBtn" disabled>Finish Field</button>
+      <button id="cancelTriBtn" class="secondary overlayBtn" disabled>Cancel Sel.</button>
+      <button id="addTriBtn" class="primary overlayBtn" disabled>Add Triangle</button>
+      <button id="sketchEditSidesBtn" class="warning overlayBtn" disabled>Enter Side Values</button>
+      <button id="canvasAdjustBtn" class="accent overlayBtn" disabled>Submit Sides &amp; Adjust</button>
+      <button id="canvasRevertBtn" class="secondary overlayBtn" style="display:none">Revert Sketch</button>
+    </div>
+    <div class="canvasAreaReadout" id="canvasAreaReadout">
+      <div class="areaTitle">Total Field Area</div>
+      <div class="areaMain" id="cvSqft">0.00 sq ft</div>
+      <div class="areaSub" id="cvUnits">0.0000 Marla • 0.0000 Kanal</div>
+    </div>
+  </div>
+
+  <!-- Floating On-Sketch Side Value Editor (Complete Feet + Feet & Inches) -->
+  <div class="sketchSideEditor" id="sketchSideEditor">
+    <div class="edHeader">
+      <span id="edSideTitle">Side B1 (P1–P2)</span>
+      <button type="button" class="edClose" id="edCloseBtn" title="Close">&times;</button>
+    </div>
+    <div class="edRow">
+      <label for="edCompleteFt">Complete Value (Decimal Feet)</label>
+      <input type="number" id="edCompleteFt" min="0" step="0.0001" placeholder="e.g. 45.50">
+    </div>
+    <div class="edRow">
+      <label>OR Feet &amp; Inches</label>
+      <div class="edSplit">
+        <input type="number" id="edFeet" min="0" step="1" placeholder="Feet (ft)">
+        <input type="number" id="edInches" min="0" max="11.999" step="0.01" placeholder="Inches (in)">
+      </div>
+    </div>
+    <div class="edActions">
+      <button type="button" class="primary" id="edSaveBtn">Done</button>
+      <button type="button" class="secondary" id="edClearSideBtn">Clear</button>
+    </div>
+  </div>
+
+  <canvas id="canvas" width="1000" height="620"></canvas>
+</div>
+
+<!-- Triangle Zoom / Select Bar (appears after Submit Sides & Adjust Shape) -->
+<div class="triZoomBar" id="triZoomBar">
+  <div style="font-size:12.5px;font-weight:700;color:#1e3a8a">
+    Inspect / Zoom Adjusted Triangles (tap a triangle below or click inside it on the sketch):
+  </div>
+  <div class="triZoomChips" id="triZoomChips"></div>
+</div>
+
+<div class="controls" style="margin-top:8px">
+  <button id="adjustShapeBtn" class="accent" disabled>Submit Sides & Adjust Shape</button>
+  <button id="revertSketchBtn" class="secondary" style="display:none">Revert to Hand Sketch</button>
+</div>
+
+<div id="pointList"></div>
+</div>
+
+<div class="card">
+<h2>2. Triangulation Status</h2>
+<div class="mode" id="modeLabel">Mode: Draw Field</div>
+<div class="status" id="triangleStatus">
+  Finish the field first. Then tap existing vertices or tap inside the polygon to place new vertices (A1, A2…).
+</div>
+</div>
+
+<div class="card">
+<h2>3. Triangle Measurement Table</h2>
+<div class="tableWrap">
+<table id="triangleTable">
+<thead>
+<tr>
+<th>Triangle</th>
+<th>Vertex 1</th><th>Vertex 2</th><th>Vertex 3</th>
+<th>Side 1</th><th>Complete (ft) / ft &amp; in</th>
+<th>Side 2</th><th>Complete (ft) / ft &amp; in</th>
+<th>Side 3</th><th>Complete (ft) / ft &amp; in</th>
+<th>Heron Area (sq ft)</th>
+<th>Kahan Area (sq ft)</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+</div>
+<div class="status" id="measureStatus">No triangles added yet.</div>
+<div class="controls" style="margin-top:6px">
+  <button id="submitTableBtn" class="accent" disabled>Submit Sides & Adjust Shape</button>
+</div>
+</div>
+
+<div class="card">
+<h2>4. Unique Side Register</h2>
+<p class="note">
+  Each unique pair of vertices gets one side ID. Outer boundary segments between consecutive P-points are <b>B1, B2…</b>;
+  all internal chords/diagonals are <b>D1, D2…</b>. Shared sides keep one ID and one measurement across every triangle.
+</p>
+<div class="tableWrap">
+<table id="sideTable">
+<thead>
+<tr>
+<th>Side ID</th><th>Type</th><th>Endpoints</th><th>Complete (ft)</th><th>Feet &amp; Inches</th><th>Used By</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+</div>
+</div>
+
+<div class="card">
+<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:8px">
+  <h2 style="margin:0">5. Total Field Area &amp; Export Report</h2>
+  <button id="saveFieldBottomBtn" class="primary smallBtn" type="button">Save All Field Details</button>
+</div>
+<div class="totalBox">
+  <div class="total"><div class="value" id="sqft">0.00</div><div class="label">Square feet (Kahan)</div></div>
+  <div class="total"><div class="value" id="heronSqft">0.00</div><div class="label">Square feet (Heron)</div></div>
+  <div class="total"><div class="value" id="marla">0.0000</div><div class="label">Marla</div></div>
+  <div class="total"><div class="value" id="kanal">0.0000</div><div class="label">Kanal</div></div>
+  <div class="total"><div class="value" id="acre">0.0000</div><div class="label">Acre</div></div>
+</div>
+
+<div class="exportBar">
+  <span style="font-size:13px;font-weight:700;color:#174f3f;margin-right:4px">Save / Export Survey:</span>
+  <button id="exportPdfBtn" class="exportBtn">Save as PDF</button>
+  <button id="exportJpgBtn" class="exportBtn">Save Sketch as JPG</button>
+  <button id="exportCsvBtn" class="exportBtn">Save Spreadsheet (CSV)</button>
+  <button id="exportXlsBtn" class="exportBtn">Save Excel (.XLS)</button>
+</div>
+<div class="status" id="exportStatus" style="display:none"></div>
+
+<div class="status">
+  Conversion used: <b>1 Marla = 272.25 sq ft</b>,
+  <b>1 Kanal = 5,445 sq ft</b> (<b>20 Marla = 1 Kanal</b>),
+  and <b>1 Acre = 43,560 sq ft</b>.
+</div>
+</div>
+
+</div>
+</div>
+
+<!-- =====================================================================
+     TAB 2: STANDALONE TRIANGLE AREA CALCULATOR (HERON & KAHAN)
+     ===================================================================== -->
+<div id="standaloneTab" class="tabSection">
+<div class="container">
+<div class="card">
+  <h2>Standalone Triangle Area Calculator (Heron & Kahan)</h2>
+  <p class="note">
+    Calculate the area of any single triangle independently using both <b>Heron's Formula</b> and <b>Kahan's Numerically Stable Formula</b>.
+  </p>
+
+  <div class="calcGrid">
+    <div class="fieldGroup">
+      <label for="stSideA">Side a (ft)</label>
+      <input type="number" id="stSideA" min="0" step="0.01" placeholder="Enter side a (e.g. 120)">
+    </div>
+    <div class="fieldGroup">
+      <label for="stSideB">Side b (ft)</label>
+      <input type="number" id="stSideB" min="0" step="0.01" placeholder="Enter side b (e.g. 145)">
+    </div>
+    <div class="fieldGroup">
+      <label for="stSideC">Side c (ft)</label>
+      <input type="number" id="stSideC" min="0" step="0.01" placeholder="Enter side c (e.g. 180)">
+    </div>
+  </div>
+
+  <div class="controls" style="margin-top:10px">
+    <button id="stCalcBtn" class="primary">Calculate Area</button>
+    <button id="stClearBtn" class="secondary">Clear</button>
+  </div>
+
+  <div class="status" id="stStatus">Enter three valid positive side lengths (sum of any two sides must exceed the third).</div>
+
+  <canvas id="standaloneCanvas" width="700" height="300" style="width:100%;max-width:100%;height:auto;border:1px solid var(--border-color);border-radius:10px;background:var(--canvas-bg);margin-top:10px"></canvas>
+
+  <div class="resultRow">
+    <div class="resCard">
+      <div class="title">Heron's Formula Area</div>
+      <div class="bigVal" id="stHeronSqft">0.0000 sq ft</div>
+      <div class="subVal" id="stHeronUnits">0.0000 Marla • 0.0000 Kanal • 0.0000 Acre</div>
+    </div>
+    <div class="resCard kahan">
+      <div class="title">Kahan's Formula Area (Stable)</div>
+      <div class="bigVal" id="stKahanSqft">0.0000 sq ft</div>
+      <div class="subVal" id="stKahanUnits">0.0000 Marla • 0.0000 Kanal • 0.0000 Acre</div>
+    </div>
+  </div>
+
+  <div class="status" id="stExtraMetrics" style="margin-top:10px">
+    Semi-perimeter (s): — | Perimeter: — | Angles (A, B, C): —
+  </div>
+</div>
+</div>
+</div>
+
+<!-- =====================================================================
+     TAB 3: GEOMETRIC & LAND MEASUREMENT FORMULAS REFERENCE
+     ===================================================================== -->
+<div id="formulasTab" class="tabSection">
+<div class="container">
+<div class="card">
+  <h2>Land & Geometric Shape Formulas (Definitions & Applications)</h2>
+  <p class="note">Select a shape category below to view formal definitions, practical land-surveying applications, side-based formulas, and angle-based formulas.</p>
+
+  <div class="formulaSelector" id="formulaChips">
+    <button class="fChip active" data-target="all">All Shapes</button>
+    <button class="fChip" data-target="f-triangle">Triangles (Heron, Kahan, SAS)</button>
+    <button class="fChip" data-target="f-irreg-quad">Irregular Quadrilaterals</button>
+    <button class="fChip" data-target="f-square">Square</button>
+    <button class="fChip" data-target="f-rect">Rectangle</button>
+    <button class="fChip" data-target="f-rhombus">Rhombus</button>
+    <button class="fChip" data-target="f-trap">Trapezium</button>
+    <button class="fChip" data-target="f-para">Parallelogram</button>
+    <button class="fChip" data-target="f-kite">Kite & Cyclic Quad</button>
+    <button class="fChip" data-target="f-circle">Circle & Sector</button>
+  </div>
+
+  <!-- 1. TRIANGLES -->
+  <div class="formulaBox" data-cat="f-triangle">
+    <h3>1. Triangle — Heron's Formula (Three Sides Known)</h3>
+    <div class="formulaDef">
+      <b>Definition:</b> A closed three-sided polygon determined uniquely by the lengths of its three sides <i>a, b, c</i>.
+    </div>
+    <div class="formulaApp">
+      <b>Applications:</b> Primary method in chain/tape land surveying (Gunter's chain or steel tape) where irregular fields are subdivided into triangles and only linear distances are measured without angular instruments.
+    </div>
+    <div class="mathBlock">
+      s = <span class="frac"><span>a + b + c</span><span>2</span></span>
+      &nbsp;&nbsp;|&nbsp;&nbsp;
+      Area = &radic;<span class="sqrt">s(s &minus; a)(s &minus; b)(s &minus; c)</span>
+      <div class="varList">where <b>a, b, c</b> = triangle side lengths, and <b>s</b> = semi-perimeter.</div>
+    </div>
+  </div>
+
+  <div class="formulaBox" data-cat="f-triangle">
+    <h3>2. Triangle — Kahan's Formula (Numerically Stable Three-Side Formula)</h3>
+    <div class="formulaDef">
+      <b>Definition:</b> A rearranged, floating-point-safe formulation of Heron's formula introduced by numerical analyst William Kahan.
+    </div>
+    <div class="formulaApp">
+      <b>Applications:</b> Essential when surveying narrow boundary strips, road-widening slivers, or acute wedge-shaped plots where one side is nearly equal to the sum of the other two (preventing severe rounding loss in standard Heron's formula).
+    </div>
+    <div class="mathBlock">
+      Sort sides so that &nbsp;<b>x &ge; y &ge; z</b><br>
+      Area = <span class="frac"><span>1</span><span>4</span></span> &radic;<span class="sqrt">(x + (y + z)) &middot; (z &minus; (x &minus; y)) &middot; (z + (x &minus; y)) &middot; (x + (y &minus; z))</span>
+      <div class="varList">Evaluate inner parentheses strictly in the order shown.</div>
+    </div>
+  </div>
+
+  <div class="formulaBox" data-cat="f-triangle">
+    <h3>3. Triangle — Angle-Based (SAS) & Base-Altitude Formulas</h3>
+    <div class="formulaDef">
+      <b>Definition:</b> Area expressed via two adjacent sides <i>a, b</i> and their included interior angle <i>&theta;</i>, or via a baseline and perpendicular offset height <i>h</i>.
+    </div>
+    <div class="formulaApp">
+      <b>Applications:</b> Used in total-station/theodolite surveys (SAS) and traditional cross-staff / optical-square offset surveys along a main survey chain line (Base &times; Height).
+    </div>
+    <div class="mathBlock">
+      <b>SAS Formula:</b> &nbsp; Area = <span class="frac"><span>1</span><span>2</span></span> a &middot; b &middot; sin(&theta;)
+      &nbsp;&nbsp;|&nbsp;&nbsp;
+      <b>Base–Height:</b> &nbsp; Area = <span class="frac"><span>1</span><span>2</span></span> &times; b &times; h
+    </div>
+  </div>
+
+  <!-- 2. IRREGULAR QUADRILATERALS -->
+  <div class="formulaBox" data-cat="f-irreg-quad">
+    <h3>4. Irregular Quadrilateral (General Four-Sided Plot)</h3>
+    <div class="formulaDef">
+      <b>Definition:</b> A four-sided polygon with unequal sides <i>a, b, c, d</i> and no mandatory parallel sides or right angles. Unlike a triangle, four side lengths alone do not fix its shape; one diagonal or two opposite angles are required.
+    </div>
+    <div class="formulaApp">
+      <b>Applications:</b> The most common shape of rural agricultural fields and residential plots in J&amp;K revenue records. Measured either by running one diagonal tie-line <i>p</i> across opposite corners or by recording opposite corner angles with a compass/theodolite.
+    </div>
+    <div class="mathBlock">
+      <b>Method A — Diagonal Split (Diagonal p):</b><br>
+      Area = Area(&Delta;<sub>1</sub>: a, b, p) + Area(&Delta;<sub>2</sub>: c, d, p)<br><br>
+      <b>Method B — Bretschneider's Formula (Opposite Angles &alpha;, &gamma;):</b><br>
+      s = <span class="frac"><span>a + b + c + d</span><span>2</span></span>, &nbsp; &theta; = <span class="frac"><span>&alpha; + &gamma;</span><span>2</span></span><br>
+      Area = &radic;<span class="sqrt">(s &minus; a)(s &minus; b)(s &minus; c)(s &minus; d) &minus; a&middot;b&middot;c&middot;d &middot; cos<sup>2</sup>(&theta;)</span><br><br>
+      <b>Method C — Two Diagonals (d<sub>1</sub>, d<sub>2</sub>) &amp; Intersecting Angle (&phi;):</b><br>
+      Area = <span class="frac"><span>1</span><span>2</span></span> d<sub>1</sub> &middot; d<sub>2</sub> &middot; sin(&phi;)
+    </div>
+  </div>
+
+  <!-- 3. SQUARE -->
+  <div class="formulaBox" data-cat="f-square">
+    <h3>5. Square</h3>
+    <div class="formulaDef">
+      <b>Definition:</b> A regular quadrilateral with four equal sides of length <i>a</i> and four 90&deg; right angles. Its two diagonals are equal (<i>d = a&radic;2</i>) and bisect each other perpendicularly.
+    </div>
+    <div class="formulaApp">
+      <b>Applications:</b> Standard unit grid blocks (such as 1 Karam &times; 1 Karam = 1 Sarsahi in J&amp;K land measurement, where 9 Sarsahi = 1 Marla), square building foundations, and urban housing plots.
+    </div>
+    <div class="mathBlock">
+      <b>From Side (a):</b> &nbsp; Area = a<sup>2</sup> &nbsp;&nbsp;|&nbsp;&nbsp; Perimeter = 4a<br>
+      <b>From Diagonal (d):</b> &nbsp; Area = <span class="frac"><span>d<sup>2</sup></span><span>2</span></span> &nbsp;&nbsp;|&nbsp;&nbsp; Diagonal d = a&radic;<span class="sqrt">2</span>
+    </div>
+  </div>
+
+  <!-- 4. RECTANGLE -->
+  <div class="formulaBox" data-cat="f-rect">
+    <h3>6. Rectangle</h3>
+    <div class="formulaDef">
+      <b>Definition:</b> A four-sided polygon with four 90&deg; right angles in which opposite sides are equal in length (Length <i>L</i> and Width <i>W</i>).
+    </div>
+    <div class="formulaApp">
+      <b>Applications:</b> Planned residential colony plots, commercial shop sites, rectangular orchard blocks, and room/floor area calculations. Diagonal check <i>d = &radic;(L<sup>2</sup> + W<sup>2</sup>)</i> verifies true 90&deg; corners on site.
+    </div>
+    <div class="mathBlock">
+      <b>Area:</b> &nbsp; Area = L &times; W &nbsp;&nbsp;|&nbsp;&nbsp; Perimeter = 2(L + W)<br>
+      <b>Diagonal (d):</b> &nbsp; d = &radic;<span class="sqrt">L<sup>2</sup> + W<sup>2</sup></span> &nbsp;&nbsp;|&nbsp;&nbsp; Area from L &amp; d = L &radic;<span class="sqrt">d<sup>2</sup> &minus; L<sup>2</sup></span>
+    </div>
+  </div>
+
+  <!-- 5. RHOMBUS -->
+  <div class="formulaBox" data-cat="f-rhombus">
+    <h3>7. Rhombus</h3>
+    <div class="formulaDef">
+      <b>Definition:</b> An equilateral quadrilateral whose four sides all have equal length <i>a</i>, opposite angles are equal, and whose diagonals <i>d<sub>1</sub>, d<sub>2</sub></i> bisect each other at 90&deg; right angles.
+    </div>
+    <div class="formulaApp">
+      <b>Applications:</b> Skewed diamond-shaped plots at oblique road intersections where all four boundary walls are equal in length but corners are not 90&deg;.
+    </div>
+    <div class="mathBlock">
+      <b>From Diagonals (d<sub>1</sub>, d<sub>2</sub>):</b> &nbsp; Area = <span class="frac"><span>1</span><span>2</span></span> d<sub>1</sub> &times; d<sub>2</sub><br>
+      <b>From Side (a) &amp; Interior Angle (&theta;):</b> &nbsp; Area = a<sup>2</sup> &middot; sin(&theta;)<br>
+      <b>From Side (a) &amp; Perpendicular Height (h):</b> &nbsp; Area = a &times; h
+    </div>
+  </div>
+
+  <!-- 6. TRAPEZIUM -->
+  <div class="formulaBox" data-cat="f-trap">
+    <h3>8. Trapezium (Trapezoid)</h3>
+    <div class="formulaDef">
+      <b>Definition:</b> A quadrilateral having at least one pair of parallel opposite sides (called bases <i>a</i> and <i>b</i>) separated by perpendicular distance <i>h</i>, with non-parallel legs <i>c</i> and <i>d</i>.
+    </div>
+    <div class="formulaApp">
+      <b>Applications:</b> Very common in plots bounded by a straight road or canal on one side and a parallel boundary wall on the opposite side, while the side boundaries taper inward or outward. Also used in the Trapezoidal Rule for irregular river/stream boundaries.
+    </div>
+    <div class="mathBlock">
+      <b>Parallel Bases (a, b) &amp; Perpendicular Height (h):</b><br>
+      Area = <span class="frac"><span>a + b</span><span>2</span></span> &times; h<br><br>
+      <b>All Four Sides Known (a &parallel; b, a &ne; b):</b><br>
+      k = |a &minus; b|, &nbsp; s<sub>t</sub> = <span class="frac"><span>k + c + d</span><span>2</span></span><br>
+      Area = <span class="frac"><span>a + b</span><span>k</span></span> &radic;<span class="sqrt">s<sub>t</sub>(s<sub>t</sub> &minus; k)(s<sub>t</sub> &minus; c)(s<sub>t</sub> &minus; d)</span><br><br>
+      <b>Angle-Based (Bases a, b, Leg c, Base Angle &theta;):</b><br>
+      Area = <span class="frac"><span>a + b</span><span>2</span></span> &middot; c &middot; sin(&theta;)
+    </div>
+  </div>
+
+  <!-- 7. PARALLELOGRAM -->
+  <div class="formulaBox" data-cat="f-para">
+    <h3>9. Parallelogram</h3>
+    <div class="formulaDef">
+      <b>Definition:</b> A four-sided polygon with two pairs of parallel and equal opposite sides (<i>a</i> and <i>b</i>), where opposite interior angles are equal.
+    </div>
+    <div class="formulaApp">
+      <b>Applications:</b> Terraced hill-slope plots or canal-side strips where opposite boundaries run parallel at a slant angle rather than 90&deg;.
+    </div>
+    <div class="mathBlock">
+      <b>Base &amp; Perpendicular Height:</b> &nbsp; Area = b &times; h<br>
+      <b>Adjacent Sides (a, b) &amp; Included Angle (&theta;):</b> &nbsp; Area = a &middot; b &middot; sin(&theta;)<br>
+      <b>Diagonals (d<sub>1</sub>, d<sub>2</sub>) &amp; Angle Between Diagonals (&phi;):</b> &nbsp; Area = <span class="frac"><span>1</span><span>2</span></span> d<sub>1</sub> &middot; d<sub>2</sub> &middot; sin(&phi;)
+    </div>
+  </div>
+
+  <!-- 8. KITE & CYCLIC QUADRILATERAL -->
+  <div class="formulaBox" data-cat="f-kite">
+    <h3>10. Kite &amp; Cyclic Quadrilateral (Brahmagupta's Formula)</h3>
+    <div class="formulaDef">
+      <b>Definition:</b> A <b>Kite</b> has two pairs of equal-length adjacent sides (<i>a = d</i> and <i>b = c</i>) with perpendicular diagonals. A <b>Cyclic Quadrilateral</b> is any four-sided polygon whose vertices lie on a single circle (opposite angles sum to 180&deg;).
+    </div>
+    <div class="formulaApp">
+      <b>Applications:</b> Symmetrical corner plots (kite) and maximum-area four-sided enclosures for given perimeter lengths (cyclic quadrilateral).
+    </div>
+    <div class="mathBlock">
+      <b>Kite (Diagonals d<sub>1</sub>, d<sub>2</sub>):</b> &nbsp; Area = <span class="frac"><span>1</span><span>2</span></span> d<sub>1</sub> &times; d<sub>2</sub> &nbsp;&nbsp;|&nbsp;&nbsp; <b>Angle-Based:</b> Area = a &middot; b &middot; sin(&theta;)<br>
+      <b>Cyclic Quadrilateral (Brahmagupta's Formula):</b> &nbsp; Area = &radic;<span class="sqrt">(s &minus; a)(s &minus; b)(s &minus; c)(s &minus; d)</span>
+    </div>
+  </div>
+
+  <!-- 9. CIRCLE & SECTOR -->
+  <div class="formulaBox" data-cat="f-circle">
+    <h3>11. Circle &amp; Circular Sector</h3>
+    <div class="formulaDef">
+      <b>Definition:</b> A locus of points equidistant (radius <i>r</i>) from a center point; a sector is a wedge bounded by two radii and an arc of central angle <i>&theta;</i>.
+    </div>
+    <div class="formulaApp">
+      <b>Applications:</b> Circular wells, water storage tanks, roundabouts, and curved road-bend plot boundaries.
+    </div>
+    <div class="mathBlock">
+      <b>Full Circle:</b> &nbsp; Area = &pi; r<sup>2</sup> &nbsp;&nbsp;|&nbsp;&nbsp; Circumference = 2 &pi; r<br>
+      <b>Circular Sector (&theta; in degrees):</b> &nbsp; Area = <span class="frac"><span>&theta;</span><span>360&deg;</span></span> &times; &pi; r<sup>2</sup>
+    </div>
+  </div>
+
+</div>
+</div>
+</div>
+
+<!-- =====================================================================
+     TAB 4: HOW TO USE THIS APP (DEDICATED INSTRUCTIONS TAB)
+     ===================================================================== -->
+<div id="howtoTab" class="tabSection">
+<div class="container">
+<div class="card">
+  <h2>How to Use This Application — Step-by-Step Guide</h2>
+  <div class="instructions">
+    <div class="step">
+      <b>Step 1 — Draw the Field Boundary:</b><br>
+      Open <b>1. Field Sketch</b> and tap <b>Start / Redraw Field</b>. Tap/click around the outer corners of your land plot in order to place boundary points <b>P1, P2, P3, P4…</b>. Use <b>Undo Point</b> at the top-right of the canvas if you misplace a corner, then press <b>Finish Field</b> once all outer corners are marked.
+    </div>
+    <div class="step">
+      <b>Step 2 — Divide the Field into Triangles:</b><br>
+      Tap any three vertices to form a triangle. You can select existing boundary points (<b>P1, P2…</b>), reuse previously created internal points (<b>A1, A2…</b>), or tap anywhere <b>inside/on</b> the field boundary to place a new vertex (<b>A1, A2…</b>). Points outside the polygon are blocked automatically. Press <b>Add Triangle</b> at the top-right of the sketch. Once triangles cover 100% of the polygon, <b>Add Triangle</b> locks automatically.
+    </div>
+    <div class="step">
+      <b>Step 3 — Enter Measured Side Lengths (in Feet):</b><br>
+      In <b>Section 3 (Triangle Measurement Table)</b>, enter the actual ground-measured length in feet for each side (<b>B1, B2…</b> for boundary edges and <b>D1, D2…</b> for internal diagonals/chords). Any shared side used by two or more triangles retains a single Side ID and auto-fills everywhere. Both <b>Heron's Area</b> and <b>Kahan's Area</b> compute instantly.
+    </div>
+    <div class="step">
+      <b>Step 4 — Adjust Shape to True Scale &amp; Zoom Triangles:</b><br>
+      After entering all triangle side lengths, click <b>Submit Sides &amp; Adjust Shape</b>. The sketch reshapes proportionally to match your actual field measurements, color-coding every triangle and displaying its ID and area clearly. Tap any triangle on the sketch (or use the zoom buttons below the canvas) to zoom into a single triangle or return to <b>Full Field View</b>.
+    </div>
+    <div class="step">
+      <b>Step 5 — Manage Multiple Sketches &amp; Export Reports:</b><br>
+      Tap <b>Next Sketch (+ Save Current)</b> to store the active plot and start a new sketch; switch between saved plots anytime using the <b>Saved Plots</b> bar. Use the export buttons in <b>Section 5</b> to save your survey as a <b>PDF report</b>, a high-resolution <b>JPG sketch image</b>, or a <b>CSV / Excel (.XLS) spreadsheet</b>.
+    </div>
+    <div class="step">
+      <b>Step 6 — Standalone Triangle Calculator &amp; Shape Formulas:</b><br>
+      Use <b>2. Triangle Calc</b> to compute any single triangle directly from three sides using both Heron's and Kahan's formulas, and browse <b>3. Shape Formulas</b> for definitions, applications, and formulas for irregular quadrilaterals, squares, rectangles, rhombuses, trapeziums, and parallelograms.
+    </div>
+  </div>
+</div>
+</div>
+</div>
+
+<footer style="font-size:12px;font-weight:700;color:var(--text-muted);text-align:center;padding:14px 10px;border-top:1px solid var(--border-color);margin-top:12px;">
+  copyright to learn to serve humanity
+</footer>
+
+<script>
+"use strict";
+
+/* ==========================================================
+   DISTINCT COLOR PALETTE FOR ADJUSTED TRIANGLES
+   ========================================================== */
+const TRI_PALETTE = [
+  { stroke: "#1d4ed8", fill: "rgba(29, 78, 216, 0.14)", text: "#1e3a8a", badgeBg: "#dbeafe" }, // Royal Blue
+  { stroke: "#b45309", fill: "rgba(217, 119, 6, 0.14)", text: "#92400e", badgeBg: "#fef3c7" }, // Amber Orange
+  { stroke: "#7e22ce", fill: "rgba(126, 34, 206, 0.13)", text: "#581c87", badgeBg: "#f3e8ff" }, // Deep Purple
+  { stroke: "#be123c", fill: "rgba(190, 18, 60, 0.13)", text: "#881337", badgeBg: "#ffe4e6" }, // Crimson Rose
+  { stroke: "#0f766e", fill: "rgba(15, 118, 110, 0.14)", text: "#115e59", badgeBg: "#ccfbf1" }, // Teal
+  { stroke: "#4338ca", fill: "rgba(67, 56, 202, 0.13)", text: "#312e81", badgeBg: "#e0e7ff" }, // Indigo
+  { stroke: "#c2410c", fill: "rgba(194, 65, 12, 0.14)", text: "#7c2d12", badgeBg: "#ffedd5" }, // Rust
+  { stroke: "#15803d", fill: "rgba(21, 128, 61, 0.14)", text: "#14532d", badgeBg: "#dcfce7" }  // Forest Green
+];
+
+function getTriColor(index){
+  return TRI_PALETTE[index % TRI_PALETTE.length];
+}
+
+/* ==========================================================
+   TAB NAVIGATION
+   ========================================================== */
+document.querySelectorAll(".navTab").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".navTab").forEach(b => b.classList.remove("active"));
+    document.querySelectorAll(".tabSection").forEach(s => s.classList.remove("active"));
+    btn.classList.add("active");
+    document.getElementById(btn.dataset.tab).classList.add("active");
+    if(btn.dataset.tab === "fieldTab") redraw();
+    if(btn.dataset.tab === "standaloneTab") drawStandaloneTriangle(null, null, null);
+  });
+});
+
+/* Formula Category Filter */
+document.querySelectorAll(".fChip").forEach(chip => {
+  chip.addEventListener("click", () => {
+    document.querySelectorAll(".fChip").forEach(c => c.classList.remove("active"));
+    chip.classList.add("active");
+    const target = chip.dataset.target;
+    document.querySelectorAll(".formulaBox").forEach(box => {
+      box.style.display = (target === "all" || box.dataset.cat === target) ? "block" : "none";
+    });
+  });
+});
+
+/* ==========================================================
+   TAB 1: FIELD BOUNDARY & MULTI-TRIANGLE DATA STRUCTURES
+   ========================================================== */
+
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+const scaleBadge = document.getElementById("scaleBadge");
+
+// Vertex object: { uid: "P1"|"A1", kind: "P"|"A", num: 1, x, y, sketchX, sketchY, adjustedX, adjustedY }
+let vertices = [];
+let boundaryCount = 0;
+
+let fieldFinished = false;
+let drawingField = false;
+let shapeAdjusted = false;
+let triangulationComplete = false;
+let zoomedTriangleId = null; // null = full plot view, or "T1", "T2", etc.
+
+let selectedVertexUids = [];
+let triangles = [];          // [{ id: "T1", v: [uid1, uid2, uid3] }]
+let sideMap = new Map();     // key "sortedUidA|sortedUidB" -> side object
+
+// Persistent named field projects (stored offline in localStorage)
+const STORAGE_KEY = "area_measurement_saved_fields_v1";
+let savedSketches = []; // array of field snapshots: { uid, fieldName, sketchNum, updatedAt, totalKahanSqFt, totalHeronSqFt, vertices, boundaryCount, fieldFinished, drawingField, shapeAdjusted, triangulationComplete, triangles, sideObj }
+let currentFieldUid = "field_" + Date.now();
+let currentSketchNum = 1;
+
+/* DOM References */
+const startBtn = document.getElementById("startBtn");
+const nextSketchBtn = document.getElementById("nextSketchBtn");
+const finishBtn = document.getElementById("finishBtn");
+const undoPointBtn = document.getElementById("undoPointBtn");
+const clearBtn = document.getElementById("clearBtn");
+const addTriBtn = document.getElementById("addTriBtn");
+const cancelTriBtn = document.getElementById("cancelTriBtn");
+let enteringSidesOnSketch = false;
+let activeEditingSideKey = null;
+
+const sketchEditSidesBtn = document.getElementById("sketchEditSidesBtn");
+const sketchSideEditor = document.getElementById("sketchSideEditor");
+const edSideTitle = document.getElementById("edSideTitle");
+const edCompleteFt = document.getElementById("edCompleteFt");
+const edFeet = document.getElementById("edFeet");
+const edInches = document.getElementById("edInches");
+const edCloseBtn = document.getElementById("edCloseBtn");
+const edSaveBtn = document.getElementById("edSaveBtn");
+const edClearSideBtn = document.getElementById("edClearSideBtn");
+
+const adjustShapeBtn = document.getElementById("adjustShapeBtn");
+const canvasAdjustBtn = document.getElementById("canvasAdjustBtn");
+const submitTableBtn = document.getElementById("submitTableBtn");
+const revertSketchBtn = document.getElementById("revertSketchBtn");
+const canvasRevertBtn = document.getElementById("canvasRevertBtn");
+
+const triZoomBar = document.getElementById("triZoomBar");
+const triZoomChips = document.getElementById("triZoomChips");
+const sketchHistoryContainer = document.getElementById("sketchHistoryContainer");
+const sketchTabs = document.getElementById("sketchTabs");
+const fieldNameInput = document.getElementById("fieldNameInput");
+const saveFieldBtn = document.getElementById("saveFieldBtn");
+const saveAsNewFieldBtn = document.getElementById("saveAsNewFieldBtn");
+const saveFieldBottomBtn = document.getElementById("saveFieldBottomBtn");
+const autoSaveBadge = document.getElementById("autoSaveBadge");
+
+const fieldStatus = document.getElementById("fieldStatus");
+const triangleStatus = document.getElementById("triangleStatus");
+const modeLabel = document.getElementById("modeLabel");
+const pointList = document.getElementById("pointList");
+const triangleTableBody = document.querySelector("#triangleTable tbody");
+const sideTableBody = document.querySelector("#sideTable tbody");
+const measureStatus = document.getElementById("measureStatus");
+const exportStatus = document.getElementById("exportStatus");
+
+/* ==========================================================
+   POLYGON GEOMETRY & POINT-IN-POLYGON CHECKS
+   ========================================================== */
+
+function signedPolygonArea(pts){
+  let area2 = 0;
+  for(let i = 0; i < pts.length; i++){
+    const j = (i + 1) % pts.length;
+    area2 += pts[i].x * pts[j].y - pts[j].x * pts[i].y;
+  }
+  return area2 * 0.5;
+}
+
+function triangleArea2D(a, b, c){
+  return Math.abs((b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x)) * 0.5;
+}
+
+function distToSegment(p, v, w){
+  const l2 = (v.x - w.x) ** 2 + (v.y - w.y) ** 2;
+  if(l2 === 0) return Math.hypot(p.x - v.x, p.y - v.y);
+  let t = ((p.x - v.x) * (w.x - v.x) + (p.y - v.y) * (w.y - v.y)) / l2;
+  t = Math.max(0, Math.min(1, t));
+  return Math.hypot(p.x - (v.x + t * (w.x - v.x)), p.y - (v.y + t * (w.y - v.y)));
+}
+
+function isPointInsideOrOnPolygon(p, polyVerts, boundaryTolerance = 14){
+  if(polyVerts.length < 3) return false;
+
+  for(let i = 0; i < polyVerts.length; i++){
+    const a = polyVerts[i];
+    const b = polyVerts[(i + 1) % polyVerts.length];
+    if(distToSegment(p, a, b) <= boundaryTolerance){
+      return true;
+    }
+  }
+
+  let inside = false;
+  for(let i = 0, j = polyVerts.length - 1; i < polyVerts.length; j = i++){
+    const xi = polyVerts[i].x, yi = polyVerts[i].y;
+    const xj = polyVerts[j].x, yj = polyVerts[j].y;
+
+    const intersect = ((yi > p.y) !== (yj > p.y)) &&
+      (p.x < (xj - xi) * (p.y - yi) / ((yj - yi) || 1e-12) + xi);
+    if(intersect) inside = !inside;
+  }
+  return inside;
+}
+
+function segmentsProperlyIntersect(a, b, c, d){
+  const ccw = (p1, p2, p3) => (p3.y - p1.y) * (p2.x - p1.x) > (p2.y - p1.y) * (p3.x - p1.x);
+  if((a.uid && (a.uid === c.uid || a.uid === d.uid)) || (b.uid && (b.uid === c.uid || b.uid === d.uid))){
+    return false;
+  }
+  return (ccw(a, c, d) !== ccw(b, c, d)) && (ccw(a, b, c) !== ccw(a, b, d));
+}
+
+function isTriangleInsidePolygon(vA, vB, vC, polyVerts){
+  const centroid = {
+    x: (vA.x + vB.x + vC.x) / 3,
+    y: (vA.y + vB.y + vC.y) / 3
+  };
+  if(!isPointInsideOrOnPolygon(centroid, polyVerts, 2)) return false;
+
+  const mids = [
+    { x: (vA.x + vB.x)/2, y: (vA.y + vB.y)/2 },
+    { x: (vB.x + vC.x)/2, y: (vB.y + vC.y)/2 },
+    { x: (vC.x + vA.x)/2, y: (vC.y + vA.y)/2 }
+  ];
+  for(const m of mids){
+    if(!isPointInsideOrOnPolygon(m, polyVerts, 14)) return false;
+  }
+
+  const triEdges = [[vA, vB], [vB, vC], [vC, vA]];
+  for(let i = 0; i < polyVerts.length; i++){
+    const p1 = polyVerts[i];
+    const p2 = polyVerts[(i + 1) % polyVerts.length];
+    for(const [e1, e2] of triEdges){
+      if(segmentsProperlyIntersect(e1, e2, p1, p2)){
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+// Check if a candidate triangle overlaps an existing triangle in 2D sketch coordinates
+function trianglesOverlapIn2D(vA, vB, vC){
+  const candCentroid = {
+    x: (vA.sketchX + vB.sketchX + vC.sketchX) / 3,
+    y: (vA.sketchY + vB.sketchY + vC.sketchY) / 3
+  };
+  const candEdges = [
+    [{x: vA.sketchX, y: vA.sketchY, uid: vA.uid}, {x: vB.sketchX, y: vB.sketchY, uid: vB.uid}],
+    [{x: vB.sketchX, y: vB.sketchY, uid: vB.uid}, {x: vC.sketchX, y: vC.sketchY, uid: vC.uid}],
+    [{x: vC.sketchX, y: vC.sketchY, uid: vC.uid}, {x: vA.sketchX, y: vA.sketchY, uid: vA.uid}]
+  ];
+
+  for(const t of triangles){
+    const tv = t.v.map(getVertex).filter(Boolean);
+    if(tv.length !== 3) continue;
+    const poly = tv.map(v => ({ x: v.sketchX, y: v.sketchY, uid: v.uid }));
+
+    // 1. Check if candidate centroid lies strictly inside existing triangle
+    if(isPointInsideOrOnPolygon(candCentroid, poly, 0)){
+      return t.id;
+    }
+    // 2. Check if existing triangle centroid lies strictly inside candidate triangle
+    const existCentroid = {
+      x: (poly[0].x + poly[1].x + poly[2].x) / 3,
+      y: (poly[0].y + poly[1].y + poly[2].y) / 3
+    };
+    const candPoly = [
+      { x: vA.sketchX, y: vA.sketchY },
+      { x: vB.sketchX, y: vB.sketchY },
+      { x: vC.sketchX, y: vC.sketchY }
+    ];
+    if(isPointInsideOrOnPolygon(existCentroid, candPoly, 0)){
+      return t.id;
+    }
+    // 3. Check if any non-shared edges cross each other
+    const existEdges = [
+      [poly[0], poly[1]],
+      [poly[1], poly[2]],
+      [poly[2], poly[0]]
+    ];
+    for(const [ce1, ce2] of candEdges){
+      for(const [ee1, ee2] of existEdges){
+        if(segmentsProperlyIntersect(ce1, ce2, ee1, ee2)){
+          return t.id;
+        }
+      }
+    }
+  }
+  return null;
+}
+
+function checkTriangulationComplete(){
+  const polyVerts = getBoundaryVertices();
+  if(!fieldFinished || polyVerts.length < 3 || triangles.length === 0){
+    triangulationComplete = false;
+    return false;
+  }
+
+  if(triangles.length < polyVerts.length - 2){
+    triangulationComplete = false;
+    return false;
+  }
+
+  const polyArea = Math.abs(signedPolygonArea(polyVerts.map(v => ({ x: v.sketchX, y: v.sketchY }))));
+  if(polyArea < 10){
+    triangulationComplete = false;
+    return false;
+  }
+
+  let triSumArea = 0;
+  triangles.forEach(t => {
+    const a = getVertex(t.v[0]), b = getVertex(t.v[1]), c = getVertex(t.v[2]);
+    if(a && b && c){
+      triSumArea += triangleArea2D(
+        { x: a.sketchX, y: a.sketchY },
+        { x: b.sketchX, y: b.sketchY },
+        { x: c.sketchX, y: c.sketchY }
+      );
+    }
+  });
+
+  const ratio = triSumArea / polyArea;
+  triangulationComplete = (ratio >= 0.985 && ratio <= 1.015);
+  return triangulationComplete;
+}
+
+/* ==========================================================
+   HELPER LOOKUPS
+   ========================================================== */
+
+function getVertex(uid){
+  return vertices.find(v => v.uid === uid);
+}
+
+function getBoundaryVertices(){
+  return vertices.filter(v => v.kind === "P");
+}
+
+function getAuxVertices(){
+  return vertices.filter(v => v.kind === "A");
+}
+
+function nextAuxNumber(){
+  let n = 1;
+  while(vertices.some(v => v.kind === "A" && v.num === n)){
+    n++;
+  }
+  return n;
+}
+
+function cleanupUnusedAuxVertices(){
+  const usedUids = new Set();
+  triangles.forEach(t => t.v.forEach(uid => usedUids.add(uid)));
+  selectedVertexUids.forEach(uid => usedUids.add(uid));
+
+  vertices = vertices.filter(v => v.kind === "P" || usedUids.has(v.uid));
+
+  const auxList = vertices.filter(v => v.kind === "A");
+  const renameMap = new Map();
+  auxList.forEach((v, idx) => {
+    const newNum = idx + 1;
+    const newUid = "A" + newNum;
+    if(v.uid !== newUid){
+      renameMap.set(v.uid, newUid);
+      v.uid = newUid;
+      v.num = newNum;
+    }
+  });
+
+  if(renameMap.size > 0){
+    triangles.forEach(t => {
+      t.v = t.v.map(uid => renameMap.get(uid) || uid);
+    });
+    selectedVertexUids = selectedVertexUids.map(uid => renameMap.get(uid) || uid);
+  }
+}
+
+/* ==========================================================
+   CANVAS / TOUCH HANDLING
+   ========================================================== */
+
+function getCanvasPoint(e){
+  const rect = canvas.getBoundingClientRect();
+  let clientX, clientY;
+
+  if(e.touches && e.touches.length){
+    clientX = e.touches[0].clientX;
+    clientY = e.touches[0].clientY;
+  } else {
+    clientX = e.clientX;
+    clientY = e.clientY;
+  }
+
+  return {
+    x: (clientX - rect.left) * (canvas.width / rect.width),
+    y: (clientY - rect.top) * (canvas.height / rect.height)
+  };
+}
+
+function findNearestSideAtPoint(p, maxDist = 24){
+  let bestSide = null;
+  let bestScore = Infinity;
+
+  sideMap.forEach(s => {
+    const v1 = getVertex(s.u1);
+    const v2 = getVertex(s.u2);
+    if(!v1 || !v2) return;
+
+    // Check distance to midpoint badge first (gives priority to tapping the side ID pill)
+    const mx = (v1.x + v2.x) / 2;
+    const my = (v1.y + v2.y) / 2;
+    const dMid = Math.hypot(p.x - mx, p.y - my);
+    if(dMid <= 34 && dMid * 0.6 < bestScore){
+      bestScore = dMid * 0.6;
+      bestSide = s;
+      return;
+    }
+
+    // Otherwise check perpendicular distance to segment (away from endpoints so vertex taps still work)
+    const dEnd1 = Math.hypot(p.x - v1.x, p.y - v1.y);
+    const dEnd2 = Math.hypot(p.x - v2.x, p.y - v2.y);
+    if(dEnd1 > 22 && dEnd2 > 22){
+      const dSeg = distToSegment(p, v1, v2);
+      if(dSeg <= maxDist && dSeg < bestScore){
+        bestScore = dSeg;
+        bestSide = s;
+      }
+    }
+  });
+
+  return bestSide;
+}
+
+function openSketchSideEditor(side){
+  if(!side) return;
+  activeEditingSideKey = side.key;
+  edSideTitle.textContent = `${side.id} (${side.u1} – ${side.u2})`;
+  edCompleteFt.value = side.length !== "" ? side.length : "";
+  edFeet.value = side.feetPart !== "" && side.feetPart !== undefined ? side.feetPart : "";
+  edInches.value = side.inchPart !== "" && side.inchPart !== undefined ? side.inchPart : "";
+
+  const v1 = getVertex(side.u1);
+  const v2 = getVertex(side.u2);
+  const wrapRect = document.getElementById("canvasWrap").getBoundingClientRect();
+  const scaleX = wrapRect.width / canvas.width;
+  const scaleY = wrapRect.height / canvas.height;
+
+  let leftPx = ((v1.x + v2.x) / 2) * scaleX - 115;
+  let topPx = ((v1.y + v2.y) / 2) * scaleY + 14;
+
+  // Keep popup cleanly inside canvasWrap bounds
+  leftPx = Math.max(10, Math.min(wrapRect.width - 255, leftPx));
+  topPx = Math.max(10, Math.min(wrapRect.height - 185, topPx));
+
+  sketchSideEditor.style.left = leftPx + "px";
+  sketchSideEditor.style.top = topPx + "px";
+  sketchSideEditor.classList.add("visible");
+  redraw();
+  setTimeout(() => edCompleteFt.focus(), 30);
+}
+
+function closeSketchSideEditor(){
+  activeEditingSideKey = null;
+  sketchSideEditor.classList.remove("visible");
+  redraw();
+}
+
+edCloseBtn.addEventListener("click", closeSketchSideEditor);
+edSaveBtn.addEventListener("click", closeSketchSideEditor);
+
+edClearSideBtn.addEventListener("click", function(){
+  if(!activeEditingSideKey) return;
+  edCompleteFt.value = "";
+  edFeet.value = "";
+  edInches.value = "";
+  updateSideFromComplete(activeEditingSideKey, "", null);
+});
+
+edCompleteFt.addEventListener("input", function(){
+  if(!activeEditingSideKey) return;
+  updateSideFromComplete(activeEditingSideKey, this.value, "editor-complete");
+});
+
+function handleEditorFtInInput(){
+  if(!activeEditingSideKey) return;
+  updateSideFromFeetInches(activeEditingSideKey, edFeet.value, edInches.value, "editor-ftin");
+}
+edFeet.addEventListener("input", handleEditorFtInInput);
+edInches.addEventListener("input", handleEditorFtInInput);
+
+[edCompleteFt, edFeet, edInches].forEach(inp => {
+  inp.addEventListener("keydown", function(e){
+    if(e.key === "Enter"){
+      e.preventDefault();
+      closeSketchSideEditor();
+    }
+  });
+});
+
+sketchEditSidesBtn.addEventListener("click", function(){
+  if(!fieldFinished) return;
+  enteringSidesOnSketch = !enteringSidesOnSketch;
+  if(enteringSidesOnSketch){
+    sketchEditSidesBtn.textContent = "Done Entering Sides";
+    sketchEditSidesBtn.className = "primary overlayBtn";
+    modeLabel.textContent = "Mode: Enter Side Values on Sketch";
+    fieldStatus.className = "status adjusted";
+    fieldStatus.textContent = "Tap any side ID or line on the sketch to enter its length in Complete Feet or Feet & Inches.";
+  } else {
+    closeSketchSideEditor();
+    sketchEditSidesBtn.textContent = "Enter Side Values";
+    sketchEditSidesBtn.className = "warning overlayBtn";
+    updateTriangulationLockUI();
+    fieldStatus.className = shapeAdjusted ? "status adjusted" : "status";
+    fieldStatus.textContent = "Exited side-entry mode. You can still tap any side badge anytime to edit its value.";
+  }
+  redraw();
+});
+
+canvas.addEventListener("pointerdown", function(e){
+  e.preventDefault();
+  const p = getCanvasPoint(e);
+
+  if(drawingField){
+    addBoundaryPoint(p);
+    return;
+  }
+
+  if(!fieldFinished) return;
+
+  // If user is in dedicated "Enter Side Values" mode, tap anywhere along a side opens the side editor
+  if(enteringSidesOnSketch){
+    const tappedSide = findNearestSideAtPoint(p, 28);
+    if(tappedSide){
+      openSketchSideEditor(tappedSide);
+    } else {
+      fieldStatus.className = "status warn";
+      fieldStatus.textContent = "Tap directly on any side line or side badge (B1, D1…) to enter its length.";
+    }
+    return;
+  }
+
+  // Even outside dedicated side-entry mode, tapping directly on a side's midpoint badge opens its editor!
+  const vNear = findNearestVertex(p, 24);
+  if(!vNear){
+    const badgeSide = findNearestSideAtPoint(p, 16);
+    if(badgeSide){
+      openSketchSideEditor(badgeSide);
+      return;
+    }
+  }
+
+  if(shapeAdjusted){
+    handleAdjustedTriangleTap(p);
+  } else {
+    handleTriangleVertexTap(p);
+  }
+});
+
+/* ==========================================================
+   FIELD DRAWING
+   ========================================================== */
+
+function addBoundaryPoint(p){
+  const near = findNearestVertex(p, 18);
+  if(near){
+    fieldStatus.className = "status warn";
+    fieldStatus.textContent = `Too close to ${near.uid}. Tap further away for the next boundary corner.`;
+    return;
+  }
+
+  boundaryCount++;
+  const uid = "P" + boundaryCount;
+  vertices.push({
+    uid: uid, kind: "P", num: boundaryCount,
+    x: p.x, y: p.y, sketchX: p.x, sketchY: p.y, adjustedX: p.x, adjustedY: p.y
+  });
+
+  redraw();
+  updatePointList();
+  undoPointBtn.disabled = boundaryCount === 0;
+  finishBtn.disabled = boundaryCount < 3;
+
+  fieldStatus.className = "status";
+  fieldStatus.textContent =
+    `Boundary point ${uid} added. Add more corners or press "Finish Field".`;
+}
+
+function resetCurrentWorkspace(startDrawing = true){
+  vertices = [];
+  boundaryCount = 0;
+  triangles = [];
+  sideMap.clear();
+  selectedVertexUids = [];
+  fieldFinished = false;
+  drawingField = startDrawing;
+  shapeAdjusted = false;
+  triangulationComplete = false;
+  zoomedTriangleId = null;
+
+  updateScaleBadge();
+  triZoomBar.classList.remove("visible");
+
+  startBtn.textContent = "Redraw Field";
+  finishBtn.disabled = true;
+  undoPointBtn.disabled = true;
+  sketchEditSidesBtn.disabled = false;
+  addTriBtn.disabled = true;
+  cancelTriBtn.disabled = true;
+  if(typeof sketchEditSidesBtn !== "undefined"){ sketchEditSidesBtn.disabled = !fieldFinished; enteringSidesOnSketch = false; sketchEditSidesBtn.textContent = "Enter Side Values"; sketchEditSidesBtn.className = "warning overlayBtn"; closeSketchSideEditor(); }
+  adjustShapeBtn.disabled = true;
+  canvasAdjustBtn.disabled = true;
+  submitTableBtn.disabled = true;
+  revertSketchBtn.style.display = "none";
+  canvasRevertBtn.style.display = "none";
+
+  modeLabel.textContent = startDrawing ? "Mode: Draw Field" : "Mode: Ready";
+  if(startDrawing) modeLabel.classList.add("active");
+  else modeLabel.classList.remove("active");
+
+  fieldStatus.className = "status";
+  fieldStatus.textContent = startDrawing
+    ? `Sketch #${currentSketchNum}: Drawing mode active. Tap/click around the complete field boundary.`
+    : "Press 'Start / Redraw Field' to begin.";
+  triangleStatus.className = "status";
+  triangleStatus.textContent =
+    "Finish the field first. Then select or place triangle vertices inside the polygon.";
+  redraw();
+  updatePointList();
+  renderTables();
+}
+
+startBtn.addEventListener("click", function(){
+  resetCurrentWorkspace(true);
+});
+
+/* ==========================================================
+   NAMED FIELD PERSISTENCE (SAVE, AUTO-SAVE, LOAD, RENAME, DELETE)
+   ========================================================== */
+
+// Dual persistence: localStorage + IndexedDB for reliable offline mobile storage
+function persistSavedFieldsToStorage(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(savedSketches));
+  } catch(err){
+    console.warn("LocalStorage save failed:", err);
+  }
+  try{
+    const req = indexedDB.open("AreaMeasurementDB", 1);
+    req.onupgradeneeded = e => {
+      const db = e.target.result;
+      if(!db.objectStoreNames.contains("fields")) db.createObjectStore("fields");
+    };
+    req.onsuccess = e => {
+      const db = e.target.result;
+      const tx = db.transaction("fields", "readwrite");
+      tx.objectStore("fields").put(savedSketches, STORAGE_KEY);
+    };
+  } catch(err){}
+}
+
+document.getElementById("importFieldFileInput").addEventListener("change", function(e){
+  const file = e.target.files && e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev){
+    try{
+      const snap = JSON.parse(ev.target.result);
+      if(snap && Array.isArray(snap.vertices)){
+        snap.uid = "field_" + Date.now();
+        savedSketches.push(snap);
+        persistSavedFieldsToStorage();
+        restoreState(snap);
+      } else {
+        alert("Invalid field backup file.");
+      }
+    } catch(err){
+      alert("Could not read field backup file.");
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = "";
+});
+
+function loadSavedFieldsFromStorage(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw){
+      const parsed = JSON.parse(raw);
+      if(Array.isArray(parsed)){
+        savedSketches = parsed;
+      }
+    }
+  } catch(err){
+    console.warn("LocalStorage load failed:", err);
+  }
+}
+
+function getNextDefaultFieldName(){
+  let n = 1;
+  while(savedSketches.some(s => s.fieldName.toLowerCase() === `field ${n}`)){
+    n++;
+  }
+  return `Field ${n}`;
+}
+
+function computeCurrentTotalAreas(){
+  let totalHeron = 0;
+  let totalKahan = 0;
+  triangles.forEach(t => {
+    const a = getTriangleAreas(t);
+    if(a.kahan !== null && a.heron !== null){
+      totalHeron += a.heron;
+      totalKahan += a.kahan;
+    }
+  });
+  return { totalKahan, totalHeron };
+}
+
+function cloneCurrentState(){
+  const sideObj = {};
+  sideMap.forEach((v, k) => { sideObj[k] = { ...v }; });
+  const rawName = (fieldNameInput.value || "").trim();
+  const safeName = rawName || `Field ${currentSketchNum}`;
+  const totals = computeCurrentTotalAreas();
+
+  return {
+    uid: currentFieldUid,
+    fieldName: safeName,
+    sketchNum: currentSketchNum,
+    updatedAt: new Date().toLocaleString([], { dateStyle: "short", timeStyle: "short" }),
+    totalKahanSqFt: totals.totalKahan,
+    totalHeronSqFt: totals.totalHeron,
+    vertices: vertices.map(v => ({ ...v })),
+    boundaryCount,
+    fieldFinished,
+    drawingField,
+    shapeAdjusted,
+    triangulationComplete,
+    triangles: triangles.map(t => ({ id: t.id, v: [...t.v] })),
+    sideObj
+  };
+}
+
+function saveOrUpdateCurrentSlot(silent = false){
+  if(vertices.length === 0) return;
+  const snap = cloneCurrentState();
+  if(!fieldNameInput.value.trim()){
+    fieldNameInput.value = snap.fieldName;
+  }
+  const existingIdx = savedSketches.findIndex(s => s.uid === currentFieldUid);
+  if(existingIdx >= 0){
+    savedSketches[existingIdx] = snap;
+  } else {
+    savedSketches.push(snap);
+  }
+  persistSavedFieldsToStorage();
+  renderSavedSketchTabs();
+
+  const timeStr = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  autoSaveBadge.textContent = `Saved "${snap.fieldName}" at ${timeStr}`;
+  if(!silent){
+    fieldStatus.className = "status adjusted";
+    fieldStatus.innerHTML = `All details for <b>${snap.fieldName}</b> (${snap.boundaryCount} points, ${snap.triangles.length} triangles, ${snap.totalKahanSqFt.toFixed(2)} sq ft) have been saved offline. You can reload and modify it anytime.`;
+  }
+}
+
+function restoreState(snap){
+  currentFieldUid = snap.uid || ("field_" + Date.now());
+  currentSketchNum = snap.sketchNum || 1;
+  fieldNameInput.value = snap.fieldName || `Field ${currentSketchNum}`;
+  vertices = snap.vertices.map(v => ({ ...v }));
+  boundaryCount = snap.boundaryCount;
+  fieldFinished = snap.fieldFinished;
+  drawingField = snap.drawingField;
+  shapeAdjusted = snap.shapeAdjusted;
+  triangulationComplete = snap.triangulationComplete;
+  zoomedTriangleId = null;
+  selectedVertexUids = [];
+  triangles = snap.triangles.map(t => ({ id: t.id, v: [...t.v] }));
+
+  sideMap.clear();
+  Object.keys(snap.sideObj || {}).forEach(k => {
+    sideMap.set(k, { ...snap.sideObj[k] });
+  });
+
+  finishBtn.disabled = !drawingField || boundaryCount < 3;
+  undoPointBtn.disabled = !drawingField || boundaryCount === 0;
+  addTriBtn.disabled = true;
+  cancelTriBtn.disabled = true;
+  if(typeof sketchEditSidesBtn !== "undefined"){
+    sketchEditSidesBtn.disabled = !fieldFinished;
+    enteringSidesOnSketch = false;
+    sketchEditSidesBtn.textContent = "Enter Side Values";
+    sketchEditSidesBtn.className = "warning overlayBtn";
+    closeSketchSideEditor();
+  }
+
+  updateScaleBadge();
+  updateTriangulationLockUI();
+  updatePointList();
+  renderTables();
+
+  if(shapeAdjusted){
+    buildTriZoomChips();
+    triZoomBar.classList.add("visible");
+    revertSketchBtn.style.display = "inline-block";
+    canvasRevertBtn.style.display = "block";
+  } else {
+    triZoomBar.classList.remove("visible");
+    revertSketchBtn.style.display = "none";
+    canvasRevertBtn.style.display = "none";
+  }
+
+  fieldStatus.className = shapeAdjusted ? "status adjusted" : "status";
+  fieldStatus.innerHTML = `Loaded <b>${snap.fieldName}</b> (${boundaryCount} boundary points, ${triangles.length} triangles). Edit any side length or triangle directly—changes auto-save.`;
+  renderSavedSketchTabs();
+  redraw();
+}
+
+function deleteSavedField(uid){
+  const target = savedSketches.find(s => s.uid === uid);
+  if(!target) return;
+  if(!confirm(`Delete saved field "${target.fieldName}"?`)) return;
+  savedSketches = savedSketches.filter(s => s.uid !== uid);
+  persistSavedFieldsToStorage();
+  renderSavedSketchTabs();
+}
+
+function renderSavedSketchTabs(){
+  if(savedSketches.length === 0){
+    sketchHistoryContainer.style.display = "none";
+    return;
+  }
+  sketchHistoryContainer.style.display = "block";
+  sketchTabs.innerHTML = "";
+  savedSketches.forEach((snap, idx) => {
+    const isCurrent = snap.uid === currentFieldUid;
+    const areaVal = Number(snap.totalKahanSqFt || 0);
+    const marlaVal = (areaVal / 272.25).toFixed(2);
+
+    const card = document.createElement("div");
+    card.className = "savedFieldCard" + (isCurrent ? " activeField" : "");
+    card.innerHTML = `
+      <div class="sfTop">
+        <span class="sfName">${snap.fieldName}</span>
+        <span style="font-size:10.5px;font-weight:700;color:var(--text-muted)">${isCurrent ? "ACTIVE" : ""}</span>
+      </div>
+      <div class="sfMeta">
+        Area: <b>${areaVal.toFixed(2)} sq ft</b> (${marlaVal} Marla)<br>
+        ${snap.boundaryCount} corners • ${snap.triangles.length} triangles • ${snap.updatedAt || ""}
+      </div>
+      <div class="sfBtns">
+        <button type="button" class="${isCurrent ? "primary" : "accent"} open-btn">${isCurrent ? "Loaded" : "Open / Edit"}</button>
+        <button type="button" class="danger del-btn">Delete</button>
+      </div>
+    `;
+    card.querySelector(".open-btn").addEventListener("click", () => {
+      if(vertices.length > 0 && currentFieldUid !== snap.uid){
+        saveOrUpdateCurrentSlot(true);
+      }
+      restoreState(savedSketches[idx]);
+    });
+    card.querySelector(".del-btn").addEventListener("click", () => {
+      deleteSavedField(snap.uid);
+    });
+    sketchTabs.appendChild(card);
+  });
+}
+
+saveFieldBtn.addEventListener("click", () => saveOrUpdateCurrentSlot(false));
+saveFieldBottomBtn.addEventListener("click", () => saveOrUpdateCurrentSlot(false));
+
+// Save a portable JSON copy directly to mobile storage (Downloads / Documents) in addition to app memory
+async function saveFieldCopyToMobileStorage(snap){
+  const safeFile = (snap.fieldName || "Field").replace(/[^a-zA-Z0-9_-]+/g, "_") + "_backup.json";
+  const jsonStr = JSON.stringify(snap, null, 2);
+
+  // If running inside Capacitor Android APK with Filesystem plugin available, write directly to Documents/Downloads
+  if(window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Filesystem){
+    try{
+      const { Filesystem } = window.Capacitor.Plugins;
+      await Filesystem.writeFile({
+        path: "AreaMeasurement/" + safeFile,
+        data: jsonStr,
+        directory: "DOCUMENTS",
+        encoding: "utf8",
+        recursive: true
+      });
+      return `Saved copy in app memory & Android Documents/AreaMeasurement/${safeFile}`;
+    } catch(e){
+      console.warn("Capacitor Filesystem fallback to download:", e);
+    }
+  }
+
+  // Standard mobile browser / WebView download to device Downloads folder
+  const blob = new Blob([jsonStr], { type: "application/json;charset=utf-8" });
+  triggerDownload(blob, safeFile);
+  return `Saved copy in mobile app memory & downloaded <b>${safeFile}</b> to device storage.`;
+}
+
+saveAsNewFieldBtn.addEventListener("click", async function(){
+  if(vertices.length === 0){
+    alert("Draw a field boundary first before saving a copy.");
+    return;
+  }
+  const suggested = getNextDefaultFieldName();
+  const newName = prompt("Enter a name for this saved copy:", suggested);
+  if(!newName || !newName.trim()) return;
+  currentFieldUid = "field_" + Date.now();
+  currentSketchNum = savedSketches.length + 1;
+  fieldNameInput.value = newName.trim();
+  saveOrUpdateCurrentSlot(true);
+  const snap = cloneCurrentState();
+  const msg = await saveFieldCopyToMobileStorage(snap);
+  fieldStatus.className = "status adjusted";
+  fieldStatus.innerHTML = msg;
+});
+
+fieldNameInput.addEventListener("change", function(){
+  if(vertices.length > 0){
+    saveOrUpdateCurrentSlot(true);
+  }
+});
+
+nextSketchBtn.addEventListener("click", function(){
+  if(vertices.length > 0){
+    saveOrUpdateCurrentSlot(true);
+  }
+  currentFieldUid = "field_" + Date.now();
+  const maxNum = savedSketches.reduce((m, s) => Math.max(m, s.sketchNum || 0), currentSketchNum);
+  currentSketchNum = maxNum + 1;
+  fieldNameInput.value = getNextDefaultFieldName();
+  renderSavedSketchTabs();
+  resetCurrentWorkspace(true);
+});
+
+undoPointBtn.addEventListener("click", function(){
+  if(!drawingField || boundaryCount === 0) return;
+  vertices.pop();
+  boundaryCount--;
+  finishBtn.disabled = boundaryCount < 3;
+  undoPointBtn.disabled = boundaryCount === 0;
+  fieldStatus.className = "status";
+  fieldStatus.textContent = boundaryCount
+    ? `Removed the last point. Current last point is P${boundaryCount}.`
+    : "All boundary points removed.";
+  redraw();
+  updatePointList();
+});
+
+finishBtn.addEventListener("click", function(){
+  if(boundaryCount < 3) return;
+
+  drawingField = false;
+  fieldFinished = true;
+  finishBtn.disabled = true;
+  undoPointBtn.disabled = true;
+  sketchEditSidesBtn.disabled = false;
+
+  buildSideRegister();
+  updateTriangulationLockUI();
+
+  modeLabel.textContent = "Mode: Manual Triangle Selection";
+  modeLabel.classList.add("active");
+
+  triangleStatus.className = "status";
+  triangleStatus.textContent =
+    "Tap existing vertices or tap INSIDE the polygon to place new vertices (A1, A2…). Points outside are blocked.";
+  fieldStatus.className = "status";
+  fieldStatus.textContent =
+    `Field boundary finished with ${boundaryCount} boundary points. Divide the polygon into triangles.`;
+
+  renderTables();
+  redraw();
+});
+
+/* ==========================================================
+   TRIANGLE VERTEX SELECTION (BLOCKED OUTSIDE & DUPLICATE/OVERLAP BLOCKED)
+   ========================================================== */
+
+function findNearestVertex(p, tolerance = 28){
+  let best = null;
+  let bestDist = Infinity;
+
+  vertices.forEach(v => {
+    const d = Math.hypot(v.x - p.x, v.y - p.y);
+    if(d < bestDist){
+      bestDist = d;
+      best = v;
+    }
+  });
+
+  return bestDist <= tolerance ? best : null;
+}
+
+function findExistingTriangleByVertices(uids){
+  const sorted = [...uids].sort();
+  return triangles.find(t => {
+    const q = [...t.v].sort();
+    return q[0] === sorted[0] && q[1] === sorted[1] && q[2] === sorted[2];
+  }) || null;
+}
+
+function handleTriangleVertexTap(p){
+  if(triangulationComplete){
+    triangleStatus.className = "status adjusted";
+    triangleStatus.textContent =
+      "Polygon triangulation is already complete! Add Triangle is disabled. Delete a triangle in the table if you wish to re-divide.";
+    return;
+  }
+
+  if(selectedVertexUids.length >= 3){
+    selectedVertexUids = [];
+    cleanupUnusedAuxVertices();
+    addTriBtn.disabled = true;
+  }
+
+  const polyVerts = getBoundaryVertices();
+  let target = findNearestVertex(p, 28);
+  let createdNew = false;
+
+  if(!target){
+    if(!isPointInsideOrOnPolygon(p, polyVerts, 14)){
+      triangleStatus.className = "status warn";
+      triangleStatus.textContent =
+        "Outside boundary! You can only select existing vertices or tap inside/on the main field polygon.";
+      return;
+    }
+
+    const num = nextAuxNumber();
+    const uid = "A" + num;
+    target = {
+      uid: uid, kind: "A", num: num,
+      x: p.x, y: p.y, sketchX: p.x, sketchY: p.y, adjustedX: p.x, adjustedY: p.y
+    };
+    vertices.push(target);
+    createdNew = true;
+    updatePointList();
+  }
+
+  if(selectedVertexUids.includes(target.uid)){
+    triangleStatus.className = "status warn";
+    triangleStatus.textContent =
+      `${target.uid} is already selected for this triangle. Choose or place a different vertex.`;
+    return;
+  }
+
+  selectedVertexUids.push(target.uid);
+  const names = selectedVertexUids.join(" – ");
+
+  if(selectedVertexUids.length < 3){
+    triangleStatus.className = "status";
+    triangleStatus.textContent =
+      `${createdNew ? "Created & selected " + target.uid : "Selected " + target.uid} (${names}). Select or tap inside polygon for ${3 - selectedVertexUids.length} more vertex(es).`;
+  } else {
+    const [va, vb, vc] = selectedVertexUids.map(getVertex);
+
+    // 1. Immediately stop & report if this exact triangle was already formed!
+    const existingDup = findExistingTriangleByVertices(selectedVertexUids);
+    if(existingDup){
+      triangleStatus.className = "status warn";
+      triangleStatus.innerHTML =
+        `<b>Duplicate Triangle Blocked:</b> Triangle <b>${names}</b> is already formed as <b>${existingDup.id}</b>! Selection cleared.`;
+      selectedVertexUids = [];
+      cleanupUnusedAuxVertices();
+      updatePointList();
+      addTriBtn.disabled = true;
+      cancelTriBtn.disabled = true;
+      redraw();
+      return;
+    }
+
+    // 2. Check collinearity
+    if(Math.abs(cross(va, vb, vc)) < 1.0){
+      triangleStatus.className = "status warn";
+      triangleStatus.textContent =
+        "These three vertices are collinear. Selection cleared—pick non-collinear vertices.";
+      selectedVertexUids = [];
+      cleanupUnusedAuxVertices();
+      updatePointList();
+      addTriBtn.disabled = true;
+      cancelTriBtn.disabled = true;
+      redraw();
+      return;
+    }
+
+    // 3. Check inside main polygon
+    if(!isTriangleInsidePolygon(va, vb, vc, polyVerts)){
+      triangleStatus.className = "status warn";
+      triangleStatus.textContent =
+        `Triangle ${names} extends outside the main field boundary! Selection cleared.`;
+      selectedVertexUids = [];
+      cleanupUnusedAuxVertices();
+      updatePointList();
+      addTriBtn.disabled = true;
+      cancelTriBtn.disabled = true;
+      redraw();
+      return;
+    }
+
+    // 4. Check overlap with already-created triangles
+    const overlapTriId = trianglesOverlapIn2D(va, vb, vc);
+    if(overlapTriId){
+      triangleStatus.className = "status warn";
+      triangleStatus.innerHTML =
+        `<b>Overlapping Triangle Blocked:</b> Triangle <b>${names}</b> overlaps existing triangle <b>${overlapTriId}</b>! Selection cleared.`;
+      selectedVertexUids = [];
+      cleanupUnusedAuxVertices();
+      updatePointList();
+      addTriBtn.disabled = true;
+      cancelTriBtn.disabled = true;
+      redraw();
+      return;
+    }
+
+    triangleStatus.className = "status";
+    triangleStatus.textContent =
+      `Triangle ready: ${names}. Press "Add Triangle" at top-right of the sketch.`;
+    addTriBtn.disabled = triangulationComplete;
+  }
+
+  cancelTriBtn.disabled = false;
+  redraw();
+}
+
+function cross(a, b, c){
+  return (b.x - a.x)*(c.y - a.y) - (b.y - a.y)*(c.x - a.x);
+}
+
+addTriBtn.addEventListener("click", addTriangleFromSelection);
+
+function updateTriangulationLockUI(){
+  const complete = checkTriangulationComplete();
+  updateScaleBadge();
+
+  if(complete){
+    addTriBtn.disabled = true;
+    cancelTriBtn.disabled = true;
+    selectedVertexUids = [];
+    modeLabel.textContent = "Mode: Triangulation Complete";
+    triangleStatus.className = "status adjusted";
+    triangleStatus.textContent =
+      `Complete triangulation achieved (${triangles.length} triangles cover 100% of the field)! "Add Triangle" is now disabled. Enter side lengths below.`;
+  } else if(fieldFinished && !shapeAdjusted){
+    modeLabel.textContent = "Mode: Manual Triangle Selection";
+  }
+}
+
+function addTriangleFromSelection(){
+  if(triangulationComplete || selectedVertexUids.length !== 3) return;
+
+  const existingDup = findExistingTriangleByVertices(selectedVertexUids);
+  if(existingDup){
+    triangleStatus.className = "status warn";
+    triangleStatus.innerHTML =
+      `<b>Duplicate Triangle Blocked:</b> Triangle <b>${selectedVertexUids.join("–")}</b> already exists as <b>${existingDup.id}</b>.`;
+    selectedVertexUids = [];
+    addTriBtn.disabled = true;
+    cancelTriBtn.disabled = true;
+    redraw();
+    return;
+  }
+
+  const triId = "T" + (triangles.length + 1);
+  triangles.push({ id: triId, v: [...selectedVertexUids] });
+
+  selectedVertexUids = [];
+  addTriBtn.disabled = true;
+  cancelTriBtn.disabled = true;
+  if(typeof sketchEditSidesBtn !== "undefined"){ sketchEditSidesBtn.disabled = !fieldFinished; enteringSidesOnSketch = false; sketchEditSidesBtn.textContent = "Enter Side Values"; sketchEditSidesBtn.className = "warning overlayBtn"; closeSketchSideEditor(); }
+
+  buildSideRegister();
+  updatePointList();
+  renderTables();
+  updateTriangulationLockUI();
+  redraw();
+
+  if(!triangulationComplete){
+    triangleStatus.className = "status";
+    triangleStatus.textContent =
+      `${triId} added. Select existing vertices or tap inside the polygon to add remaining triangles.`;
+  }
+}
+
+cancelTriBtn.addEventListener("click", function(){
+  selectedVertexUids = [];
+  cleanupUnusedAuxVertices();
+  updatePointList();
+  addTriBtn.disabled = true;
+  cancelTriBtn.disabled = true;
+  if(typeof sketchEditSidesBtn !== "undefined"){ sketchEditSidesBtn.disabled = !fieldFinished; enteringSidesOnSketch = false; sketchEditSidesBtn.textContent = "Enter Side Values"; sketchEditSidesBtn.className = "warning overlayBtn"; closeSketchSideEditor(); }
+  triangleStatus.className = "status";
+  triangleStatus.textContent =
+    "Triangle selection cancelled. Select or place three vertices inside the polygon.";
+  redraw();
+});
+
+/* ==========================================================
+   SIDE IDENTIFICATION
+   ========================================================== */
+
+function sideKey(uidA, uidB){
+  return uidA < uidB ? `${uidA}|${uidB}` : `${uidB}|${uidA}`;
+}
+
+function buildSideRegister(){
+  const oldData = new Map();
+  sideMap.forEach((s, key) => {
+    oldData.set(key, {
+      length: s.length,
+      feetPart: s.feetPart !== undefined ? s.feetPart : "",
+      inchPart: s.inchPart !== undefined ? s.inchPart : ""
+    });
+  });
+
+  sideMap.clear();
+
+  const pVerts = getBoundaryVertices();
+  for(let i = 0; i < pVerts.length; i++){
+    const j = (i + 1) % pVerts.length;
+    const key = sideKey(pVerts[i].uid, pVerts[j].uid);
+    const prev = oldData.get(key) || { length: "", feetPart: "", inchPart: "" };
+    sideMap.set(key, {
+      key: key,
+      id: "B" + (i + 1),
+      type: "Boundary",
+      u1: pVerts[i].uid,
+      u2: pVerts[j].uid,
+      length: prev.length,
+      feetPart: prev.feetPart,
+      inchPart: prev.inchPart
+    });
+  }
+
+  let dCount = 1;
+  triangles.forEach(t => {
+    const [v0, v1, v2] = t.v;
+    [[v0, v1], [v1, v2], [v2, v0]].forEach(pair => {
+      const key = sideKey(pair[0], pair[1]);
+      if(!sideMap.has(key)){
+        const prev = oldData.get(key) || { length: "", feetPart: "", inchPart: "" };
+        sideMap.set(key, {
+          key: key,
+          id: "D" + (dCount++),
+          type: "Internal / Chord",
+          u1: pair[0],
+          u2: pair[1],
+          length: prev.length,
+          feetPart: prev.feetPart,
+          inchPart: prev.inchPart
+        });
+      }
+    });
+  });
+}
+
+function getSide(uidA, uidB){
+  return sideMap.get(sideKey(uidA, uidB));
+}
+
+/* ==========================================================
+   HERON & KAHAN AREA CALCULATIONS
+   ========================================================== */
+
+function parseLength(v){
+  const n = parseFloat(v);
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+function heronArea(a, b, c){
+  if(a === null || b === null || c === null) return null;
+  if(a + b <= c || a + c <= b || b + c <= a) return null;
+
+  const s = (a + b + c) / 2;
+  const val = s * (s - a) * (s - b) * (s - c);
+  if(val <= 0) return null;
+
+  return Math.sqrt(val);
+}
+
+function kahanArea(a, b, c){
+  if(a === null || b === null || c === null) return null;
+  const sides = [a, b, c].sort((m, n) => n - m);
+  const x = sides[0], y = sides[1], z = sides[2];
+
+  if(z - (x - y) <= 0) return null;
+
+  const t1 = x + (y + z);
+  const t2 = z - (x - y);
+  const t3 = z + (x - y);
+  const t4 = x + (y - z);
+  const prod = t1 * t2 * t3 * t4;
+  if(prod <= 0) return null;
+
+  return 0.25 * Math.sqrt(prod);
+}
+
+function decimalFeetToFtIn(decFt){
+  if(!Number.isFinite(decFt) || decFt <= 0) return { ft: "", inch: "" };
+  let wholeFt = Math.floor(decFt);
+  let remIn = (decFt - wholeFt) * 12;
+  if(Math.abs(remIn - 12) < 1e-4){
+    wholeFt += 1;
+    remIn = 0;
+  }
+  return {
+    ft: wholeFt,
+    inch: Number(remIn.toFixed(2))
+  };
+}
+
+function syncSideInputsInDOM(key, sideObj, skipSource){
+  const compVal = sideObj.length !== "" ? sideObj.length : "";
+  const ftVal = sideObj.feetPart !== "" ? sideObj.feetPart : "";
+  const inVal = sideObj.inchPart !== "" ? sideObj.inchPart : "";
+
+  triangleTableBody.querySelectorAll(`input.compInput[data-side="${key}"]`).forEach(inp => {
+    if(inp !== skipSource) inp.value = compVal;
+  });
+  triangleTableBody.querySelectorAll(`input.ftInput[data-side="${key}"]`).forEach(inp => {
+    if(inp !== skipSource) inp.value = ftVal;
+  });
+  triangleTableBody.querySelectorAll(`input.inInput[data-side="${key}"]`).forEach(inp => {
+    if(inp !== skipSource) inp.value = inVal;
+  });
+
+  if(activeEditingSideKey === key){
+    if(skipSource !== "editor-complete") edCompleteFt.value = compVal;
+    if(skipSource !== "editor-ftin"){
+      edFeet.value = ftVal;
+      edInches.value = inVal;
+    }
+  }
+}
+
+function updateSideFromComplete(key, rawValue, skipSource){
+  const s = sideMap.get(key);
+  if(!s) return;
+
+  const n = parseFloat(rawValue);
+  if(Number.isFinite(n) && n > 0){
+    s.length = n;
+    const parts = decimalFeetToFtIn(n);
+    s.feetPart = parts.ft;
+    s.inchPart = parts.inch;
+  } else {
+    s.length = "";
+    s.feetPart = "";
+    s.inchPart = "";
+  }
+
+  syncSideInputsInDOM(key, s, skipSource);
+  updateCalculatedCellsAndRegisters();
+  redraw();
+}
+
+function updateSideFromFeetInches(key, rawFt, rawIn, skipSource){
+  const s = sideMap.get(key);
+  if(!s) return;
+
+  const f = parseFloat(rawFt);
+  const inc = parseFloat(rawIn);
+  const hasF = Number.isFinite(f) && f >= 0 && rawFt !== "";
+  const hasI = Number.isFinite(inc) && inc >= 0 && rawIn !== "";
+
+  if(!hasF && !hasI){
+    s.length = "";
+    s.feetPart = "";
+    s.inchPart = "";
+  } else {
+    const fNum = hasF ? f : 0;
+    const iNum = hasI ? inc : 0;
+    const totalFt = fNum + (iNum / 12);
+    s.feetPart = hasF ? fNum : (iNum > 0 ? 0 : "");
+    s.inchPart = hasI ? iNum : (fNum > 0 ? 0 : "");
+    s.length = totalFt > 0 ? Number(totalFt.toFixed(4)) : "";
+  }
+
+  syncSideInputsInDOM(key, s, skipSource);
+  updateCalculatedCellsAndRegisters();
+  redraw();
+}
+
+function getTriangleAreas(t){
+  const s1 = getSide(t.v[0], t.v[1]);
+  const s2 = getSide(t.v[1], t.v[2]);
+  const s3 = getSide(t.v[2], t.v[0]);
+
+  const l1 = parseLength(s1 ? s1.length : "");
+  const l2 = parseLength(s2 ? s2.length : "");
+  const l3 = parseLength(s3 ? s3.length : "");
+
+  return {
+    heron: heronArea(l1, l2, l3),
+    kahan: kahanArea(l1, l2, l3),
+    lengths: [l1, l2, l3]
+  };
+}
+
+/* ==========================================================
+   TRUE-TO-SCALE RECONSTRUCTION + TRIANGLE ZOOM / SELECT
+   ========================================================== */
+
+function circleIntersections(x0, y0, r0, x1, y1, r1){
+  const dx = x1 - x0;
+  const dy = y1 - y0;
+  const d = Math.hypot(dx, dy);
+  if(d < 1e-9 || d > r0 + r1 + 1e-6 || d < Math.abs(r0 - r1) - 1e-6){
+    return null;
+  }
+  const dClamped = Math.min(Math.max(d, Math.abs(r0 - r1)), r0 + r1);
+  const a = (r0 * r0 - r1 * r1 + dClamped * dClamped) / (2 * dClamped);
+  const hSq = Math.max(0, r0 * r0 - a * a);
+  const h = Math.sqrt(hSq);
+
+  const xm = x0 + (a * dx) / d;
+  const ym = y0 + (a * dy) / d;
+  const rx = (-dy * h) / d;
+  const ry = (dx * h) / d;
+
+  return [
+    { x: xm + rx, y: ym + ry },
+    { x: xm - rx, y: ym - ry }
+  ];
+}
+
+function applyAdjustedViewport(targetTriId = null){
+  zoomedTriangleId = targetTriId;
+
+  let focusVerts = vertices.filter(v => Number.isFinite(v.adjustedX));
+  if(targetTriId){
+    const tri = triangles.find(t => t.id === targetTriId);
+    if(tri){
+      const tv = tri.v.map(getVertex).filter(Boolean);
+      if(tv.length === 3) focusVerts = tv;
+    }
+  }
+
+  if(focusVerts.length === 0) return;
+
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  focusVerts.forEach(v => {
+    if(v.adjustedX < minX) minX = v.adjustedX;
+    if(v.adjustedX > maxX) maxX = v.adjustedX;
+    if(v.adjustedY < minY) minY = v.adjustedY;
+    if(v.adjustedY > maxY) maxY = v.adjustedY;
+  });
+
+  const worldW = Math.max(1e-3, maxX - minX);
+  const worldH = Math.max(1e-3, maxY - minY);
+  const padX = targetTriId ? 155 : 120;
+  const padY = targetTriId ? 125 : 100;
+  const availW = canvas.width - padX * 2;
+  const availH = canvas.height - padY * 2;
+  const scale = Math.min(availW / worldW, availH / worldH);
+
+  const cxWorld = (minX + maxX) / 2;
+  const cyWorld = (minY + maxY) / 2;
+  const cxCanvas = canvas.width / 2;
+  const cyCanvas = canvas.height / 2;
+
+  vertices.forEach(v => {
+    if(Number.isFinite(v.adjustedX)){
+      v.x = cxCanvas + (v.adjustedX - cxWorld) * scale;
+      v.y = cyCanvas + (v.adjustedY - cyWorld) * scale;
+    }
+  });
+
+  updateScaleBadge();
+  buildTriZoomChips();
+  redraw();
+}
+
+function buildTriZoomChips(){
+  triZoomChips.innerHTML = "";
+
+  const allBtn = document.createElement("button");
+  allBtn.className = "triChip" + (zoomedTriangleId === null ? " active" : "");
+  if(zoomedTriangleId === null) allBtn.style.background = "#174f3f";
+  allBtn.textContent = "Full Field View";
+  allBtn.addEventListener("click", () => applyAdjustedViewport(null));
+  triZoomChips.appendChild(allBtn);
+
+  triangles.forEach((t, idx) => {
+    const col = getTriColor(idx);
+    const areas = getTriangleAreas(t);
+    const isSel = zoomedTriangleId === t.id;
+    const btn = document.createElement("button");
+    btn.className = "triChip" + (isSel ? " active" : "");
+    btn.style.borderColor = col.stroke;
+    if(isSel){
+      btn.style.background = col.stroke;
+    } else {
+      btn.style.color = col.text;
+    }
+    const areaTxt = areas.kahan !== null ? ` (${areas.kahan.toFixed(1)} sq ft)` : "";
+    btn.textContent = `${t.id}: ${t.v.join("–")}${areaTxt}`;
+    btn.addEventListener("click", () => {
+      applyAdjustedViewport(isSel ? null : t.id);
+    });
+    triZoomChips.appendChild(btn);
+  });
+}
+
+function handleAdjustedTriangleTap(p){
+  for(let i = triangles.length - 1; i >= 0; i--){
+    const t = triangles[i];
+    const pts = t.v.map(getVertex).filter(Boolean);
+    if(pts.length === 3 && isPointInsideOrOnPolygon(p, pts, 4)){
+      const nextZoom = (zoomedTriangleId === t.id) ? null : t.id;
+      applyAdjustedViewport(nextZoom);
+      const areas = getTriangleAreas(t);
+      fieldStatus.className = "status adjusted";
+      fieldStatus.innerHTML = nextZoom
+        ? `Zoomed into <b>${t.id}</b> (${t.v.join("–")}) — Kahan Area: <b>${areas.kahan.toFixed(2)} sq ft</b> | Heron Area: <b>${areas.heron.toFixed(2)} sq ft</b>. Tap again or click "Full Field View" to zoom out.`
+        : `Showing full adjusted field view.`;
+      return;
+    }
+  }
+}
+
+function adjustFieldGeometryToMeasuredSides(){
+  if(triangles.length === 0){
+    fieldStatus.className = "status warn";
+    fieldStatus.textContent = "Add at least one triangle and enter valid side lengths first.";
+    return;
+  }
+
+  for(const t of triangles){
+    const res = getTriangleAreas(t);
+    if(res.kahan === null){
+      fieldStatus.className = "status warn";
+      fieldStatus.innerHTML = `<span class="bad">Cannot adjust shape:</span> Triangle <b>${t.id}</b> (${t.v.join("–")}) does not have 3 valid side lengths satisfying the triangle inequality.`;
+      return;
+    }
+  }
+
+  const sketchPos = new Map();
+  vertices.forEach(v => sketchPos.set(v.uid, { x: v.sketchX, y: v.sketchY }));
+
+  const placed = new Map();
+
+  const t0 = triangles[0];
+  const [u0, u1, u2] = t0.v;
+  const L01 = parseLength(getSide(u0, u1).length);
+  const L12 = parseLength(getSide(u1, u2).length);
+  const L20 = parseLength(getSide(u2, u0).length);
+
+  const sk0 = sketchPos.get(u0);
+  const sk1 = sketchPos.get(u1);
+  const sk2 = sketchPos.get(u2);
+
+  const baseAngle = Math.atan2(sk1.y - sk0.y, sk1.x - sk0.x);
+  placed.set(u0, { x: 0, y: 0 });
+  placed.set(u1, { x: L01 * Math.cos(baseAngle), y: L01 * Math.sin(baseAngle) });
+
+  const cands0 = circleIntersections(
+    placed.get(u0).x, placed.get(u0).y, L20,
+    placed.get(u1).x, placed.get(u1).y, L12
+  );
+
+  if(!cands0){
+    fieldStatus.innerHTML = `<span class="bad">Geometry error in ${t0.id}.</span>`;
+    return;
+  }
+
+  const skCross0 = cross(sk0, sk1, sk2);
+  const p0 = placed.get(u0), p1 = placed.get(u1);
+  const c0CrossA = cross(p0, p1, cands0[0]);
+  const c0CrossB = cross(p0, p1, cands0[1]);
+  const chosen0 = (Math.sign(c0CrossA) === Math.sign(skCross0) || Math.abs(c0CrossB - c0CrossA) < 1e-6)
+    ? cands0[0] : cands0[1];
+  placed.set(u2, chosen0);
+
+  let progress = true;
+  const remaining = new Set(triangles.slice(1).map(t => t.id));
+
+  while(progress && remaining.size > 0){
+    progress = false;
+    for(const t of triangles){
+      if(!remaining.has(t.id)) continue;
+      const known = t.v.filter(uid => placed.has(uid));
+      const unknown = t.v.filter(uid => !placed.has(uid));
+
+      if(known.length === 3){
+        remaining.delete(t.id);
+        progress = true;
+      } else if(known.length === 2 && unknown.length === 1){
+        const kA = known[0], kB = known[1], unk = unknown[0];
+        const rA = parseLength(getSide(kA, unk).length);
+        const rB = parseLength(getSide(kB, unk).length);
+        const posA = placed.get(kA);
+        const posB = placed.get(kB);
+
+        const cands = circleIntersections(posA.x, posA.y, rA, posB.x, posB.y, rB);
+        if(!cands){
+          fieldStatus.className = "status warn";
+          fieldStatus.innerHTML = `<span class="bad">Geometric mismatch in ${t.id}:</span> Side lengths (${rA} ft, ${rB} ft) cannot meet across ${kA}–${kB}.`;
+          return;
+        }
+
+        const sA = sketchPos.get(kA), sB = sketchPos.get(kB), sU = sketchPos.get(unk);
+        const skSign = Math.sign(cross(sA, sB, sU));
+        const sign0 = Math.sign(cross(posA, posB, cands[0]));
+        const chosen = (sign0 === skSign) ? cands[0] : cands[1];
+
+        placed.set(unk, chosen);
+        remaining.delete(t.id);
+        progress = true;
+      }
+    }
+  }
+
+  if(remaining.size > 0){
+    let offsetX = 0;
+    placed.forEach(pt => { if(pt.x > offsetX) offsetX = pt.x; });
+    offsetX += 40;
+
+    for(const t of triangles){
+      if(!remaining.has(t.id)) continue;
+      const [a, b, c] = t.v;
+      const lab = parseLength(getSide(a, b).length);
+      const lbc = parseLength(getSide(b, c).length);
+      const lca = parseLength(getSide(c, a).length);
+      if(!placed.has(a)) placed.set(a, { x: offsetX, y: 0 });
+      if(!placed.has(b)) placed.set(b, { x: placed.get(a).x + lab, y: placed.get(a).y });
+      const cands = circleIntersections(
+        placed.get(a).x, placed.get(a).y, lca,
+        placed.get(b).x, placed.get(b).y, lbc
+      );
+      if(cands && !placed.has(c)) placed.set(c, cands[0]);
+      offsetX += lab + 40;
+    }
+  }
+
+  const pVerts = getBoundaryVertices();
+  for(let i = 0; i < pVerts.length; i++){
+    const curr = pVerts[i];
+    if(!placed.has(curr.uid)){
+      const prev = pVerts[(i - 1 + pVerts.length) % pVerts.length];
+      if(placed.has(prev.uid)){
+        const bSide = getSide(prev.uid, curr.uid);
+        const len = parseLength(bSide ? bSide.length : "") || 50;
+        const ang = Math.atan2(curr.sketchY - prev.sketchY, curr.sketchX - prev.sketchX);
+        placed.set(curr.uid, {
+          x: placed.get(prev.uid).x + len * Math.cos(ang),
+          y: placed.get(prev.uid).y + len * Math.sin(ang)
+        });
+      }
+    }
+  }
+
+  vertices.forEach(v => {
+    if(placed.has(v.uid)){
+      const pt = placed.get(v.uid);
+      v.adjustedX = pt.x;
+      v.adjustedY = pt.y;
+    }
+  });
+
+  shapeAdjusted = true;
+  updateScaleBadge();
+  revertSketchBtn.style.display = "inline-block";
+  canvasRevertBtn.style.display = "block";
+  triZoomBar.classList.add("visible");
+
+  let closureNotes = [];
+  sideMap.forEach(s => {
+    const entered = parseLength(s.length);
+    const p1 = placed.get(s.u1), p2 = placed.get(s.u2);
+    if(entered && p1 && p2){
+      const actualDist = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+      const diff = Math.abs(actualDist - entered);
+      if(diff > 0.25){
+        closureNotes.push(`${s.id}: entered ${entered.toFixed(2)} ft vs geometric ${actualDist.toFixed(2)} ft`);
+      }
+    }
+  });
+
+  fieldStatus.className = "status adjusted";
+  if(closureNotes.length > 0){
+    fieldStatus.innerHTML =
+      `<b>Field & color-coded triangles adjusted to true scale!</b> (Note: over-constrained discrepancy on ${closureNotes.join("; ")}). Tap any triangle to zoom.`;
+  } else {
+    fieldStatus.innerHTML =
+      `<b>Field & color-coded triangles adjusted to true proportional scale!</b> Use the zoom bar below or tap any triangle on the sketch to zoom in.`;
+  }
+
+  applyAdjustedViewport(null);
+  saveOrUpdateCurrentSlot(true);
+}
+
+function revertToHandSketch(){
+  vertices.forEach(v => {
+    v.x = v.sketchX;
+    v.y = v.sketchY;
+  });
+  shapeAdjusted = false;
+  zoomedTriangleId = null;
+  updateScaleBadge();
+  revertSketchBtn.style.display = "none";
+  canvasRevertBtn.style.display = "none";
+  triZoomBar.classList.remove("visible");
+  fieldStatus.className = "status";
+  fieldStatus.textContent = "Reverted to original hand-drawn sketch layout.";
+  redraw();
+}
+
+function updateScaleBadge(){
+  scaleBadge.classList.remove("trueScale", "complete");
+  if(shapeAdjusted){
+    scaleBadge.textContent = zoomedTriangleId
+      ? `Zoomed: ${zoomedTriangleId} (True Scale)`
+      : "True-to-Scale Color-Coded Plot";
+    scaleBadge.classList.add("trueScale");
+  } else if(triangulationComplete){
+    scaleBadge.textContent = "Triangulation Complete (Enter Sides)";
+    scaleBadge.classList.add("complete");
+  } else {
+    scaleBadge.textContent = "Mode: Rough Sketch (Not to Scale)";
+  }
+}
+
+adjustShapeBtn.addEventListener("click", adjustFieldGeometryToMeasuredSides);
+canvasAdjustBtn.addEventListener("click", adjustFieldGeometryToMeasuredSides);
+submitTableBtn.addEventListener("click", adjustFieldGeometryToMeasuredSides);
+revertSketchBtn.addEventListener("click", revertToHandSketch);
+canvasRevertBtn.addEventListener("click", revertToHandSketch);
+
+/* ==========================================================
+   TABLE RENDERING & LIVE SYNC
+   ========================================================== */
+
+function buildSideCellHTML(side){
+  const compVal = side.length !== "" ? side.length : "";
+  const ftVal = (side.feetPart !== "" && side.feetPart !== undefined) ? side.feetPart : "";
+  const inVal = (side.inchPart !== "" && side.inchPart !== undefined) ? side.inchPart : "";
+  return `
+    <div class="sideInputGroup">
+      <input type="number" class="compInput" min="0" step="0.0001" placeholder="Complete ft"
+        value="${compVal}" data-side="${side.key}" title="Complete length in decimal feet">
+      <div class="ftInRow">
+        <input type="number" class="ftInput" min="0" step="1" placeholder="ft"
+          value="${ftVal}" data-side="${side.key}" title="Feet">
+        <span>ft</span>
+        <input type="number" class="inInput" min="0" max="11.999" step="0.01" placeholder="in"
+          value="${inVal}" data-side="${side.key}" title="Inches">
+        <span>in</span>
+      </div>
+    </div>
+  `;
+}
+
+function renderTables(){
+  triangleTableBody.innerHTML = "";
+
+  if(triangles.length === 0){
+    triangleTableBody.innerHTML =
+      `<tr><td colspan="13" class="empty">No triangles added yet.</td></tr>`;
+  }
+
+  triangles.forEach((t, idx) => {
+    const col = getTriColor(idx);
+    const s1 = getSide(t.v[0], t.v[1]);
+    const s2 = getSide(t.v[1], t.v[2]);
+    const s3 = getSide(t.v[2], t.v[0]);
+    const areas = getTriangleAreas(t);
+
+    const tr = document.createElement("tr");
+    tr.dataset.triId = t.id;
+
+    tr.innerHTML = `
+      <td><span style="display:inline-block;padding:3px 7px;border-radius:5px;background:${col.badgeBg};color:${col.text};font-weight:800">${t.id}</span></td>
+      <td><b>${t.v[0]}</b></td>
+      <td><b>${t.v[1]}</b></td>
+      <td><b>${t.v[2]}</b></td>
+
+      <td><b>${s1.id}</b></td>
+      <td>${buildSideCellHTML(s1)}</td>
+
+      <td><b>${s2.id}</b></td>
+      <td>${buildSideCellHTML(s2)}</td>
+
+      <td><b>${s3.id}</b></td>
+      <td>${buildSideCellHTML(s3)}</td>
+
+      <td class="heron-cell ${areas.heron === null ? "bad" : "good"}">
+        ${areas.heron === null ? "Enter valid 3 sides" : areas.heron.toFixed(4)}
+      </td>
+
+      <td class="kahan-cell ${areas.kahan === null ? "bad" : "good"}">
+        ${areas.kahan === null ? "Enter valid 3 sides" : areas.kahan.toFixed(4)}
+      </td>
+
+      <td>
+        <button class="danger smallBtn" onclick="deleteTriangle('${t.id}')">Delete</button>
+      </td>
+    `;
+
+    triangleTableBody.appendChild(tr);
+  });
+
+  triangleTableBody.querySelectorAll("input.compInput").forEach(input => {
+    input.addEventListener("input", function(){
+      updateSideFromComplete(this.dataset.side, this.value, this);
+    });
+  });
+
+  triangleTableBody.querySelectorAll("input.ftInput, input.inInput").forEach(input => {
+    input.addEventListener("input", function(){
+      const group = this.closest(".sideInputGroup");
+      const ftEl = group.querySelector(".ftInput");
+      const inEl = group.querySelector(".inInput");
+      updateSideFromFeetInches(this.dataset.side, ftEl.value, inEl.value, this);
+    });
+  });
+
+  updateCalculatedCellsAndRegisters();
+}
+
+function updateCalculatedCellsAndRegisters(){
+  triangles.forEach(t => {
+    const tr = triangleTableBody.querySelector(`tr[data-tri-id="${t.id}"]`);
+    if(!tr) return;
+    const areas = getTriangleAreas(t);
+    const hCell = tr.querySelector(".heron-cell");
+    const kCell = tr.querySelector(".kahan-cell");
+
+    if(hCell){
+      hCell.className = "heron-cell " + (areas.heron === null ? "bad" : "good");
+      hCell.textContent = areas.heron === null ? "Enter valid 3 sides" : areas.heron.toFixed(4);
+    }
+    if(kCell){
+      kCell.className = "kahan-cell " + (areas.kahan === null ? "bad" : "good");
+      kCell.textContent = areas.kahan === null ? "Enter valid 3 sides" : areas.kahan.toFixed(4);
+    }
+  });
+
+  sideTableBody.innerHTML = "";
+  sideMap.forEach(s => {
+    const usedBy = triangles
+      .filter(t => {
+        const pairs = [
+          [t.v[0], t.v[1]],
+          [t.v[1], t.v[2]],
+          [t.v[2], t.v[0]]
+        ];
+        return pairs.some(pair => sideKey(pair[0], pair[1]) === s.key);
+      })
+      .map(t => t.id)
+      .join(", ");
+
+    const ftInDisp = (s.length === "")
+      ? "—"
+      : `${s.feetPart !== "" ? s.feetPart : 0}' ${s.inchPart !== "" ? Number(s.inchPart).toFixed(2) : "0"}"`;
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td><b>${s.id}</b></td>
+      <td>${s.type}</td>
+      <td>${s.u1} – ${s.u2}</td>
+      <td>${s.length === "" ? "—" : Number(s.length).toFixed(3) + " ft"}</td>
+      <td>${ftInDisp}</td>
+      <td>${usedBy || "—"}</td>
+    `;
+    sideTableBody.appendChild(tr);
+  });
+
+  if(sideMap.size === 0){
+    sideTableBody.innerHTML =
+      `<tr><td colspan="6" class="empty">Sides will appear once the field boundary or triangles are added.</td></tr>`;
+  }
+
+  let validCount = 0;
+  let totalHeron = 0;
+  let totalKahan = 0;
+
+  triangles.forEach(t => {
+    const areas = getTriangleAreas(t);
+    if(areas.kahan !== null && areas.heron !== null){
+      validCount++;
+      totalHeron += areas.heron;
+      totalKahan += areas.kahan;
+    }
+  });
+
+  const allValid = triangles.length > 0 && validCount === triangles.length;
+  adjustShapeBtn.disabled = !allValid;
+  canvasAdjustBtn.disabled = !allValid;
+  submitTableBtn.disabled = !allValid;
+
+  if(triangles.length === 0){
+    measureStatus.textContent = "No triangles added yet.";
+  } else {
+    measureStatus.innerHTML =
+      `<b>${validCount}/${triangles.length}</b> triangle(s) have valid measurements. ` +
+      `Total Area — Kahan: <b>${totalKahan.toFixed(2)} sq ft</b> | Heron: <b>${totalHeron.toFixed(2)} sq ft</b>.` +
+      (allValid ? ` Ready! Click <b>Submit Sides & Adjust Shape</b>.` : "");
+  }
+
+  if(shapeAdjusted){
+    buildTriZoomChips();
+  }
+
+  updateTotals(totalKahan, totalHeron);
+  if(vertices.length > 0 && (triangles.length > 0 || fieldFinished)){
+    saveOrUpdateCurrentSlot(true);
+  }
+}
+
+function deleteTriangle(id){
+  triangles = triangles.filter(t => t.id !== id);
+  triangles.forEach((t, i) => t.id = "T" + (i + 1));
+
+  selectedVertexUids = [];
+  cleanupUnusedAuxVertices();
+  addTriBtn.disabled = true;
+  cancelTriBtn.disabled = true;
+  if(typeof sketchEditSidesBtn !== "undefined"){ sketchEditSidesBtn.disabled = !fieldFinished; enteringSidesOnSketch = false; sketchEditSidesBtn.textContent = "Enter Side Values"; sketchEditSidesBtn.className = "warning overlayBtn"; closeSketchSideEditor(); }
+
+  if(shapeAdjusted){
+    revertToHandSketch();
+  }
+
+  buildSideRegister();
+  updatePointList();
+  renderTables();
+  updateTriangulationLockUI();
+  redraw();
+
+  triangleStatus.className = "status";
+  triangleStatus.textContent =
+    "Triangle deleted. Add Triangle is re-enabled until the polygon is fully covered.";
+}
+
+/* ==========================================================
+   TOTAL CONVERSIONS
+   ========================================================== */
+
+function updateTotals(totalKahanSqFt, totalHeronSqFt){
+  const marlaVal = (totalKahanSqFt / 272.25).toFixed(4);
+  const kanalVal = (totalKahanSqFt / 5445).toFixed(4);
+  const acreVal = (totalKahanSqFt / 43560).toFixed(4);
+
+  document.getElementById("sqft").textContent = totalKahanSqFt.toFixed(2);
+  document.getElementById("heronSqft").textContent = totalHeronSqFt.toFixed(2);
+  document.getElementById("marla").textContent = marlaVal;
+  document.getElementById("kanal").textContent = kanalVal;
+  document.getElementById("acre").textContent = acreVal;
+
+  const cvSqft = document.getElementById("cvSqft");
+  const cvUnits = document.getElementById("cvUnits");
+  if(cvSqft) cvSqft.textContent = `${totalKahanSqFt.toFixed(2)} sq ft`;
+  if(cvUnits) cvUnits.textContent = `${marlaVal} Marla • ${kanalVal} Kanal`;
+}
+
+/* ==========================================================
+   POINT LIST
+   ========================================================== */
+
+function updatePointList(){
+  const pVerts = getBoundaryVertices();
+  const aVerts = getAuxVertices();
+
+  if(pVerts.length === 0 && aVerts.length === 0){
+    pointList.innerHTML = '<p class="empty">No vertices yet.</p>';
+    return;
+  }
+
+  let html = "";
+  if(pVerts.length > 0){
+    html += `<h3>Boundary Points</h3>` + pVerts.map(v => `<b>${v.uid}</b>`).join(" • ");
+  }
+  if(aVerts.length > 0){
+    html += `<h3>Added Triangle Vertices</h3>` + aVerts.map(v => `<b>${v.uid}</b>`).join(" • ");
+  }
+  pointList.innerHTML = html;
+}
+
+/* ==========================================================
+   CLEAR ALL
+   ========================================================== */
+
+clearBtn.addEventListener("click", function(){
+  if(!confirm("Clear the current field, vertices, triangles, and all measurements?")) return;
+  resetCurrentWorkspace(false);
+});
+
+/* ==========================================================
+   ADAPTIVE CANVAS DRAWING (PROPER LAYER ORDER & SCALED FONTS)
+   Layer 1: Background grid & polygon fill
+   Layer 2: Colored Triangle Fills & Strokes (always visible!)
+   Layer 3: Side ID + Feet Labels (scaled dynamically to edge length)
+   Layer 4: Triangle Centroid ID + Area Badges (compact & non-obscuring)
+   Layer 5: Vertex Markers & Vertex Labels
+   ========================================================== */
+
+function drawPolygon(pointsArray, fill = false){
+  if(pointsArray.length < 2) return;
+
+  ctx.beginPath();
+  ctx.moveTo(pointsArray[0].x, pointsArray[0].y);
+
+  for(let i = 1; i < pointsArray.length; i++){
+    ctx.lineTo(pointsArray[i].x, pointsArray[i].y);
+  }
+
+  if(fieldFinished) ctx.closePath();
+
+  if(fill) ctx.fill();
+  ctx.stroke();
+}
+
+function drawVertex(v, selected = false){
+  const isAux = v.kind === "A";
+  // Slightly more compact vertex radius in full adjusted view so triangles stay prominent
+  const baseR = (shapeAdjusted && zoomedTriangleId === null) ? 7.5 : 9.5;
+  const radius = selected ? 11.5 : (isAux ? baseR - 1 : baseR);
+
+  ctx.beginPath();
+  ctx.arc(v.x, v.y, radius, 0, Math.PI * 2);
+  if(selected){
+    ctx.fillStyle = "#b42318";
+  } else if(isAux){
+    ctx.fillStyle = "#1d4ed8";
+  } else {
+    ctx.fillStyle = "#176b4f";
+  }
+  ctx.fill();
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = "#fff";
+  ctx.stroke();
+
+  const fontSize = (shapeAdjusted && zoomedTriangleId === null) ? 12 : 13.5;
+  const label = v.uid;
+  ctx.font = `bold ${fontSize}px Arial`;
+  ctx.textAlign = "left";
+  ctx.textBaseline = "alphabetic";
+  ctx.lineWidth = 3.5;
+  ctx.strokeStyle = "rgba(255,255,255,0.94)";
+  ctx.strokeText(label, v.x + radius + 3, v.y - radius);
+  ctx.fillStyle = selected ? "#b42318" : (isAux ? "#1e3a8a" : "#18212a");
+  ctx.fillText(label, v.x + radius + 3, v.y - radius);
+}
+
+function centroidOfTriangle(t){
+  const a = getVertex(t.v[0]);
+  const b = getVertex(t.v[1]);
+  const c = getVertex(t.v[2]);
+  return {
+    x: (a.x + b.x + c.x) / 3,
+    y: (a.y + b.y + c.y) / 3
+  };
+}
+
+// Compute triangle inradius in pixels to auto-fit centroid label inside small triangles
+function triangleInradiusPx(a, b, c){
+  const ab = Math.hypot(b.x - a.x, b.y - a.y);
+  const bc = Math.hypot(c.x - b.x, c.y - b.y);
+  const ca = Math.hypot(a.x - c.x, a.y - c.y);
+  const perim = ab + bc + ca;
+  if(perim < 1e-6) return 0;
+  const area = triangleArea2D(a, b, c);
+  return (2 * area) / perim;
+}
+
+function getSideColorStyle(side){
+  if(!shapeAdjusted){
+    return {
+      border: side.type === "Boundary" ? "#176b4f" : "#b45309",
+      text: side.type === "Boundary" ? "#174f3f" : "#92400e",
+      bg: side.length !== "" ? "rgba(255, 253, 240, 0.90)" : "rgba(255, 255, 255, 0.86)"
+    };
+  }
+  const triIdx = triangles.findIndex(t => {
+    const pairs = [[t.v[0], t.v[1]], [t.v[1], t.v[2]], [t.v[2], t.v[0]]];
+    return pairs.some(pr => sideKey(pr[0], pr[1]) === side.key);
+  });
+  if(triIdx >= 0){
+    const col = getTriColor(triIdx);
+    return {
+      border: col.stroke,
+      text: col.text,
+      bg: "rgba(255, 255, 255, 0.88)" // Translucent so triangle lines remain visible behind badges
+    };
+  }
+  return { border: "#176b4f", text: "#174f3f", bg: "rgba(255,255,255,0.88)" };
+}
+
+function drawSideLabel(side){
+  const v1 = getVertex(side.u1);
+  const v2 = getVertex(side.u2);
+  if(!v1 || !v2) return;
+
+  const edgePx = Math.hypot(v2.x - v1.x, v2.y - v1.y);
+  const mx = (v1.x + v2.x) / 2;
+  const my = (v1.y + v2.y) / 2;
+
+  const hasLen = side.length !== "" && parseLength(side.length) !== null;
+  const hasInches = hasLen && Number(side.inchPart) > 0;
+  const lenText = hasLen
+    ? (hasInches ? `${Number(side.length).toFixed(2)}ft (${side.feetPart}'${Number(side.inchPart).toFixed(1)}")` : `${Number(side.length)}ft`)
+    : "";
+  const idText = side.id;
+  const style = getSideColorStyle(side);
+  const isBeingEdited = (activeEditingSideKey === side.key);
+
+  // Adapt font size dynamically based on edge pixel length & zoom state so labels never swallow small triangles
+  const isFullAdjusted = shapeAdjusted && zoomedTriangleId === null;
+  let idFont = isFullAdjusted ? 10 : 12;
+  let lenFont = isFullAdjusted ? 9.5 : 11;
+  let boxH = isFullAdjusted ? 16 : 20;
+  let padX = isFullAdjusted ? 4 : 6;
+
+  if(edgePx < 75){
+    idFont = 9;
+    lenFont = 8.5;
+    boxH = 14;
+    padX = 3;
+  }
+
+  ctx.save();
+  ctx.font = `bold ${idFont}px Arial`;
+  const idWidth = ctx.measureText(idText).width;
+  ctx.font = `700 ${lenFont}px Arial`;
+  const lenWidth = hasLen ? ctx.measureText(lenText).width : 0;
+
+  const gap = hasLen ? 4 : 0;
+  const boxW = idWidth + lenWidth + gap + padX * 2;
+
+  ctx.fillStyle = isBeingEdited ? "#fef08a" : style.bg;
+  ctx.strokeStyle = isBeingEdited ? "#b42318" : style.border;
+  ctx.lineWidth = isBeingEdited ? 2.4 : 1.3;
+
+  const rx = mx - boxW / 2;
+  const ry = my - boxH / 2;
+  ctx.beginPath();
+  if(ctx.roundRect){
+    ctx.roundRect(rx, ry, boxW, boxH, 4);
+  } else {
+    ctx.rect(rx, ry, boxW, boxH);
+  }
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.textAlign = "left";
+  ctx.textBaseline = "middle";
+  ctx.font = `bold ${idFont}px Arial`;
+  ctx.fillStyle = style.text;
+  ctx.fillText(idText, rx + padX, my + 0.5);
+
+  if(hasLen){
+    ctx.font = `700 ${lenFont}px Arial`;
+    ctx.fillStyle = "#111827";
+    ctx.fillText(lenText, rx + padX + idWidth + gap, my + 0.5);
+  }
+  ctx.restore();
+}
+
+// Step A: Draw all triangle fills and crisp thick borders FIRST so triangles are always prominent
+function drawTriangleShapes(){
+  triangles.forEach((t, idx) => {
+    const a = getVertex(t.v[0]);
+    const b = getVertex(t.v[1]);
+    const c = getVertex(t.v[2]);
+    if(!a || !b || !c) return;
+
+    const col = getTriColor(idx);
+    const isZoomed = zoomedTriangleId === t.id;
+    const isDimmed = shapeAdjusted && zoomedTriangleId !== null && !isZoomed;
+
+    ctx.save();
+    if(isDimmed) ctx.globalAlpha = 0.25;
+
+    ctx.beginPath();
+    ctx.moveTo(a.x, a.y);
+    ctx.lineTo(b.x, b.y);
+    ctx.lineTo(c.x, c.y);
+    ctx.closePath();
+
+    ctx.fillStyle = shapeAdjusted ? col.fill : "rgba(23,107,79,0.12)";
+    ctx.fill();
+
+    ctx.strokeStyle = shapeAdjusted ? col.stroke : "#176b4f";
+    ctx.lineWidth = isZoomed ? 4.5 : (shapeAdjusted ? 3.4 : 2.6);
+    ctx.stroke();
+    ctx.restore();
+  });
+}
+
+// Step B: Draw Triangle ID & Area labels sized proportionally to each triangle's inradius
+function drawTriangleLabels(){
+  triangles.forEach((t, idx) => {
+    const a = getVertex(t.v[0]);
+    const b = getVertex(t.v[1]);
+    const c = getVertex(t.v[2]);
+    if(!a || !b || !c) return;
+
+    const col = getTriColor(idx);
+    const isZoomed = zoomedTriangleId === t.id;
+    const isDimmed = shapeAdjusted && zoomedTriangleId !== null && !isZoomed;
+    const cen = centroidOfTriangle(t);
+    const areas = getTriangleAreas(t);
+    const inrad = triangleInradiusPx(a, b, c);
+
+    ctx.save();
+    if(isDimmed) ctx.globalAlpha = 0.25;
+
+    if(shapeAdjusted && areas.kahan !== null){
+      // Scale font cleanly to fit inside the triangle without hiding its edges
+      let idFont = isZoomed ? 15 : Math.max(9.5, Math.min(12.5, inrad * 0.36));
+      let areaFont = isZoomed ? 12.5 : Math.max(8.5, Math.min(10.5, inrad * 0.28));
+
+      // In general view, stack T1 and area on two compact lines if triangle is small
+      const showTwoLines = !isZoomed && inrad < 58;
+      if(showTwoLines){
+        const line1 = t.id;
+        const line2 = `${areas.kahan.toFixed(0)} sq ft`;
+        ctx.font = `bold ${idFont}px Arial`;
+        const w1 = ctx.measureText(line1).width;
+        ctx.font = `600 ${areaFont}px Arial`;
+        const w2 = ctx.measureText(line2).width;
+        const boxW = Math.max(w1, w2) + 8;
+        const boxH = idFont + areaFont + 7;
+
+        ctx.fillStyle = "rgba(255,255,255,0.86)";
+        ctx.strokeStyle = col.stroke;
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        if(ctx.roundRect) ctx.roundRect(cen.x - boxW/2, cen.y - boxH/2, boxW, boxH, 4);
+        else ctx.rect(cen.x - boxW/2, cen.y - boxH/2, boxW, boxH);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.font = `bold ${idFont}px Arial`;
+        ctx.fillStyle = col.text;
+        ctx.fillText(line1, cen.x, cen.y - areaFont * 0.52);
+        ctx.font = `600 ${areaFont}px Arial`;
+        ctx.fillText(line2, cen.x, cen.y + idFont * 0.55);
+      } else {
+        const labelText = `${t.id} (${areas.kahan.toFixed(1)} sq ft)`;
+        ctx.font = `bold ${idFont}px Arial`;
+        const tw = ctx.measureText(labelText).width + 10;
+        const th = idFont + 8;
+
+        ctx.fillStyle = col.badgeBg;
+        ctx.strokeStyle = col.stroke;
+        ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        if(ctx.roundRect) ctx.roundRect(cen.x - tw/2, cen.y - th/2, tw, th, 5);
+        else ctx.rect(cen.x - tw/2, cen.y - th/2, tw, th);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillStyle = col.text;
+        ctx.fillText(labelText, cen.x, cen.y + 0.5);
+      }
+    } else {
+      ctx.font = "bold 14px Arial";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.lineWidth = 3.5;
+      ctx.strokeStyle = "rgba(255,255,255,0.9)";
+      ctx.strokeText(t.id, cen.x, cen.y);
+      ctx.fillStyle = "#174f3f";
+      ctx.fillText(t.id, cen.x, cen.y);
+    }
+
+    ctx.restore();
+  });
+}
+
+let customCanvasBg = null;
+
+function getEffectiveCanvasBg(){
+  if(customCanvasBg) return customCanvasBg;
+  return document.body.classList.contains("dark-mode") ? "#0b1120" : "#fafafa";
+}
+
+function getEffectiveGridColor(){
+  return document.body.classList.contains("dark-mode") ? "#1e293b" : "#e8edef";
+}
+
+function redraw(){
+  ctx.fillStyle = getEffectiveCanvasBg();
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.strokeStyle = getEffectiveGridColor();
+  ctx.lineWidth = 1;
+  for(let x = 0; x < canvas.width; x += 50){
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+  }
+  for(let y = 0; y < canvas.height; y += 50){
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+  }
+
+  const pVerts = getBoundaryVertices();
+  if(pVerts.length >= 2){
+    ctx.strokeStyle = "#174f3f";
+    ctx.lineWidth = 4;
+    ctx.fillStyle = "rgba(23,107,79,0.04)";
+    drawPolygon(pVerts, fieldFinished);
+  }
+
+  if(fieldFinished && triangles.length > 0){
+    drawTriangleShapes();
+  }
+
+  if(selectedVertexUids.length >= 2){
+    const selVerts = selectedVertexUids.map(getVertex).filter(Boolean);
+    ctx.save();
+    ctx.strokeStyle = "#b42318";
+    ctx.lineWidth = 2.6;
+    ctx.setLineDash([9, 6]);
+    ctx.beginPath();
+    ctx.moveTo(selVerts[0].x, selVerts[0].y);
+    for(let i = 1; i < selVerts.length; i++){
+      ctx.lineTo(selVerts[i].x, selVerts[i].y);
+    }
+    if(selVerts.length === 3) ctx.closePath();
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  if(fieldFinished){
+    sideMap.forEach(side => {
+      drawSideLabel(side);
+    });
+  }
+
+  if(fieldFinished && triangles.length > 0){
+    drawTriangleLabels();
+  }
+
+  vertices.forEach(v => {
+    drawVertex(v, selectedVertexUids.includes(v.uid));
+  });
+}
+
+/* ==========================================================
+   SAVE / EXPORT OPTIONS (PDF, JPG, SPREADSHEET CSV & XLS)
+   ========================================================== */
+
+function showExportNotice(msg){
+  exportStatus.style.display = "block";
+  exportStatus.className = "status adjusted";
+  exportStatus.innerHTML = msg;
+}
+
+function triggerDownload(blob, filename){
+  // Capacitor Android native storage write if plugin is present
+  if(window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Filesystem){
+    const reader = new FileReader();
+    reader.onloadend = async function(){
+      try{
+        const base64Data = reader.result.split(",")[1];
+        await window.Capacitor.Plugins.Filesystem.writeFile({
+          path: "AreaMeasurement/" + filename,
+          data: base64Data,
+          directory: "DOCUMENTS",
+          recursive: true
+        });
+      } catch(e){
+        console.warn("Native write fallback:", e);
+      }
+    };
+    reader.readAsDataURL(blob);
+  }
+
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => {
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, 200);
+}
+
+// Helper: Render the ENTIRE sketch with all visible shapes & labels onto a clean export canvas
+function renderEntireSketchForExport(){
+  // Save current live state
+  const prevCoords = vertices.map(v => ({ uid: v.uid, x: v.x, y: v.y }));
+  const prevZoom = zoomedTriangleId;
+  const prevCustomBg = customCanvasBg;
+  const wasDark = document.body.classList.contains("dark-mode");
+
+  // Switch temporarily to crisp light background and full-plot framing so every shape & edge is 100% visible
+  if(wasDark) document.body.classList.remove("dark-mode");
+  customCanvasBg = "#ffffff";
+  zoomedTriangleId = null;
+
+  if(vertices.length > 0){
+    // Use adjustedX/adjustedY if adjusted, otherwise sketchX/sketchY
+    const srcX = v => (shapeAdjusted && Number.isFinite(v.adjustedX)) ? v.adjustedX : v.sketchX;
+    const srcY = v => (shapeAdjusted && Number.isFinite(v.adjustedY)) ? v.adjustedY : v.sketchY;
+
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    vertices.forEach(v => {
+      const vx = srcX(v), vy = srcY(v);
+      if(vx < minX) minX = vx;
+      if(vx > maxX) maxX = vx;
+      if(vy < minY) minY = vy;
+      if(vy > maxY) maxY = vy;
+    });
+
+    const worldW = Math.max(1e-3, maxX - minX);
+    const worldH = Math.max(1e-3, maxY - minY);
+    const padX = 95;
+    const padY = 85;
+    const scale = Math.min((canvas.width - padX * 2) / worldW, (canvas.height - padY * 2) / worldH);
+    const cxWorld = (minX + maxX) / 2;
+    const cyWorld = (minY + maxY) / 2;
+
+    vertices.forEach(v => {
+      v.x = canvas.width / 2 + (srcX(v) - cxWorld) * scale;
+      v.y = canvas.height / 2 + (srcY(v) - cyWorld) * scale;
+    });
+  }
+
+  redraw();
+
+  // Copy full canvas + stamped header/footer banner onto export canvas
+  const expCanvas = document.createElement("canvas");
+  expCanvas.width = canvas.width;
+  expCanvas.height = canvas.height + 76;
+  const eCtx = expCanvas.getContext("2d");
+
+  eCtx.fillStyle = "#ffffff";
+  eCtx.fillRect(0, 0, expCanvas.width, expCanvas.height);
+  eCtx.drawImage(canvas, 0, 0);
+
+  // Outer border around entire exported sketch
+  eCtx.strokeStyle = "#174f3f";
+  eCtx.lineWidth = 3;
+  eCtx.strokeRect(1.5, 1.5, canvas.width - 3, canvas.height - 3);
+
+  // Stamp summary bar at bottom
+  eCtx.fillStyle = "#174f3f";
+  eCtx.fillRect(0, canvas.height, expCanvas.width, 76);
+  eCtx.fillStyle = "#ffffff";
+  eCtx.font = "bold 17px Arial";
+  eCtx.fillText(`Area Measurement — ${fieldNameInput.value.trim() || ('Field ' + currentSketchNum)} (${shapeAdjusted ? "True-to-Scale Adjusted" : "Field Layout"})`, 22, canvas.height + 29);
+
+  const sqftTxt = document.getElementById("sqft").textContent;
+  const heronTxt = document.getElementById("heronSqft").textContent;
+  const marlaTxt = document.getElementById("marla").textContent;
+  const kanalTxt = document.getElementById("kanal").textContent;
+  const acreTxt = document.getElementById("acre").textContent;
+  eCtx.font = "14px Arial";
+  eCtx.fillText(`Total Area (Kahan): ${sqftTxt} sq ft  |  Heron: ${heronTxt} sq ft  |  ${marlaTxt} Marla  |  ${kanalTxt} Kanal  |  ${acreTxt} Acre`, 22, canvas.height + 55);
+
+  // Restore exact previous user viewport & theme state
+  prevCoords.forEach(saved => {
+    const v = getVertex(saved.uid);
+    if(v){ v.x = saved.x; v.y = saved.y; }
+  });
+  zoomedTriangleId = prevZoom;
+  customCanvasBg = prevCustomBg;
+  if(wasDark) document.body.classList.add("dark-mode");
+  redraw();
+
+  return expCanvas;
+}
+
+// 1. Save Entire Sketch as High-Res JPG
+document.getElementById("exportJpgBtn").addEventListener("click", function(){
+  const expCanvas = renderEntireSketchForExport();
+  expCanvas.toBlob(blob => {
+    if(blob){
+      triggerDownload(blob, `${(fieldNameInput.value.trim() || 'Field_' + currentSketchNum).replace(/[^a-zA-Z0-9_-]+/g, '_')}.jpg`);
+      showExportNotice(`Saved complete sketch with all shapes as <b>Area_Measurement_Plot_${currentSketchNum}.jpg</b>.`);
+    }
+  }, "image/jpeg", 0.96);
+});
+
+// 2. Save as CSV Spreadsheet
+document.getElementById("exportCsvBtn").addEventListener("click", function(){
+  let lines = [];
+  lines.push(`"J&K Irregular Field Area Report - ${fieldNameInput.value.trim() || ('Field ' + currentSketchNum)}"`);
+  lines.push("");
+  lines.push(`"TRIANGLE MEASUREMENTS"`);
+  lines.push(`"Triangle","Vertex 1","Vertex 2","Vertex 3","Side 1","Length 1 (ft)","Side 2","Length 2 (ft)","Side 3","Length 3 (ft)","Heron Area (sq ft)","Kahan Area (sq ft)"`);
+
+  triangles.forEach(t => {
+    const s1 = getSide(t.v[0], t.v[1]);
+    const s2 = getSide(t.v[1], t.v[2]);
+    const s3 = getSide(t.v[2], t.v[0]);
+    const areas = getTriangleAreas(t);
+    lines.push([
+      t.id, t.v[0], t.v[1], t.v[2],
+      s1.id, s1.length || "",
+      s2.id, s2.length || "",
+      s3.id, s3.length || "",
+      areas.heron !== null ? areas.heron.toFixed(4) : "",
+      areas.kahan !== null ? areas.kahan.toFixed(4) : ""
+    ].map(x => `"${x}"`).join(","));
+  });
+
+  lines.push("");
+  lines.push(`"UNIQUE SIDE REGISTER"`);
+  lines.push(`"Side ID","Type","Endpoints","Measured Length (ft)"`);
+  sideMap.forEach(s => {
+    lines.push([s.id, s.type, `${s.u1}-${s.u2}`, s.length || ""].map(x => `"${x}"`).join(","));
+  });
+
+  lines.push("");
+  lines.push(`"TOTAL FIELD AREA"`);
+  lines.push(`"Total Kahan Area (sq ft)","${document.getElementById("sqft").textContent}"`);
+  lines.push(`"Total Heron Area (sq ft)","${document.getElementById("heronSqft").textContent}"`);
+  lines.push(`"Marla (272.25 sq ft)","${document.getElementById("marla").textContent}"`);
+  lines.push(`"Kanal (5445 sq ft)","${document.getElementById("kanal").textContent}"`);
+  lines.push(`"Acre (43560 sq ft)","${document.getElementById("acre").textContent}"`);
+
+  const blob = new Blob([lines.join("\r\n")], { type: "text/csv;charset=utf-8;" });
+  triggerDownload(blob, `${(fieldNameInput.value.trim() || 'Field_' + currentSketchNum).replace(/[^a-zA-Z0-9_-]+/g, '_')}.csv`);
+  showExportNotice(`Saved spreadsheet as <b>Area_Measurement_Plot_${currentSketchNum}.csv</b>.`);
+});
+
+// 3. Save as Excel (.XLS) Workbook
+document.getElementById("exportXlsBtn").addEventListener("click", function(){
+  let triRows = triangles.map(t => {
+    const s1 = getSide(t.v[0], t.v[1]);
+    const s2 = getSide(t.v[1], t.v[2]);
+    const s3 = getSide(t.v[2], t.v[0]);
+    const areas = getTriangleAreas(t);
+    return `<tr>
+      <td>${t.id}</td><td>${t.v[0]}</td><td>${t.v[1]}</td><td>${t.v[2]}</td>
+      <td>${s1.id}</td><td>${s1.length || ""}</td>
+      <td>${s2.id}</td><td>${s2.length || ""}</td>
+      <td>${s3.id}</td><td>${s3.length || ""}</td>
+      <td>${areas.heron !== null ? areas.heron.toFixed(4) : ""}</td>
+      <td>${areas.kahan !== null ? areas.kahan.toFixed(4) : ""}</td>
+    </tr>`;
+  }).join("");
+
+  let sideRows = "";
+  sideMap.forEach(s => {
+    sideRows += `<tr><td>${s.id}</td><td>${s.type}</td><td>${s.u1} - ${s.u2}</td><td>${s.length || ""}</td></tr>`;
+  });
+
+  const xlsHtml = `
+    <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel">
+    <head><meta charset="UTF-8"></head>
+    <body>
+      <h3>J&amp;K Irregular Field Survey Report — ${fieldNameInput.value.trim() || ('Field ' + currentSketchNum)}</h3>
+      <table border="1">
+        <tr><th>Triangle</th><th>V1</th><th>V2</th><th>V3</th><th>Side 1</th><th>Length (ft)</th><th>Side 2</th><th>Length (ft)</th><th>Side 3</th><th>Length (ft)</th><th>Heron Area (sq ft)</th><th>Kahan Area (sq ft)</th></tr>
+        ${triRows}
+      </table>
+      <br>
+      <table border="1">
+        <tr><th>Side ID</th><th>Type</th><th>Endpoints</th><th>Measured Length (ft)</th></tr>
+        ${sideRows}
+      </table>
+      <br>
+      <table border="1">
+        <tr><th>Unit</th><th>Total Area</th></tr>
+        <tr><td>Square Feet (Kahan)</td><td>${document.getElementById("sqft").textContent}</td></tr>
+        <tr><td>Square Feet (Heron)</td><td>${document.getElementById("heronSqft").textContent}</td></tr>
+        <tr><td>Marla</td><td>${document.getElementById("marla").textContent}</td></tr>
+        <tr><td>Kanal</td><td>${document.getElementById("kanal").textContent}</td></tr>
+        <tr><td>Acre</td><td>${document.getElementById("acre").textContent}</td></tr>
+      </table>
+    </body></html>`;
+
+  const blob = new Blob([xlsHtml], { type: "application/vnd.ms-excel;charset=utf-8;" });
+  triggerDownload(blob, `${(fieldNameInput.value.trim() || 'Field_' + currentSketchNum).replace(/[^a-zA-Z0-9_-]+/g, '_')}.xls`);
+  showExportNotice(`Saved Excel spreadsheet as <b>Area_Measurement_Plot_${currentSketchNum}.xls</b>.`);
+});
+
+// 4. Save as PDF Report (Generates clean printable PDF report with embedded canvas image + tables)
+document.getElementById("exportPdfBtn").addEventListener("click", function(){
+  const imgData = renderEntireSketchForExport().toDataURL("image/png");
+  let triRows = triangles.map(t => {
+    const s1 = getSide(t.v[0], t.v[1]);
+    const s2 = getSide(t.v[1], t.v[2]);
+    const s3 = getSide(t.v[2], t.v[0]);
+    const areas = getTriangleAreas(t);
+    return `<tr>
+      <td><b>${t.id}</b></td><td>${t.v.join(" – ")}</td>
+      <td>${s1.id}: ${s1.length || "—"} ft</td>
+      <td>${s2.id}: ${s2.length || "—"} ft</td>
+      <td>${s3.id}: ${s3.length || "—"} ft</td>
+      <td>${areas.heron !== null ? areas.heron.toFixed(2) : "—"}</td>
+      <td><b>${areas.kahan !== null ? areas.kahan.toFixed(2) : "—"}</b></td>
+    </tr>`;
+  }).join("");
+
+  const reportWin = window.open("", "_blank");
+  if(reportWin){
+    reportWin.document.write(`<!DOCTYPE html><html><head><title>Area Measurement PDF Report</title>
+      <style>
+        body{font-family:Arial,sans-serif;padding:20px;color:#18212a}
+        h1{color:#174f3f;font-size:20px;margin-bottom:4px}
+        img{max-width:100%;border:1px solid #ccc;border-radius:8px;margin:10px 0}
+        table{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px}
+        th,td{border:1px solid #cbd5e1;padding:6px;text-align:center}
+        th{background:#eef7f3;color:#174f3f}
+        .totals{margin-top:14px;padding:10px;background:#f0fdf4;border:1px solid #bbf7d0;font-size:14px}
+      </style></head><body>
+      <h1>Area Measurement — Field Survey Report — ${fieldNameInput.value.trim() || ('Field ' + currentSketchNum)}</h1>
+      <div>Status: ${shapeAdjusted ? "True-to-Scale Adjusted Geometry" : "Manual Triangulation Layout"}</div>
+      <img src="${imgData}" />
+      <table>
+        <thead><tr><th>Triangle</th><th>Vertices</th><th>Side 1</th><th>Side 2</th><th>Side 3</th><th>Heron (sq ft)</th><th>Kahan (sq ft)</th></tr></thead>
+        <tbody>${triRows || '<tr><td colspan="7">No triangles recorded</td></tr>'}</tbody>
+      </table>
+      <div class="totals">
+        <b>Total Area (Kahan):</b> ${document.getElementById("sqft").textContent} sq ft &nbsp;|&nbsp;
+        <b>Total Area (Heron):</b> ${document.getElementById("heronSqft").textContent} sq ft<br>
+        <b>Marla:</b> ${document.getElementById("marla").textContent} &nbsp;|&nbsp;
+        <b>Kanal:</b> ${document.getElementById("kanal").textContent} &nbsp;|&nbsp;
+        <b>Acre:</b> ${document.getElementById("acre").textContent}
+      </div>
+      <script>window.onload=function(){window.print();}<\/script>
+      </body></html>`);
+    reportWin.document.close();
+  } else {
+    // Fallback for Android WebView where window.open may be restricted
+    window.print();
+  }
+  showExportNotice(`Opened print/PDF dialog — choose <b>Save as PDF</b> to save your report.`);
+});
+
+/* ==========================================================
+   TAB 2: STANDALONE TRIANGLE CALCULATOR (HERON & KAHAN)
+   ========================================================== */
+
+const stSideA = document.getElementById("stSideA");
+const stSideB = document.getElementById("stSideB");
+const stSideC = document.getElementById("stSideC");
+const stCalcBtn = document.getElementById("stCalcBtn");
+const stClearBtn = document.getElementById("stClearBtn");
+const stStatus = document.getElementById("stStatus");
+const stHeronSqft = document.getElementById("stHeronSqft");
+const stHeronUnits = document.getElementById("stHeronUnits");
+const stKahanSqft = document.getElementById("stKahanSqft");
+const stKahanUnits = document.getElementById("stKahanUnits");
+const stExtraMetrics = document.getElementById("stExtraMetrics");
+const standaloneCanvas = document.getElementById("standaloneCanvas");
+const stCtx = standaloneCanvas.getContext("2d");
+
+function formatUnitSubline(sqft){
+  const marla = (sqft / 272.25).toFixed(4);
+  const kanal = (sqft / 5445).toFixed(4);
+  const acre = (sqft / 43560).toFixed(4);
+  return `${marla} Marla • ${kanal} Kanal • ${acre} Acre`;
+}
+
+function calculateStandaloneTriangle(){
+  const a = parseLength(stSideA.value);
+  const b = parseLength(stSideB.value);
+  const c = parseLength(stSideC.value);
+
+  if(a === null || b === null || c === null){
+    stStatus.innerHTML = "Please enter positive numerical values for all three sides <b>a</b>, <b>b</b>, and <b>c</b>.";
+    stHeronSqft.textContent = "0.0000 sq ft";
+    stHeronUnits.textContent = "0.0000 Marla • 0.0000 Kanal • 0.0000 Acre";
+    stKahanSqft.textContent = "0.0000 sq ft";
+    stKahanUnits.textContent = "0.0000 Marla • 0.0000 Kanal • 0.0000 Acre";
+    stExtraMetrics.textContent = "Semi-perimeter (s): — | Perimeter: — | Angles (A, B, C): —";
+    drawStandaloneTriangle(null, null, null);
+    return;
+  }
+
+  const hArea = heronArea(a, b, c);
+  const kArea = kahanArea(a, b, c);
+
+  if(hArea === null || kArea === null){
+    stStatus.innerHTML = `<span class="bad">Invalid Triangle:</span> The sum of any two sides must be strictly greater than the third side.`;
+    stHeronSqft.textContent = "Invalid";
+    stKahanSqft.textContent = "Invalid";
+    drawStandaloneTriangle(null, null, null);
+    return;
+  }
+
+  const perim = a + b + c;
+  const semi = perim / 2;
+
+  const angA = Math.acos(Math.min(1, Math.max(-1, (b*b + c*c - a*a) / (2*b*c)))) * (180 / Math.PI);
+  const angB = Math.acos(Math.min(1, Math.max(-1, (a*a + c*c - b*b) / (2*a*c)))) * (180 / Math.PI);
+  const angC = 180 - angA - angB;
+
+  stStatus.innerHTML = `<span class="good">Valid Triangle Calculated!</span> Diagram below is drawn to true proportional scale.`;
+  stHeronSqft.textContent = `${hArea.toFixed(4)} sq ft`;
+  stHeronUnits.textContent = formatUnitSubline(hArea);
+  stKahanSqft.textContent = `${kArea.toFixed(4)} sq ft`;
+  stKahanUnits.textContent = formatUnitSubline(kArea);
+  stExtraMetrics.innerHTML =
+    `Perimeter: <b>${perim.toFixed(2)} ft</b> &nbsp;|&nbsp; Semi-perimeter (s): <b>${semi.toFixed(2)} ft</b> &nbsp;|&nbsp; ` +
+    `Angles: <b>&ang;A = ${angA.toFixed(2)}&deg;, &ang;B = ${angB.toFixed(2)}&deg;, &ang;C = ${angC.toFixed(2)}&deg;</b>`;
+
+  drawStandaloneTriangle(a, b, c);
+}
+
+function drawStandaloneTriangle(a, b, c){
+  const W = standaloneCanvas.width;
+  const H = standaloneCanvas.height;
+  stCtx.clearRect(0, 0, W, H);
+
+  stCtx.strokeStyle = "#edf2f4";
+  stCtx.lineWidth = 1;
+  for(let x = 0; x < W; x += 35){
+    stCtx.beginPath(); stCtx.moveTo(x, 0); stCtx.lineTo(x, H); stCtx.stroke();
+  }
+  for(let y = 0; y < H; y += 35){
+    stCtx.beginPath(); stCtx.moveTo(0, y); stCtx.lineTo(W, y); stCtx.stroke();
+  }
+
+  if(!a || !b || !c){
+    stCtx.fillStyle = "#64748b";
+    stCtx.font = "14px Arial";
+    stCtx.textAlign = "center";
+    stCtx.fillText("Enter sides a, b, c above to preview proportional triangle", W / 2, H / 2);
+    return;
+  }
+
+  const cosB = (a*a + c*c - b*b) / (2 * a * c);
+  const sinB = Math.sqrt(Math.max(0, 1 - cosB * cosB));
+  const pB = { x: 0, y: 0 };
+  const pA = { x: c, y: 0 };
+  const pC = { x: a * cosB, y: -a * sinB };
+
+  const minX = Math.min(pB.x, pA.x, pC.x);
+  const maxX = Math.max(pB.x, pA.x, pC.x);
+  const minY = Math.min(pB.y, pA.y, pC.y);
+  const maxY = Math.max(pB.y, pA.y, pC.y);
+
+  const scale = Math.min((W - 140) / Math.max(1e-3, maxX - minX), (H - 95) / Math.max(1e-3, maxY - minY));
+  const cx = (minX + maxX) / 2;
+  const cy = (minY + maxY) / 2;
+
+  const mapPt = pt => ({
+    x: W / 2 + (pt.x - cx) * scale,
+    y: H / 2 + (pt.y - cy) * scale
+  });
+
+  const vA = mapPt(pA), vB = mapPt(pB), vC = mapPt(pC);
+
+  stCtx.beginPath();
+  stCtx.moveTo(vB.x, vB.y);
+  stCtx.lineTo(vA.x, vA.y);
+  stCtx.lineTo(vC.x, vC.y);
+  stCtx.closePath();
+  stCtx.fillStyle = "rgba(23, 107, 79, 0.14)";
+  stCtx.fill();
+  stCtx.strokeStyle = "#176b4f";
+  stCtx.lineWidth = 3;
+  stCtx.stroke();
+
+  const drawMid = (p1, p2, txt) => {
+    const mx = (p1.x + p2.x) / 2;
+    const my = (p1.y + p2.y) / 2;
+    stCtx.font = "bold 12px Arial";
+    const tw = stCtx.measureText(txt).width + 12;
+    stCtx.fillStyle = "rgba(255,255,255,0.92)";
+    stCtx.strokeStyle = "#176b4f";
+    stCtx.lineWidth = 1.2;
+    stCtx.fillRect(mx - tw/2, my - 10, tw, 20);
+    stCtx.strokeRect(mx - tw/2, my - 10, tw, 20);
+    stCtx.fillStyle = "#18212a";
+    stCtx.textAlign = "center";
+    stCtx.textBaseline = "middle";
+    stCtx.fillText(txt, mx, my);
+  };
+
+  drawMid(vB, vA, `c = ${c} ft`);
+  drawMid(vB, vC, `a = ${a} ft`);
+  drawMid(vA, vC, `b = ${b} ft`);
+
+  [[vA, "A"], [vB, "B"], [vC, "C"]].forEach(([pt, name]) => {
+    stCtx.beginPath();
+    stCtx.arc(pt.x, pt.y, 6, 0, Math.PI * 2);
+    stCtx.fillStyle = "#174f3f";
+    stCtx.fill();
+    stCtx.font = "bold 13px Arial";
+    stCtx.fillStyle = "#174f3f";
+    stCtx.fillText(name, pt.x + 10, pt.y - 8);
+  });
+}
+
+[stSideA, stSideB, stSideC].forEach(inp => {
+  inp.addEventListener("input", calculateStandaloneTriangle);
+});
+stCalcBtn.addEventListener("click", calculateStandaloneTriangle);
+stClearBtn.addEventListener("click", () => {
+  stSideA.value = "";
+  stSideB.value = "";
+  stSideC.value = "";
+  calculateStandaloneTriangle();
+});
+
+/* ==========================================================
+   DARK MODE & COLOR ADJUSTMENT CONTROLS
+   ========================================================== */
+const darkModeBtn = document.getElementById("darkModeBtn");
+const accentColorPicker = document.getElementById("accentColorPicker");
+const canvasBgPicker = document.getElementById("canvasBgPicker");
+
+function darkenHex(hex, factor = 0.72){
+  const clean = hex.replace("#", "");
+  if(clean.length !== 6) return hex;
+  const r = Math.max(0, Math.min(255, Math.round(parseInt(clean.slice(0,2), 16) * factor)));
+  const g = Math.max(0, Math.min(255, Math.round(parseInt(clean.slice(2,4), 16) * factor)));
+  const b = Math.max(0, Math.min(255, Math.round(parseInt(clean.slice(4,6), 16) * factor)));
+  return "#" + [r,g,b].map(x => x.toString(16).padStart(2, "0")).join("");
+}
+
+darkModeBtn.addEventListener("click", function(){
+  const isDark = document.body.classList.toggle("dark-mode");
+  darkModeBtn.textContent = isDark ? "Light Mode" : "Dark Mode";
+  customCanvasBg = null;
+  canvasBgPicker.value = isDark ? "#0b1120" : "#fafafa";
+  redraw();
+  drawStandaloneTriangle(
+    parseLength(stSideA.value),
+    parseLength(stSideB.value),
+    parseLength(stSideC.value)
+  );
+});
+
+accentColorPicker.addEventListener("input", function(){
+  const primaryCol = this.value;
+  const headerCol = darkenHex(primaryCol, 0.78);
+  const navCol = darkenHex(primaryCol, 0.58);
+  document.documentElement.style.setProperty("--accent-primary", primaryCol);
+  document.documentElement.style.setProperty("--accent-header", headerCol);
+  document.documentElement.style.setProperty("--accent-nav", navCol);
+});
+
+canvasBgPicker.addEventListener("input", function(){
+  customCanvasBg = this.value;
+  redraw();
+});
+
+/* ==========================================================
+   DYNAMIC DEVICE VIEWPORT & CANVAS ASPECT ADAPTATION
+   ========================================================== */
+function adaptCanvasAspectToDevice(){
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+  let targetW = 1000;
+  let targetH = 620;
+
+  if(w <= 600){
+    // Taller aspect ratio on narrow mobile portrait so drawing area is spacious
+    targetW = 800;
+    targetH = 640;
+  } else if(w <= 960){
+    // Tablet aspect ratio
+    targetW = 920;
+    targetH = 600;
+  } else if(h < 540 && w > h){
+    // Landscape phone
+    targetW = 1000;
+    targetH = 500;
+  }
+
+  if(canvas.width !== targetW || canvas.height !== targetH){
+    const scaleX = targetW / canvas.width;
+    const scaleY = targetH / canvas.height;
+    canvas.width = targetW;
+    canvas.height = targetH;
+
+    // Rescale existing sketch points proportionally so nothing shifts off-screen on rotation/resize
+    vertices.forEach(v => {
+      v.x *= scaleX;
+      v.y *= scaleY;
+      v.sketchX *= scaleX;
+      v.sketchY *= scaleY;
+    });
+
+    if(shapeAdjusted){
+      applyAdjustedViewport(zoomedTriangleId);
+    } else {
+      redraw();
+    }
+  }
+}
+
+let resizeTimer = null;
+window.addEventListener("resize", function(){
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(adaptCanvasAspectToDevice, 120);
+});
+window.addEventListener("orientationchange", function(){
+  setTimeout(adaptCanvasAspectToDevice, 180);
+});
+
+/* ==========================================================
+   INITIAL STATE
+   ========================================================== */
+
+loadSavedFieldsFromStorage();
+if(savedSketches.length > 0){
+  renderSavedSketchTabs();
+  fieldNameInput.value = getNextDefaultFieldName();
+}
+updatePointList();
+renderTables();
+adaptCanvasAspectToDevice();
+redraw();
+drawStandaloneTriangle(null, null, null);
+
+</script>
+</body>
+</html>
