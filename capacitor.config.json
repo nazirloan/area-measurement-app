@@ -1,0 +1,11 @@
+{
+  "appId": "com.areameasurement.offline",
+  "appName": "Area Measurement",
+  "webDir": "www",
+  "bundledWebRuntime": false,
+  "android": {
+    "allowMixedContent": false,
+    "captureInput": true,
+    "webContentsDebuggingEnabled": false
+  }
+}
