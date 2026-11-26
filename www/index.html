@@ -804,6 +804,8 @@ table.show-vertices .vertex-col { display: table-cell; }
   line-height: 1.55;
 }
 
+
+.divisionHandleHint{font-size:12px;color:var(--text-muted)}
 </style>
 </head>
 <body>
@@ -1073,6 +1075,7 @@ table.show-vertices .vertex-col { display: table-cell; }
       <input type="range" id="divEndSlider" min="5" max="95" value="50" step="1" style="width:125px;cursor:pointer">
       <span id="divEndPosLabel" style="font-size:12px;font-weight:800;color:var(--accent-primary)">50%</span>
     </div>
+    <div class="divisionHandleHint">Drag the <b>round handles</b> at the two ends of a division line directly on the sketch. The endpoint snaps to the field boundary and the colored portion areas update automatically.</div>
     <div id="divAreaPreserveReadout" class="note" style="margin-top:6px;font-weight:700;color:var(--text-main)"></div>
   </div>
   <div id="splitSuggestionOutput" class="splitResultCard" style="display:none"></div>
@@ -1989,7 +1992,16 @@ movePolygonBtn.addEventListener("click", function(){
     : "Move Polygon OFF.";
 });
 
+let draggingDivisionHandle = null;
+
 canvas.addEventListener("pointermove", function(e){
+  if(draggingDivisionHandle){
+    e.preventDefault();
+    const p=getCanvasPoint(e);
+    const lp=suggestedDivisionPlan && suggestedDivisionPlan.linePoints ? suggestedDivisionPlan.linePoints[draggingDivisionHandle.line] : null;
+    if(lp){ const q=nearestBoundaryPoint(p); if(q) lp[draggingDivisionHandle.end]=q; updateDivisionAreasFromSketch(); redraw(); }
+    return;
+  }
   if(!draggingPolygon || !lastDragPt) return;
   e.preventDefault();
   const p = getCanvasPoint(e);
@@ -2009,6 +2021,7 @@ canvas.addEventListener("pointermove", function(e){
 });
 
 window.addEventListener("pointerup", function(){
+  if(draggingDivisionHandle){ draggingDivisionHandle=null; canvas.style.cursor=movePolygonMode?'grab':'crosshair'; saveOrUpdateCurrentSlot(true); return; }
   if(draggingPolygon){
     draggingPolygon = false;
     lastDragPt = null;
@@ -2020,6 +2033,11 @@ window.addEventListener("pointerup", function(){
 canvas.addEventListener("pointerdown", function(e){
   e.preventDefault();
   const p = getCanvasPoint(e);
+
+  if(!movePolygonMode && suggestedDivisionPlan && suggestedDivisionPlan.linePoints){
+    const h=pointOnDivisionHandle(p);
+    if(h){ draggingDivisionHandle=h; canvas.style.cursor='grabbing'; return; }
+  }
 
   if(movePolygonMode && vertices.length > 0){
     draggingPolygon = true;
@@ -4897,6 +4915,7 @@ function setDivisionLineEndFraction(lineIdx, whichEnd, newFrac){
   leftPart.share = leftPart.sqft / suggestedDivisionPlan.totalSqFt;
   rightPart.share = rightPart.sqft / suggestedDivisionPlan.totalSqFt;
 
+  initializeDivisionGeometry();
   syncDivisionSliderToSelectedLine();
   updateDivisionAreaReadout();
   redraw();
@@ -5043,148 +5062,317 @@ suggestDivisionBtn.addEventListener("click", function(){
   suggestedDivisionPlan = {
     totalSqFt,
     parts: validParts,
-    lineEnds
+    lineEnds,
+    linePoints: []
   };
+  initializeDivisionGeometry();
   populateDivisionLineControls();
   redraw();
 });
 
-function drawSuggestedDivisionOnSketch(){
-  if(!suggestedDivisionPlan || !Array.isArray(suggestedDivisionPlan.parts) || suggestedDivisionPlan.parts.length === 0) return;
-  const pVerts = getBoundaryVertices();
-  if(pVerts.length < 3) return;
-
-  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-  pVerts.forEach(v => {
-    if(v.x < minX) minX = v.x;
-    if(v.x > maxX) maxX = v.x;
-    if(v.y < minY) minY = v.y;
-    if(v.y > maxY) maxY = v.y;
+function polygonSignedArea(pts){
+  let a=0; for(let i=0;i<pts.length;i++){ const j=(i+1)%pts.length; a += pts[i].x*pts[j].y-pts[j].x*pts[i].y; } return a/2;
+}
+function lineIntersectionsWithPolygon(a,b,poly){
+  const out=[];
+  const dx=b.x-a.x, dy=b.y-a.y;
+  for(let i=0;i<poly.length;i++){
+    const p=poly[i], q=poly[(i+1)%poly.length];
+    const ex=q.x-p.x, ey=q.y-p.y;
+    const den=dx*ey-dy*ex;
+    if(Math.abs(den)<1e-9) continue;
+    const t=((p.x-a.x)*ey-(p.y-a.y)*ex)/den;
+    const u=((p.x-a.x)*dy-(p.y-a.y)*dx)/den;
+    if(t>=-1e-7 && t<=1+1e-7 && u>=-1e-7 && u<=1+1e-7){
+      out.push({x:a.x+t*dx,y:a.y+t*dy,t});
+    }
+  }
+  // remove duplicate corner intersections
+  const uniq=[];
+  out.forEach(pt=>{ if(!uniq.some(q=>Math.hypot(q.x-pt.x,q.y-pt.y)<1)) uniq.push(pt); });
+  return uniq;
+}
+function clipPolygonHalfPlane(poly,a,b,keepLeft){
+  if(!poly.length) return [];
+  const cross=(p)=> (b.x-a.x)*(p.y-a.y)-(b.y-a.y)*(p.x-a.x);
+  const inside=(p)=> keepLeft ? cross(p)>=-1e-7 : cross(p)<=1e-7;
+  const intersect=(p,q)=>{
+    const cp=cross(p), cq=cross(q), den=cp-cq;
+    if(Math.abs(den)<1e-9) return {x:p.x,y:p.y};
+    const t=cp/den; return {x:p.x+(q.x-p.x)*t,y:p.y+(q.y-p.y)*t};
+  };
+  const out=[];
+  for(let i=0;i<poly.length;i++){
+    const cur=poly[i], prev=poly[(i+poly.length-1)%poly.length];
+    const ic=inside(cur), ip=inside(prev);
+    if(ic && ip) out.push(cur);
+    else if(ip && !ic) out.push(intersect(prev,cur));
+    else if(!ip && ic){ out.push(intersect(prev,cur)); out.push(cur); }
+  }
+  return out;
+}
+function divisionRegionPolygons(){
+  const field=getBoundaryVertices().map(v=>({x:v.x,y:v.y}));
+  if(field.length<3 || !suggestedDivisionPlan || !suggestedDivisionPlan.linePoints) return [];
+  let remaining=field.map(p=>({x:p.x,y:p.y}));
+  const regions=[];
+  const lines=suggestedDivisionPlan.linePoints;
+  for(let i=0;i<suggestedDivisionPlan.parts.length;i++){
+    if(i===suggestedDivisionPlan.parts.length-1){ regions.push(remaining); break; }
+    const lp=lines[i];
+    const left=clipPolygonHalfPlane(remaining,lp.a,lp.b,true);
+    const right=clipPolygonHalfPlane(remaining,lp.a,lp.b,false);
+    // choose the side that is geometrically connected to the current ordered strip
+    regions.push(left);
+    remaining=right;
+  }
+  return regions;
+}
+function updateDivisionAreasFromSketch(){
+  if(!suggestedDivisionPlan) return;
+  const regs=divisionRegionPolygons();
+  const raw=regs.map(r=>Math.abs(polygonSignedArea(r)));
+  const sum=raw.reduce((a,b)=>a+b,0);
+  if(sum<1e-8) return;
+  suggestedDivisionPlan.parts.forEach((p,i)=>{
+    const sqft=suggestedDivisionPlan.totalSqFt*(raw[i]||0)/sum;
+    p.sqft=sqft; p.share=sqft/suggestedDivisionPlan.totalSqFt;
   });
-
-  const spanX = Math.max(20, maxX - minX);
-  const spanY = Math.max(20, maxY - minY);
-  const endsList = suggestedDivisionPlan.lineEnds || [];
-
-  // Use the selected boundary/internal side as the reference direction.
-  // Previously the division lines were always generated from the global
-  // left/right bounding-box X coordinate, so choosing another side only
-  // changed the displayed length. Now ANY selected side controls the
-  // orientation of the division family.
-  const selectedSides = getSelectedDivisionSides();
-  const referenceSide = selectedSides[0] || [...sideMap.values()].find(s => parseLength(s.length) !== null) || null;
-  let refA = null, refB = null;
-  if(referenceSide){
-    refA = getVertex(referenceSide.u1);
-    refB = getVertex(referenceSide.u2);
+  updateDivisionAreaReadout();
+}
+function pointOnDivisionHandle(p){
+  if(!suggestedDivisionPlan || !suggestedDivisionPlan.linePoints) return null;
+  for(let i=0;i<suggestedDivisionPlan.linePoints.length;i++){
+    const lp=suggestedDivisionPlan.linePoints[i];
+    if(Math.hypot(p.x-lp.a.x,p.y-lp.a.y)<18) return {line:i,end:'a'};
+    if(Math.hypot(p.x-lp.b.x,p.y-lp.b.y)<18) return {line:i,end:'b'};
   }
-
-  let ux = 1, uy = 0;
-  if(refA && refB){
-    const dx = refB.x - refA.x;
-    const dy = refB.y - refA.y;
-    const len = Math.hypot(dx, dy);
-    if(len > 1e-9){ ux = dx / len; uy = dy / len; }
+  return null;
+}
+function nearestBoundaryPoint(p){
+  const poly=getBoundaryVertices(); let best=null,bd=Infinity;
+  for(let i=0;i<poly.length;i++){
+    const a=poly[i],b=poly[(i+1)%poly.length];
+    const dx=b.x-a.x,dy=b.y-a.y,den=dx*dx+dy*dy||1;
+    let t=((p.x-a.x)*dx+(p.y-a.y)*dy)/den; t=Math.max(0,Math.min(1,t));
+    const q={x:a.x+t*dx,y:a.y+t*dy}; const d=Math.hypot(p.x-q.x,p.y-q.y);
+    if(d<bd){bd=d;best=q;}
   }
-  const nx = -uy, ny = ux;
+  return best;
+}
+function initializeDivisionGeometry(){
+  if(!suggestedDivisionPlan) return;
+  const poly=getBoundaryVertices().map(v=>({x:v.x,y:v.y}));
+  if(poly.length<3) return;
+  const selectedSides=getSelectedDivisionSides();
+  const ref=selectedSides[0] || [...sideMap.values()].find(s=>parseLength(s.length)!==null);
+  let ux=1,uy=0;
+  if(ref){ const a=getVertex(ref.u1),b=getVertex(ref.u2); if(a&&b){const L=Math.hypot(b.x-a.x,b.y-a.y)||1;ux=(b.x-a.x)/L;uy=(b.y-a.y)/L;} }
+  const nx=-uy,ny=ux;
+  const proj=poly.map(v=>v.x*nx+v.y*ny), minN=Math.min(...proj), maxN=Math.max(...proj);
+  const t0=poly.reduce((s,v)=>s+v.x*ux+v.y*uy,0)/poly.length;
+  const tSpan=Math.hypot(Math.max(...poly.map(v=>v.x))-Math.min(...poly.map(v=>v.x)),Math.max(...poly.map(v=>v.y))-Math.min(...poly.map(v=>v.y))*2)+1000;
+  suggestedDivisionPlan.linePoints=(suggestedDivisionPlan.lineEnds||[]).map(e=>{
+    const f=(e.f1+e.f2)/2, n=minN+(maxN-minN)*f;
+    const a0={x:(t0-tSpan)*ux+n*nx,y:(t0-tSpan)*uy+n*ny};
+    const b0={x:(t0+tSpan)*ux+n*nx,y:(t0+tSpan)*uy+n*ny};
+    const hits=lineIntersectionsWithPolygon(a0,b0,poly);
+    if(hits.length>=2) return {a:hits[0],b:hits[hits.length-1]};
+    return {a:nearestBoundaryPoint(a0),b:nearestBoundaryPoint(b0)};
+  });
+  updateDivisionAreasFromSketch();
+}
+function boundaryEdgeSplitInfo(point){
+  const poly=getBoundaryVertices();
+  if(poly.length<2 || !point) return null;
+  let best=null, bestD=Infinity;
+  for(let i=0;i<poly.length;i++){
+    const a=poly[i], b=poly[(i+1)%poly.length];
+    const dx=b.x-a.x, dy=b.y-a.y;
+    const den=dx*dx+dy*dy || 1;
+    let t=((point.x-a.x)*dx+(point.y-a.y)*dy)/den;
+    t=Math.max(0,Math.min(1,t));
+    const q={x:a.x+t*dx,y:a.y+t*dy};
+    const d=Math.hypot(point.x-q.x,point.y-q.y);
+    if(d<bestD){ bestD=d; best={edge:i,t,q,a,b}; }
+  }
+  return bestD<=24 ? best : null;
+}
 
-  // Project the complete field onto the normal of the selected side. This
-  // gives a side-independent coordinate system for placing each division.
-  const projections = pVerts.map(v => v.x * nx + v.y * ny);
-  const minN = Math.min(...projections);
-  const maxN = Math.max(...projections);
-  const spanN = Math.max(20, maxN - minN);
-  const centerT = (pVerts.reduce((acc,v) => acc + v.x, 0) / pVerts.length) * ux +
-                  (pVerts.reduce((acc,v) => acc + v.y, 0) / pVerts.length) * uy;
-  const centerN = (minN + maxN) / 2;
-  const lineHalfLength = Math.max(
-    2000,
-    Math.hypot(maxX - minX, maxY - minY) * 3
+function getMeasuredBoundarySide(edgeIndex){
+  const poly=getBoundaryVertices();
+  if(!poly[edgeIndex] || poly.length < 2) return null;
+  const a=poly[edgeIndex], b=poly[(edgeIndex+1)%poly.length];
+
+  // First use the normal endpoint lookup.
+  let side=getSide(a.uid,b.uid);
+
+  // Robust fallback: boundary sides are registered as B1, B2, ...
+  // in exactly the same order as the boundary vertices. This prevents
+  // the divided-side labels from losing the measured parent length.
+  if(!side) side=[...sideMap.values()].find(s =>
+    s.type === "Boundary" &&
+    ((s.u1===a.uid && s.u2===b.uid) || (s.u1===b.uid && s.u2===a.uid))
   );
 
-  ctx.save();
-  ctx.beginPath();
-  ctx.moveTo(pVerts[0].x, pVerts[0].y);
-  for(let i = 1; i < pVerts.length; i++){
-    ctx.lineTo(pVerts[i].x, pVerts[i].y);
+  return side || null;
+}
+
+function measuredBoundaryFullFeet(edgeIndex){
+  const side=getMeasuredBoundarySide(edgeIndex);
+  if(!side) return null;
+
+  // Normally length is already stored as decimal feet.
+  let full=parseLength(side.length);
+  if(full!==null) return full;
+
+  // Also support the feet + inches fields if the complete-length field
+  // has not been populated for some reason.
+  const f=parseFloat(side.feetPart);
+  const inc=parseFloat(side.inchPart);
+  if(Number.isFinite(f) || Number.isFinite(inc)){
+    const total=(Number.isFinite(f)?f:0)+(Number.isFinite(inc)?inc/12:0);
+    if(total>0) return total;
   }
-  ctx.closePath();
-  ctx.clip();
+  return null;
+}
 
-  // Each division is parallel to the selected reference side. The two
-  // slider values independently introduce a small normal-position change
-  // at the two ends, so the line can still be skewed for an irregular plot.
-  const divSegments = endsList.map(e => {
-    const f1 = e.f1 ?? 0.5;
-    const f2 = e.f2 ?? 0.5;
-    const n1 = minN + spanN * f1;
-    const n2 = minN + spanN * f2;
-    const t1 = centerT - lineHalfLength;
-    const t2 = centerT + lineHalfLength;
-    return {
-      xTop: t1 * ux + n1 * nx,
-      yTop: t1 * uy + n1 * ny,
-      xBot: t2 * ux + n2 * nx,
-      yBot: t2 * uy + n2 * ny
-    };
+function measuredBoundaryPartFeet(edgeIndex, t0, t1){
+  const full=measuredBoundaryFullFeet(edgeIndex);
+  if(full===null) return null;
+  return Math.abs(t1-t0)*full;
+}
+
+function drawBoundarySplitLengthLabels(){
+  // Draw every boundary segment that is cut by a division line.
+  // A boundary B2, for example, becomes B2-1, B2-2, ... and each
+  // piece gets its own coloured label and measured length.
+  if(!suggestedDivisionPlan || !Array.isArray(suggestedDivisionPlan.linePoints)) return;
+  const poly=getBoundaryVertices();
+  if(poly.length < 2) return;
+
+  const cutsByEdge=new Map();
+
+  suggestedDivisionPlan.linePoints.forEach((lp,lineIdx)=>{
+    if(!lp || !lp.a || !lp.b) return;
+    [lp.a,lp.b].forEach(pt=>{
+      const hit=boundaryEdgeSplitInfo(pt);
+      if(!hit) return;
+      if(!cutsByEdge.has(hit.edge)) cutsByEdge.set(hit.edge,[]);
+      cutsByEdge.get(hit.edge).push({t:hit.t,lineIdx});
+    });
   });
 
-  suggestedDivisionPlan.parts.forEach((part, idx) => {
-    const col = DIV_COLORS[idx % DIV_COLORS.length];
-    const leftTopX = (idx === 0) ? (minX - 10) : divSegments[idx - 1].xTop;
-    const leftBotX = (idx === 0) ? (minX - 10) : divSegments[idx - 1].xBot;
-    const rightTopX = (idx === suggestedDivisionPlan.parts.length - 1) ? (maxX + 10) : divSegments[idx].xTop;
-    const rightBotX = (idx === suggestedDivisionPlan.parts.length - 1) ? (maxX + 10) : divSegments[idx].xBot;
+  // Only boundary sides actually touched by a division line need splitting.
+  cutsByEdge.forEach((cuts,edgeIdx)=>{
+    const a=poly[edgeIdx];
+    const b=poly[(edgeIdx+1)%poly.length];
+    const original=getMeasuredBoundarySide(edgeIdx);
+    const fullLen=measuredBoundaryFullFeet(edgeIdx);
 
-    ctx.fillStyle = col.fill;
-    ctx.beginPath();
-    ctx.moveTo(leftTopX, minY - 10);
-    ctx.lineTo(rightTopX, minY - 10);
-    ctx.lineTo(rightBotX, maxY + 10);
-    ctx.lineTo(leftBotX, maxY + 10);
-    ctx.closePath();
-    ctx.fill();
+    // Always show the new IDs, even if the parent side has not yet been measured.
+    // If measured, calculate each part from its exact fractional position.
+    const points=[{t:0,lineIdx:null},{t:1,lineIdx:null},...cuts];
+    points.sort((x,y)=>x.t-y.t);
 
-    // Draw area of divided portion on the sketch
-    const partCenterX = (leftTopX + leftBotX + rightTopX + rightBotX) / 4;
-    const partCenterY = (minY + maxY) / 2 + ((idx % 2 === 0) ? -12 : 14);
-    ctx.font = "bold 12px Arial";
-    ctx.textAlign = "center";
-    ctx.fillStyle = col.text;
-    ctx.fillText(`${part.name}: ${part.sqft.toFixed(1)} sq ft (${(part.sqft/272.25).toFixed(2)}M)`, partCenterX, partCenterY);
+    const unique=[];
+    points.forEach(v=>{
+      const last=unique[unique.length-1];
+      if(!last || Math.abs(v.t-last.t)>0.008){
+        unique.push({...v});
+      }else if(v.lineIdx!==null){
+        last.lineIdx=v.lineIdx;
+      }
+    });
+
+    for(let j=0;j<unique.length-1;j++){
+      const t1=unique[j].t, t2=unique[j+1].t;
+      if(t2-t1<0.01) continue;
+
+      const p1={x:a.x+(b.x-a.x)*t1,y:a.y+(b.y-a.y)*t1};
+      const p2={x:a.x+(b.x-a.x)*t2,y:a.y+(b.y-a.y)*t2};
+      const mx=(p1.x+p2.x)/2, my=(p1.y+p2.y)/2;
+      const dx=p2.x-p1.x,dy=p2.y-p1.y;
+      const edgePx=Math.hypot(dx,dy)||1;
+
+      // Part ID: B2-1, B2-2, ...
+      const parentId=(original && original.id) ? original.id : `B${edgeIdx+1}`;
+      const partId=`${parentId}-${j+1}`;
+      const feet=fullLen!==null ? (t2-t1)*fullLen : null;
+      const lengthText=feet!==null ? `${feet.toFixed(1)} ft` : `not measured`;
+
+      // Give every divided portion a clearly different colour.
+      const colorIndex=(edgeIdx*7+j)%DIV_COLORS.length;
+      const col=DIV_COLORS[colorIndex];
+
+      // Draw the segment itself in the portion colour.
+      ctx.save();
+      ctx.strokeStyle=col.stroke;
+      ctx.lineWidth=6;
+      ctx.beginPath();
+      ctx.moveTo(p1.x,p1.y); ctx.lineTo(p2.x,p2.y); ctx.stroke();
+
+      // Offset label inward toward the field centre.
+      let nx=-dy/edgePx, ny=dx/edgePx;
+      const center=poly.reduce((q,v)=>({x:q.x+v.x,y:q.y+v.y}),{x:0,y:0});
+      center.x/=poly.length; center.y/=poly.length;
+      if((center.x-mx)*nx+(center.y-my)*ny<0){nx=-nx;ny=-ny;}
+
+      const label=`${partId}  •  ${lengthText}`;
+      ctx.font='bold 11px Arial';
+      const tw=Math.max(76,ctx.measureText(label).width+16), th=24;
+      const lx=mx+nx*16, ly=my+ny*16;
+
+      ctx.fillStyle='rgba(255,255,255,0.97)';
+      ctx.strokeStyle=col.stroke;
+      ctx.lineWidth=2;
+      ctx.beginPath();
+      ctx.roundRect(lx-tw/2,ly-th/2,tw,th,6);
+      ctx.fill(); ctx.stroke();
+
+      ctx.fillStyle=col.text;
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText(label,lx,ly);
+      ctx.restore();
+    }
   });
+}
 
-  // Draw each division line + estimated length in feet
-  divSegments.forEach((seg, lIdx) => {
-    const col = DIV_COLORS[lIdx % DIV_COLORS.length];
-    ctx.strokeStyle = col.stroke;
-    ctx.lineWidth = 2.8;
-    ctx.setLineDash([7, 5]);
-    ctx.beginPath();
-    ctx.moveTo(seg.xTop, seg.yTop);
-    ctx.lineTo(seg.xBot, seg.yBot);
-    ctx.stroke();
-    ctx.setLineDash([]);
-
-    const estFt = estimateDivisionLineFeet(seg.xTop, seg.yTop, seg.xBot, seg.yBot);
-    const midX = (seg.xTop + seg.xBot) / 2;
-    const midY = (seg.yTop + seg.yBot) / 2;
-    const lenLabel = `L${lIdx + 1} ≈ ${estFt.toFixed(1)} ft`;
-
-    ctx.font = "bold 11px Arial";
-    const tw = ctx.measureText(lenLabel).width + 10;
-    ctx.fillStyle = "rgba(255,255,255,0.92)";
-    ctx.strokeStyle = col.stroke;
-    ctx.lineWidth = 1.2;
-    ctx.fillRect(midX - tw/2, midY - 10, tw, 20);
-    ctx.strokeRect(midX - tw/2, midY - 10, tw, 20);
-    ctx.fillStyle = col.text;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(lenLabel, midX, midY);
+function drawSuggestedDivisionOnSketch(){
+  if(!suggestedDivisionPlan || !suggestedDivisionPlan.parts.length) return;
+  const pVerts=getBoundaryVertices(); if(pVerts.length<3) return;
+  if(!suggestedDivisionPlan.linePoints || suggestedDivisionPlan.linePoints.length!==suggestedDivisionPlan.parts.length-1) initializeDivisionGeometry();
+  const regs=divisionRegionPolygons();
+  regs.forEach((poly,idx)=>{
+    if(poly.length<3) return;
+    const col=DIV_COLORS[idx%DIV_COLORS.length];
+    ctx.beginPath(); ctx.moveTo(poly[0].x,poly[0].y); for(let i=1;i<poly.length;i++) ctx.lineTo(poly[i].x,poly[i].y); ctx.closePath();
+    ctx.fillStyle=col.fill.replace(/0\.20\)/,'0.42)'); ctx.fill();
+    const cen=poly.reduce((a,p)=>({x:a.x+p.x,y:a.y+p.y}),{x:0,y:0}); cen.x/=poly.length; cen.y/=poly.length;
+    ctx.fillStyle=col.text; ctx.font='bold 12px Arial'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(`${suggestedDivisionPlan.parts[idx].name}: ${suggestedDivisionPlan.parts[idx].sqft.toFixed(1)} sq ft (${(suggestedDivisionPlan.parts[idx].sqft/272.25).toFixed(2)} M)`,cen.x,cen.y);
   });
+  drawBoundarySplitLengthLabels();
+  suggestedDivisionPlan.linePoints.forEach((lp,i)=>{
+    // Boundary sides are split into new named portions (B1-1, B1-2, ...).
+    // Their measured lengths are displayed directly on the corresponding sketch portions.
+    // This is drawn once for all boundary edges below.
 
-  ctx.restore();
+    const col=DIV_COLORS[i%DIV_COLORS.length];
+    // Each division line gets its own clearly visible colour and ID.
+    ctx.save();
+    ctx.strokeStyle=col.stroke; ctx.lineWidth=4; ctx.setLineDash([10,6]);
+    ctx.beginPath();ctx.moveTo(lp.a.x,lp.a.y);ctx.lineTo(lp.b.x,lp.b.y);ctx.stroke();ctx.setLineDash([]);
+    [lp.a,lp.b].forEach(pt=>{ctx.beginPath();ctx.arc(pt.x,pt.y,9,0,Math.PI*2);ctx.fillStyle=col.stroke;ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke();});
+    const mx=(lp.a.x+lp.b.x)/2,my=(lp.a.y+lp.b.y)/2;
+    const estFt=estimateDivisionLineFeet(lp.a.x,lp.a.y,lp.b.x,lp.b.y);
+    const label=`L${i+1}  ${Number.isFinite(estFt)?estFt.toFixed(1):'—'} ft`;
+    ctx.font='bold 12px Arial'; const tw=ctx.measureText(label).width+16;
+    ctx.fillStyle='rgba(255,255,255,.98)';ctx.strokeStyle=col.stroke;ctx.lineWidth=2;
+    ctx.beginPath();ctx.roundRect(mx-tw/2,my-12,tw,24,6);ctx.fill();ctx.stroke();
+    ctx.fillStyle=col.text;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(label,mx,my);
+    ctx.restore();
+  });
 }
 
 /* ==========================================================
