@@ -252,6 +252,10 @@ canvas{display:block;width:100%;height:auto;touch-action:none}
   flex:1;padding:7px 8px;font-size:12px;margin:0;
 }
 
+
+/* Side-value popup lock after Adjust & Align Division Boundaries */
+.sketchSideEditor.locked{display:none !important;}
+
 /* Compact Table Side Cell with Complete ft + Feet & Inches */
 .sideInputGroup{
   display:flex;flex-direction:column;gap:4px;align-items:center;min-width:118px;
@@ -1558,6 +1562,9 @@ const addTriBtn = document.getElementById("addTriBtn");
 const cancelTriBtn = document.getElementById("cancelTriBtn");
 let enteringSidesOnSketch = false;
 let activeEditingSideKey = null;
+// When division boundaries have been adjusted/aligned, prevent side-value popups
+// from opening on the sketch. The measurement table remains editable.
+let sketchSideValuePopupLocked = false;
 
 const sketchEditSidesBtn = document.getElementById("sketchEditSidesBtn");
 const sketchSideEditor = document.getElementById("sketchSideEditor");
@@ -1873,6 +1880,12 @@ function findNearestSideAtPoint(p, maxDist = 24){
 }
 
 function openSketchSideEditor(side){
+  if(sketchSideValuePopupLocked){
+    fieldStatus.className = "status adjusted";
+    fieldStatus.textContent = "Sketch side-value popups are locked after Adjust & Align Division Boundaries. Use the measurement table below to edit side values.";
+    closeSketchSideEditor();
+    return;
+  }
   if(!side) return;
   activeEditingSideKey = side.key;
   edSideTitle.textContent = `${side.id} (${side.u1} – ${side.u2})`;
@@ -1939,7 +1952,7 @@ edInches.addEventListener("input", handleEditorFtInInput);
 });
 
 sketchEditSidesBtn.addEventListener("click", function(){
-  if(!fieldFinished) return;
+  if(!fieldFinished || sketchSideValuePopupLocked) return;
   enteringSidesOnSketch = !enteringSidesOnSketch;
   if(enteringSidesOnSketch){
     sketchEditSidesBtn.textContent = "Done Entering Sides";
@@ -2086,6 +2099,7 @@ function addBoundaryPoint(p){
 }
 
 function resetCurrentWorkspace(startDrawing = true){
+  sketchSideValuePopupLocked = false;
   vertices = [];
   boundaryCount = 0;
   triangles = [];
@@ -3200,6 +3214,8 @@ function adjustFieldGeometryToMeasuredSides(){
 }
 
 function revertToHandSketch(){
+  sketchSideValuePopupLocked = false;
+  closeSketchSideEditor();
   vertices.forEach(v => {
     v.x = v.sketchX;
     v.y = v.sketchY;
@@ -4894,7 +4910,12 @@ function updateDivisionAreaReadout(){
   if(!leftP || !rightP) return;
   const sumBoth = leftP.sqft + rightP.sqft;
   const ends = suggestedDivisionPlan.lineEnds[lineIdx] || { f1: 0.5, f2: 0.5 };
+  const selectedSides = getSelectedDivisionSides();
+  const refTxt = selectedSides.length
+    ? selectedSides.map(s => `<b>${s.id}</b> (${s.u1}–${s.u2})`).join(", ")
+    : "Automatic measured side";
   divAreaPreserveReadout.innerHTML =
+    `<b>Reference side:</b> ${refTxt} &nbsp;|&nbsp; ` +
     `<b>End 1:</b> ${Math.round(ends.f1*100)}% &nbsp;|&nbsp; <b>End 2:</b> ${Math.round(ends.f2*100)}% &nbsp;|&nbsp; ` +
     `<b>${leftP.name}:</b> ${leftP.sqft.toFixed(2)} sq ft (${(leftP.sqft/272.25).toFixed(3)} Marla) &nbsp;|&nbsp; ` +
     `<b>${rightP.name}:</b> ${rightP.sqft.toFixed(2)} sq ft (${(rightP.sqft/272.25).toFixed(3)} Marla) &nbsp;|&nbsp; ` +
@@ -4902,10 +4923,17 @@ function updateDivisionAreaReadout(){
 }
 
 function clearDivisionFromSketch(){
+  sketchSideValuePopupLocked = false;
+  closeSketchSideEditor();
   suggestedDivisionPlan = null;
   divisionAlignPanel.style.display = "none";
   splitSuggestionOutput.style.display = "none";
   splitSuggestionOutput.innerHTML = "";
+  sketchSideValuePopupLocked = false;
+  enteringSidesOnSketch = false;
+  sketchEditSidesBtn.disabled = !fieldFinished;
+  sketchEditSidesBtn.textContent = "Enter Side Values";
+  sketchEditSidesBtn.className = "warning overlayBtn";
   redraw();
   fieldStatus.className = "status";
   fieldStatus.textContent = "Cleared suggested division and reverted sketch to field view.";
@@ -4918,6 +4946,18 @@ alignDivisionBtn.addEventListener("click", function(){
   }
   populateDivisionLineControls();
   divisionAlignPanel.style.display = divisionAlignPanel.style.display === "none" ? "block" : "none";
+
+  // Once the user presses Adjust & Align, keep the sketch measurements as
+  // labels only. This prevents an accidental tap on a line from reopening
+  // the floating value editor while the division geometry is being aligned.
+  sketchSideValuePopupLocked = true;
+  enteringSidesOnSketch = false;
+  sketchEditSidesBtn.textContent = "Side Values Locked";
+  sketchEditSidesBtn.className = "secondary overlayBtn";
+  closeSketchSideEditor();
+  fieldStatus.className = "status adjusted";
+  fieldStatus.textContent = "Division alignment mode active. Sketch side-value popups are disabled; edit measurements in the table below.";
+  redraw();
 });
 
 divLineIndexSelect.addEventListener("change", function(){
@@ -5026,6 +5066,42 @@ function drawSuggestedDivisionOnSketch(){
   const spanY = Math.max(20, maxY - minY);
   const endsList = suggestedDivisionPlan.lineEnds || [];
 
+  // Use the selected boundary/internal side as the reference direction.
+  // Previously the division lines were always generated from the global
+  // left/right bounding-box X coordinate, so choosing another side only
+  // changed the displayed length. Now ANY selected side controls the
+  // orientation of the division family.
+  const selectedSides = getSelectedDivisionSides();
+  const referenceSide = selectedSides[0] || [...sideMap.values()].find(s => parseLength(s.length) !== null) || null;
+  let refA = null, refB = null;
+  if(referenceSide){
+    refA = getVertex(referenceSide.u1);
+    refB = getVertex(referenceSide.u2);
+  }
+
+  let ux = 1, uy = 0;
+  if(refA && refB){
+    const dx = refB.x - refA.x;
+    const dy = refB.y - refA.y;
+    const len = Math.hypot(dx, dy);
+    if(len > 1e-9){ ux = dx / len; uy = dy / len; }
+  }
+  const nx = -uy, ny = ux;
+
+  // Project the complete field onto the normal of the selected side. This
+  // gives a side-independent coordinate system for placing each division.
+  const projections = pVerts.map(v => v.x * nx + v.y * ny);
+  const minN = Math.min(...projections);
+  const maxN = Math.max(...projections);
+  const spanN = Math.max(20, maxN - minN);
+  const centerT = (pVerts.reduce((acc,v) => acc + v.x, 0) / pVerts.length) * ux +
+                  (pVerts.reduce((acc,v) => acc + v.y, 0) / pVerts.length) * uy;
+  const centerN = (minN + maxN) / 2;
+  const lineHalfLength = Math.max(
+    2000,
+    Math.hypot(maxX - minX, maxY - minY) * 3
+  );
+
   ctx.save();
   ctx.beginPath();
   ctx.moveTo(pVerts[0].x, pVerts[0].y);
@@ -5035,13 +5111,23 @@ function drawSuggestedDivisionOnSketch(){
   ctx.closePath();
   ctx.clip();
 
-  // Compute top and bottom division line endpoints across bounding box using independent End 1 & End 2 sliders
-  const divSegments = endsList.map(e => ({
-    xTop: minX + spanX * (e.f1 ?? 0.5),
-    yTop: minY - 10,
-    xBot: minX + spanX * (e.f2 ?? 0.5),
-    yBot: maxY + 10
-  }));
+  // Each division is parallel to the selected reference side. The two
+  // slider values independently introduce a small normal-position change
+  // at the two ends, so the line can still be skewed for an irregular plot.
+  const divSegments = endsList.map(e => {
+    const f1 = e.f1 ?? 0.5;
+    const f2 = e.f2 ?? 0.5;
+    const n1 = minN + spanN * f1;
+    const n2 = minN + spanN * f2;
+    const t1 = centerT - lineHalfLength;
+    const t2 = centerT + lineHalfLength;
+    return {
+      xTop: t1 * ux + n1 * nx,
+      yTop: t1 * uy + n1 * ny,
+      xBot: t2 * ux + n2 * nx,
+      yBot: t2 * uy + n2 * ny
+    };
+  });
 
   suggestedDivisionPlan.parts.forEach((part, idx) => {
     const col = DIV_COLORS[idx % DIV_COLORS.length];
