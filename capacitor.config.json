@@ -1,0 +1,6 @@
+{
+  "appId": "com.learn2servehumanity.areameasurement",
+  "appName": "Area Measurement",
+  "webDir": "www",
+  "bundledWebRuntime": false
+}
