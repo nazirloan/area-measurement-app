@@ -717,6 +717,89 @@ button, .navTab, .fChip, .triChip {
     font-size: 11px;
   }
 }
+
+/* Hidden Vertex Columns & Hidden Side Register until button pressed */
+.vertex-col { display: none; }
+table.show-vertices .vertex-col { display: table-cell; }
+#sideRegisterCard { display: none; }
+#sideRegisterCard.visible { display: block; }
+
+/* Basic Calculator Grid */
+.basicCalcWrap {
+  max-width: 420px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 12px;
+  margin-top: 8px;
+}
+.bcDisplay {
+  width: 100%;
+  padding: 12px;
+  font-size: 20px;
+  font-weight: 800;
+  text-align: right;
+  border: 1.5px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--input-bg);
+  color: var(--input-text);
+  margin-bottom: 10px;
+}
+.bcGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 7px;
+}
+.bcBtn {
+  padding: 12px 6px;
+  font-size: 15px;
+  font-weight: 800;
+  border-radius: 8px;
+  margin: 0;
+  background: var(--bg-card);
+  color: var(--text-main);
+  border: 1px solid var(--border-color);
+}
+.bcBtn.op { background: #dbeafe; color: #1e3a8a; }
+.bcBtn.eq { background: var(--accent-primary); color: #fff; }
+.bcBtn.clr { background: #fee2e2; color: #991b1b; }
+
+/* Split Field Box */
+.splitBox {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-color);
+}
+.splitRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-top: 8px;
+}
+.splitRow input[type=text], .splitRow input[type=number], .splitRow select {
+  padding: 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 7px;
+  background: var(--input-bg);
+  color: var(--input-text);
+  font-size: 13px;
+}
+.splitRow input[type=text] { width: 130px; }
+.splitRow input[type=number] { width: 110px; }
+.splitRow select { width: 105px; }
+.splitResultCard {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+
 </style>
 </head>
 <body>
@@ -752,6 +835,7 @@ button, .navTab, .fChip, .triChip {
   <button class="navTab" data-tab="standaloneTab">2. Triangle Calc</button>
   <button class="navTab" data-tab="formulasTab">3. Shape Formulas</button>
   <button class="navTab" data-tab="howtoTab">4. How to Use</button>
+  <button class="navTab" data-tab="basicCalcTab">5. Basic Calc</button>
 </nav>
 
 <!-- =====================================================================
@@ -765,6 +849,8 @@ button, .navTab, .fChip, .triChip {
 <div class="controls">
   <button id="startBtn" class="primary">Start / Redraw Field</button>
   <button id="nextSketchBtn" class="warning">New Field (+ Save Current)</button>
+  <button id="fitActualViewBtn" class="accent" type="button">Full / Actual View</button>
+  <button id="movePolygonBtn" class="secondary" type="button">Move Polygon: OFF</button>
   <button id="clearBtn" class="danger">Clear Current</button>
 </div>
 
@@ -857,13 +943,19 @@ button, .navTab, .fChip, .triChip {
 </div>
 
 <div class="card">
-<h2>3. Triangle Measurement Table</h2>
+<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:8px">
+  <h2 style="margin:0">3. Triangle Measurement Table</h2>
+  <div>
+    <button id="toggleVerticesBtn" class="secondary smallBtn" type="button">Show Vertices</button>
+    <button id="toggleSideRegisterBtn" class="secondary smallBtn" type="button">Show Unique Side Register</button>
+  </div>
+</div>
 <div class="tableWrap">
 <table id="triangleTable">
 <thead>
 <tr>
 <th>Triangle</th>
-<th>Vertex 1</th><th>Vertex 2</th><th>Vertex 3</th>
+<th class="vertex-col">Vertex 1</th><th class="vertex-col">Vertex 2</th><th class="vertex-col">Vertex 3</th>
 <th>Side 1</th><th>Complete (ft) / ft &amp; in</th>
 <th>Side 2</th><th>Complete (ft) / ft &amp; in</th>
 <th>Side 3</th><th>Complete (ft) / ft &amp; in</th>
@@ -881,7 +973,7 @@ button, .navTab, .fChip, .triChip {
 </div>
 </div>
 
-<div class="card">
+<div class="card" id="sideRegisterCard">
 <h2>4. Unique Side Register</h2>
 <p class="note">
   Each unique pair of vertices gets one side ID. Outer boundary segments between consecutive P-points are <b>B1, B2…</b>;
@@ -921,6 +1013,67 @@ button, .navTab, .fChip, .triChip {
 </div>
 <div class="status" id="exportStatus" style="display:none"></div>
 
+<div class="splitBox" id="fieldSplitBox">
+  <h3 style="margin:0 0 4px;color:var(--accent-primary)">Split Field into Target Areas (Based on Measured Boundaries)</h3>
+  <div class="note" style="margin-top:0">
+    After calculating total field area, enter target division parts below and click <b>Suggest Division</b>. Divisions are suggested using your measured boundary sides (B1, B2…), internal chords (D1, D2…), and triangle areas.
+  </div>
+  <div id="splitInputsList">
+    <div class="splitRow">
+      <input type="text" class="spName" value="Part A" placeholder="Part name">
+      <input type="number" class="spVal" min="0" step="0.01" placeholder="Area or %">
+      <select class="spUnit">
+        <option value="marla" selected>Marla</option>
+        <option value="pct">Percentage (%)</option>
+        <option value="sqft">Sq Ft</option>
+        <option value="kanal">Kanal</option>
+      </select>
+    </div>
+    <div class="splitRow">
+      <input type="text" class="spName" value="Part B" placeholder="Part name">
+      <input type="number" class="spVal" min="0" step="0.01" placeholder="Area or %">
+      <select class="spUnit">
+        <option value="marla" selected>Marla</option>
+        <option value="pct">Percentage (%)</option>
+        <option value="sqft">Sq Ft</option>
+        <option value="kanal">Kanal</option>
+      </select>
+    </div>
+  </div>
+  <div class="controls" style="margin-top:8px">
+    <button id="addSplitPartBtn" class="secondary smallBtn" type="button">+ Add Part</button>
+    <button id="suggestDivisionBtn" class="accent smallBtn" type="button">Suggest Division</button>
+    <button id="alignDivisionBtn" class="primary smallBtn" type="button">Adjust &amp; Align Division Boundaries</button>
+    <button id="clearDivisionBtn" class="danger smallBtn" type="button">Clear Division from Sketch</button>
+  </div>
+  <div id="divisionAlignPanel" style="display:none;margin-top:8px;padding:10px 12px;border-radius:8px;background:var(--bg-card);border:1px solid var(--border-color)">
+    <div style="font-size:12px;font-weight:800;color:var(--accent-primary);margin-bottom:6px">
+      Independent End Sliders for Division Line (Area Preserved on Both Sides)
+    </div>
+    <div class="splitRow" style="margin-top:4px">
+      <label for="divSideSelect" style="font-size:12px;font-weight:700">Division Side(s):</label>
+      <select id="divSideSelect" multiple size="2" style="width:170px;height:52px" title="Select one or more sides through which divisions occur"></select>
+      <button id="divAllSidesBtn" class="secondary smallBtn" type="button">Auto / Primary Side</button>
+      <label for="divLineIndexSelect" style="font-size:12px;font-weight:700">Division Line:</label>
+      <select id="divLineIndexSelect" style="width:155px"></select>
+      <button id="divResetLineBtn" class="secondary smallBtn" type="button">Reset Line</button>
+      <button id="divClearSketchBtn" class="danger smallBtn" type="button">Clear Division from Sketch</button>
+    </div>
+    <div class="splitRow" style="margin-top:8px">
+      <label for="divStartSlider" style="font-size:12px;font-weight:700">End 1 Slider (%):</label>
+      <input type="range" id="divStartSlider" min="5" max="95" value="50" step="1" style="width:125px;cursor:pointer">
+      <span id="divStartPosLabel" style="font-size:12px;font-weight:800;color:var(--accent-primary)">50%</span>
+      <button id="divMoveLeftBtn" class="secondary smallBtn" type="button">&larr; Shift Left</button>
+      <button id="divMoveRightBtn" class="secondary smallBtn" type="button">Shift Right &rarr;</button>
+      <label for="divEndSlider" style="font-size:12px;font-weight:700">End 2 Slider (%):</label>
+      <input type="range" id="divEndSlider" min="5" max="95" value="50" step="1" style="width:125px;cursor:pointer">
+      <span id="divEndPosLabel" style="font-size:12px;font-weight:800;color:var(--accent-primary)">50%</span>
+    </div>
+    <div id="divAreaPreserveReadout" class="note" style="margin-top:6px;font-weight:700;color:var(--text-main)"></div>
+  </div>
+  <div id="splitSuggestionOutput" class="splitResultCard" style="display:none"></div>
+</div>
+
 <div class="status">
   Conversion used: <b>1 Marla = 272.25 sq ft</b>,
   <b>1 Kanal = 5,445 sq ft</b> (<b>20 Marla = 1 Kanal</b>),
@@ -937,7 +1090,47 @@ button, .navTab, .fChip, .triChip {
 <div id="standaloneTab" class="tabSection">
 <div class="container">
 <div class="card">
-  <h2>Standalone Triangle Area Calculator (Heron & Kahan)</h2>
+  <h2>Standalone Triangle &amp; Quadrilateral Area Calculator (Heron &amp; Kahan)</h2>
+  <div class="controls" style="margin-bottom:8px">
+    <button id="modeTriCalcBtn" class="primary smallBtn" type="button">Triangle (3 Sides)</button>
+    <button id="modeQuadCalcBtn" class="secondary smallBtn" type="button">Irregular Quadrilateral (4 Sides + 1 Diagonal)</button>
+  </div>
+
+  <!-- Quadrilateral with 1 Diagonal Panel -->
+  <div id="quadCalcPanel" style="display:none;background:var(--bg-subtle);border:1px solid var(--border-color);border-radius:10px;padding:12px;margin-bottom:10px">
+    <h3 style="margin:0 0 6px;color:var(--accent-primary)">Irregular Quadrilateral Area (Sides a, b, c, d + Diagonal p)</h3>
+    <p class="note" style="margin-top:0">
+      Diagonal <b>p</b> splits the quadrilateral into <b>&Delta;1 (a, b, p)</b> and <b>&Delta;2 (c, d, p)</b>. Computed via both Heron and Kahan formulas.
+    </p>
+    <div class="calcGrid">
+      <div class="fieldGroup"><label for="qdA">Side a (ft)</label><input type="number" id="qdA" min="0" step="0.01" placeholder="e.g. 100"></div>
+      <div class="fieldGroup"><label for="qdB">Side b (ft)</label><input type="number" id="qdB" min="0" step="0.01" placeholder="e.g. 120"></div>
+      <div class="fieldGroup"><label for="qdC">Side c (ft)</label><input type="number" id="qdC" min="0" step="0.01" placeholder="e.g. 90"></div>
+      <div class="fieldGroup"><label for="qdD">Side d (ft)</label><input type="number" id="qdD" min="0" step="0.01" placeholder="e.g. 110"></div>
+      <div class="fieldGroup"><label for="qdP">Diagonal p (ft)</label><input type="number" id="qdP" min="0" step="0.01" placeholder="e.g. 150"></div>
+    </div>
+    <div class="controls" style="margin-top:10px">
+      <button id="qdCalcBtn" class="primary" type="button">Calculate Quadrilateral Area</button>
+      <button id="qdClearBtn" class="secondary" type="button">Clear Quad</button>
+    </div>
+    <div class="status" id="qdStatus">Enter sides a, b, c, d and diagonal p (each triangle must satisfy the triangle inequality).</div>
+    <div class="resultRow">
+      <div class="resCard">
+        <div class="title">Quad Area — Heron's Formula</div>
+        <div class="bigVal" id="qdHeronSqft">0.0000 sq ft</div>
+        <div class="subVal" id="qdHeronUnits">0.0000 Marla • 0.0000 Kanal • 0.0000 Acre</div>
+      </div>
+      <div class="resCard kahan">
+        <div class="title">Quad Area — Kahan's Formula</div>
+        <div class="bigVal" id="qdKahanSqft">0.0000 sq ft</div>
+        <div class="subVal" id="qdKahanUnits">0.0000 Marla • 0.0000 Kanal • 0.0000 Acre</div>
+      </div>
+    </div>
+    <canvas id="quadCanvas" width="700" height="300" style="width:100%;max-width:100%;height:auto;border:1px solid var(--border-color);border-radius:10px;background:var(--canvas-bg);margin-top:10px"></canvas>
+    <div class="status" id="qdBreakdown" style="margin-top:8px">&Delta;1 (a, b, p): — | &Delta;2 (c, d, p): —</div>
+  </div>
+
+  <div id="triSinglePanel">
   <p class="note">
     Calculate the area of any single triangle independently using both <b>Heron's Formula</b> and <b>Kahan's Numerically Stable Formula</b>.
   </p>
@@ -981,6 +1174,7 @@ button, .navTab, .fChip, .triChip {
 
   <div class="status" id="stExtraMetrics" style="margin-top:10px">
     Semi-perimeter (s): — | Perimeter: — | Angles (A, B, C): —
+  </div>
   </div>
 </div>
 </div>
@@ -1228,6 +1422,52 @@ button, .navTab, .fChip, .triChip {
 </div>
 </div>
 
+<!-- =====================================================================
+     TAB 5: BASIC CALCULATOR
+     ===================================================================== -->
+<div id="basicCalcTab" class="tabSection">
+<div class="container">
+<div class="card">
+  <h2>Basic Calculator</h2>
+  <p class="note">Quick arithmetic calculator for field checks, conversions, and survey totals.</p>
+  <div class="basicCalcWrap">
+    <input type="text" id="bcScreen" class="bcDisplay" value="0" readonly aria-label="Calculator display">
+    <div class="bcGrid" id="bcButtons">
+      <button type="button" class="bcBtn clr" data-bc="C">C</button>
+      <button type="button" class="bcBtn clr" data-bc="DEL">&larr;</button>
+      <button type="button" class="bcBtn op" data-bc="(">(</button>
+      <button type="button" class="bcBtn op" data-bc=")">)</button>
+
+      <button type="button" class="bcBtn op" data-bc="^">x^y</button>
+      <button type="button" class="bcBtn op" data-bc="%">%</button>
+      <button type="button" class="bcBtn op" data-bc="/">&divide;</button>
+      <button type="button" class="bcBtn op" data-bc="*">&times;</button>
+
+      <button type="button" class="bcBtn" data-bc="7">7</button>
+      <button type="button" class="bcBtn" data-bc="8">8</button>
+      <button type="button" class="bcBtn" data-bc="9">9</button>
+      <button type="button" class="bcBtn op" data-bc="-">&minus;</button>
+
+      <button type="button" class="bcBtn" data-bc="4">4</button>
+      <button type="button" class="bcBtn" data-bc="5">5</button>
+      <button type="button" class="bcBtn" data-bc="6">6</button>
+      <button type="button" class="bcBtn op" data-bc="+">+</button>
+
+      <button type="button" class="bcBtn" data-bc="1">1</button>
+      <button type="button" class="bcBtn" data-bc="2">2</button>
+      <button type="button" class="bcBtn" data-bc="3">3</button>
+      <button type="button" class="bcBtn op" data-bc="+">+</button>
+
+      <button type="button" class="bcBtn" data-bc="sqrt">&radic;x</button>
+      <button type="button" class="bcBtn" data-bc="0">0</button>
+      <button type="button" class="bcBtn" data-bc=".">.</button>
+      <button type="button" class="bcBtn eq" data-bc="=">=</button>
+    </div>
+  </div>
+</div>
+</div>
+</div>
+
 <footer style="font-size:12px;font-weight:700;color:var(--text-muted);text-align:center;padding:14px 10px;border-top:1px solid var(--border-color);margin-top:12px;">
   copyright to learn to serve humanity
 </footer>
@@ -1264,6 +1504,7 @@ document.querySelectorAll(".navTab").forEach(btn => {
     document.getElementById(btn.dataset.tab).classList.add("active");
     if(btn.dataset.tab === "fieldTab") redraw();
     if(btn.dataset.tab === "standaloneTab") drawStandaloneTriangle(null, null, null);
+drawQuadSketch(null, null, null, null, null);
   });
 });
 
@@ -1717,9 +1958,62 @@ sketchEditSidesBtn.addEventListener("click", function(){
   redraw();
 });
 
+let movePolygonMode = false;
+let draggingPolygon = false;
+let lastDragPt = null;
+
+const movePolygonBtn = document.getElementById("movePolygonBtn");
+movePolygonBtn.addEventListener("click", function(){
+  movePolygonMode = !movePolygonMode;
+  draggingPolygon = false;
+  lastDragPt = null;
+  this.textContent = movePolygonMode ? "Move Polygon: ON (Drag)" : "Move Polygon: OFF";
+  this.className = movePolygonMode ? "warning" : "secondary";
+  canvas.style.cursor = movePolygonMode ? "grab" : "crosshair";
+  fieldStatus.className = movePolygonMode ? "status adjusted" : "status";
+  fieldStatus.textContent = movePolygonMode
+    ? "Move Polygon ON: Drag anywhere on the sketch to move the entire polygon and all triangles together."
+    : "Move Polygon OFF.";
+});
+
+canvas.addEventListener("pointermove", function(e){
+  if(!draggingPolygon || !lastDragPt) return;
+  e.preventDefault();
+  const p = getCanvasPoint(e);
+  const dx = p.x - lastDragPt.x;
+  const dy = p.y - lastDragPt.y;
+  lastDragPt = p;
+
+  vertices.forEach(v => {
+    v.x += dx;
+    v.y += dy;
+    v.sketchX += dx;
+    v.sketchY += dy;
+    if(Number.isFinite(v.adjustedX)) v.adjustedX += dx;
+    if(Number.isFinite(v.adjustedY)) v.adjustedY += dy;
+  });
+  redraw();
+});
+
+window.addEventListener("pointerup", function(){
+  if(draggingPolygon){
+    draggingPolygon = false;
+    lastDragPt = null;
+    canvas.style.cursor = movePolygonMode ? "grab" : "crosshair";
+    if(vertices.length > 0) saveOrUpdateCurrentSlot(true);
+  }
+});
+
 canvas.addEventListener("pointerdown", function(e){
   e.preventDefault();
   const p = getCanvasPoint(e);
+
+  if(movePolygonMode && vertices.length > 0){
+    draggingPolygon = true;
+    lastDragPt = p;
+    canvas.style.cursor = "grabbing";
+    return;
+  }
 
   if(drawingField){
     addBoundaryPoint(p);
@@ -1728,25 +2022,30 @@ canvas.addEventListener("pointerdown", function(e){
 
   if(!fieldFinished) return;
 
-  // If user is in dedicated "Enter Side Values" mode, tap anywhere along a side opens the side editor
-  if(enteringSidesOnSketch){
-    const tappedSide = findNearestSideAtPoint(p, 28);
-    if(tappedSide){
-      openSketchSideEditor(tappedSide);
-    } else {
-      fieldStatus.className = "status warn";
-      fieldStatus.textContent = "Tap directly on any side line or side badge (B1, D1…) to enter its length.";
-    }
-    return;
-  }
-
-  // Even outside dedicated side-entry mode, tapping directly on a side's midpoint badge opens its editor!
-  const vNear = findNearestVertex(p, 24);
-  if(!vNear){
-    const badgeSide = findNearestSideAtPoint(p, 16);
-    if(badgeSide){
-      openSketchSideEditor(badgeSide);
+  // Side value entry on the sketch is disabled until triangulation is complete
+  if(!triangulationComplete){
+    closeSketchSideEditor();
+  } else {
+    // If user is in dedicated "Enter Side Values" mode, tap anywhere along a side opens the side editor
+    if(enteringSidesOnSketch){
+      const tappedSide = findNearestSideAtPoint(p, 28);
+      if(tappedSide){
+        openSketchSideEditor(tappedSide);
+      } else {
+        fieldStatus.className = "status warn";
+        fieldStatus.textContent = "Tap directly on any side line or side badge (B1, D1…) to enter its length.";
+      }
       return;
+    }
+
+    // After triangulation is complete, tapping on a polygon line or side badge pops the line value fields
+    const vNear = findNearestVertex(p, 22);
+    if(!vNear){
+      const lineSide = findNearestSideAtPoint(p, 18);
+      if(lineSide){
+        openSketchSideEditor(lineSide);
+        return;
+      }
     }
   }
 
@@ -1804,7 +2103,7 @@ function resetCurrentWorkspace(startDrawing = true){
   startBtn.textContent = "Redraw Field";
   finishBtn.disabled = true;
   undoPointBtn.disabled = true;
-  sketchEditSidesBtn.disabled = false;
+  sketchEditSidesBtn.disabled = !triangulationComplete;
   addTriBtn.disabled = true;
   cancelTriBtn.disabled = true;
   if(typeof sketchEditSidesBtn !== "undefined"){ sketchEditSidesBtn.disabled = !fieldFinished; enteringSidesOnSketch = false; sketchEditSidesBtn.textContent = "Enter Side Values"; sketchEditSidesBtn.className = "warning overlayBtn"; closeSketchSideEditor(); }
@@ -2156,7 +2455,7 @@ finishBtn.addEventListener("click", function(){
   fieldFinished = true;
   finishBtn.disabled = true;
   undoPointBtn.disabled = true;
-  sketchEditSidesBtn.disabled = false;
+  sketchEditSidesBtn.disabled = !triangulationComplete;
 
   buildSideRegister();
   updateTriangulationLockUI();
@@ -2334,6 +2633,15 @@ function updateTriangulationLockUI(){
   const complete = checkTriangulationComplete();
   updateScaleBadge();
 
+  if(typeof sketchEditSidesBtn !== "undefined"){
+    sketchEditSidesBtn.disabled = !complete;
+    if(!complete && enteringSidesOnSketch){
+      enteringSidesOnSketch = false;
+      sketchEditSidesBtn.textContent = "Enter Side Values";
+      sketchEditSidesBtn.className = "warning overlayBtn";
+      closeSketchSideEditor();
+    }
+  }
   if(complete){
     addTriBtn.disabled = true;
     cancelTriBtn.disabled = true;
@@ -2972,9 +3280,9 @@ function renderTables(){
 
     tr.innerHTML = `
       <td><span style="display:inline-block;padding:3px 7px;border-radius:5px;background:${col.badgeBg};color:${col.text};font-weight:800">${t.id}</span></td>
-      <td><b>${t.v[0]}</b></td>
-      <td><b>${t.v[1]}</b></td>
-      <td><b>${t.v[2]}</b></td>
+      <td class="vertex-col"><b>${t.v[0]}</b></td>
+      <td class="vertex-col"><b>${t.v[1]}</b></td>
+      <td class="vertex-col"><b>${t.v[2]}</b></td>
 
       <td><b>${s1.id}</b></td>
       <td>${buildSideCellHTML(s1)}</td>
@@ -3536,6 +3844,10 @@ function redraw(){
     drawTriangleLabels();
   }
 
+  if(typeof drawSuggestedDivisionOnSketch === "function"){
+    drawSuggestedDivisionOnSketch();
+  }
+
   vertices.forEach(v => {
     drawVertex(v, selectedVertexUids.includes(v.uid));
   });
@@ -3551,8 +3863,28 @@ function showExportNotice(msg){
   exportStatus.innerHTML = msg;
 }
 
-function triggerDownload(blob, filename){
-  // Capacitor Android native storage write if plugin is present
+async function triggerDownload(blob, filename){
+  // 1. Pop OS File Manager / Save Picker when supported by browser/WebView
+  if(typeof window.showSaveFilePicker === "function"){
+    try{
+      const ext = filename.includes(".") ? "." + filename.split(".").pop().toLowerCase() : "";
+      const handle = await window.showSaveFilePicker({
+        suggestedName: filename,
+        types: ext ? [{
+          description: "Saved Survey File",
+          accept: { [blob.type || "application/octet-stream"]: [ext] }
+        }] : undefined
+      });
+      const writable = await handle.createWritable();
+      await writable.write(blob);
+      await writable.close();
+      return;
+    } catch(err){
+      if(err && err.name === "AbortError") return;
+    }
+  }
+
+  // 2. Capacitor Android native storage write if plugin is present
   if(window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Filesystem){
     const reader = new FileReader();
     reader.onloadend = async function(){
@@ -3571,6 +3903,7 @@ function triggerDownload(blob, filename){
     reader.readAsDataURL(blob);
   }
 
+  // 3. Fallback anchor download
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
@@ -4093,6 +4426,799 @@ window.addEventListener("resize", function(){
 window.addEventListener("orientationchange", function(){
   setTimeout(adaptCanvasAspectToDevice, 180);
 });
+
+/* ==========================================================
+   TOGGLE VERTICES & UNIQUE SIDE REGISTER VISIBILITY
+   ========================================================== */
+const toggleVerticesBtn = document.getElementById("toggleVerticesBtn");
+const toggleSideRegisterBtn = document.getElementById("toggleSideRegisterBtn");
+const triangleTableEl = document.getElementById("triangleTable");
+const sideRegisterCard = document.getElementById("sideRegisterCard");
+
+toggleVerticesBtn.addEventListener("click", function(){
+  const showing = triangleTableEl.classList.toggle("show-vertices");
+  this.textContent = showing ? "Hide Vertices" : "Show Vertices";
+});
+
+toggleSideRegisterBtn.addEventListener("click", function(){
+  const showing = sideRegisterCard.classList.toggle("visible");
+  this.textContent = showing ? "Hide Unique Side Register" : "Show Unique Side Register";
+});
+
+/* ==========================================================
+   FIELD DIVISION SUGGESTION BASED ON MEASURED BOUNDARIES
+   ========================================================== */
+const splitInputsList = document.getElementById("splitInputsList");
+const addSplitPartBtn = document.getElementById("addSplitPartBtn");
+const suggestDivisionBtn = document.getElementById("suggestDivisionBtn");
+const clearDivisionBtn = document.getElementById("clearDivisionBtn");
+const splitSuggestionOutput = document.getElementById("splitSuggestionOutput");
+
+addSplitPartBtn.addEventListener("click", function(){
+  const idx = splitInputsList.querySelectorAll(".splitRow").length + 1;
+  const row = document.createElement("div");
+  row.className = "splitRow";
+  row.innerHTML = `
+    <input type="text" class="spName" value="Part ${String.fromCharCode(64 + idx)}" placeholder="Part name">
+    <input type="number" class="spVal" min="0" step="0.01" placeholder="Area or %">
+    <select class="spUnit">
+      <option value="marla" selected>Marla</option>
+      <option value="pct">Percentage (%)</option>
+      <option value="sqft">Sq Ft</option>
+      <option value="kanal">Kanal</option>
+    </select>
+  `;
+  splitInputsList.appendChild(row);
+});
+
+clearDivisionBtn.addEventListener("click", function(){
+  splitSuggestionOutput.style.display = "none";
+  splitSuggestionOutput.innerHTML = "";
+});
+
+suggestDivisionBtn.addEventListener("click", function(){
+  const totals = computeCurrentTotalAreas();
+  const totalSqFt = totals.totalKahan;
+  if(!totalSqFt || totalSqFt <= 0){
+    splitSuggestionOutput.style.display = "block";
+    splitSuggestionOutput.innerHTML = `<span class="bad">Please complete area calculations first</span> (add triangles and enter side lengths in feet).`;
+    return;
+  }
+
+  const rows = [...splitInputsList.querySelectorAll(".splitRow")];
+  const parts = [];
+  for(const r of rows){
+    const name = (r.querySelector(".spName").value || "Part").trim();
+    const val = parseFloat(r.querySelector(".spVal").value);
+    const unit = r.querySelector(".spUnit").value;
+    if(!Number.isFinite(val) || val <= 0) continue;
+    let sqft = val;
+    if(unit === "pct") sqft = (val / 100) * totalSqFt;
+    else if(unit === "marla") sqft = val * 272.25;
+    else if(unit === "kanal") sqft = val * 5445;
+    parts.push({ name, sqft });
+  }
+
+  if(parts.length === 0){
+    splitSuggestionOutput.style.display = "block";
+    splitSuggestionOutput.innerHTML = `<span class="bad">Enter at least one positive target area</span> to suggest a division.`;
+    return;
+  }
+
+  const sumRequested = parts.reduce((acc, p) => acc + p.sqft, 0);
+  const measuredSides = [...sideMap.values()].filter(s => parseLength(s.length) !== null);
+  const boundarySides = measuredSides.filter(s => s.type === "Boundary");
+  const primarySide = boundarySides[0] || measuredSides[0] || null;
+  const primaryLen = primarySide ? parseLength(primarySide.length) : null;
+
+  let html = `<b>Suggested Division Plan</b> (Calculated Field Area: <b>${totalSqFt.toFixed(2)} sq ft</b> / <b>${(totalSqFt/272.25).toFixed(4)} Marla</b>):<br>`;
+  if(sumRequested > totalSqFt * 1.001){
+    html += `<div class="bad" style="margin:4px 0">Warning: Requested total (${sumRequested.toFixed(2)} sq ft) exceeds total calculated field area (${totalSqFt.toFixed(2)} sq ft).</div>`;
+  }
+
+  parts.forEach((p, idx) => {
+    const share = p.sqft / totalSqFt;
+    const pct = (share * 100).toFixed(2);
+    const marla = (p.sqft / 272.25).toFixed(4);
+    const kanal = (p.sqft / 5445).toFixed(4);
+
+    let boundaryHint = "";
+    if(primarySide && primaryLen){
+      const linDist = (primaryLen * share).toFixed(2);
+      const sqrtDist = (primaryLen * Math.sqrt(Math.min(1, share))).toFixed(2);
+      boundaryHint = ` &rarr; Along <b>${primarySide.id}</b> (${primarySide.u1}–${primarySide.u2}, ${primaryLen} ft): linear strip <b>~${linDist} ft</b> (or from corner: <b>~${sqrtDist} ft</b>)`;
+    }
+
+    const matchingTri = triangles.find(t => {
+      const a = getTriangleAreas(t);
+      return a.kahan !== null && Math.abs(a.kahan - p.sqft) <= totalSqFt * 0.08;
+    });
+    const triHint = matchingTri ? ` [Near existing <b>${matchingTri.id}</b>]` : "";
+
+    html += `<div><b>${idx + 1}. ${p.name}:</b> <b>${p.sqft.toFixed(2)} sq ft</b> (${marla} Marla, ${kanal} Kanal, <b>${pct}%</b>)${triHint}${boundaryHint}</div>`;
+  });
+
+  if(measuredSides.length > 0){
+    const sideSummary = measuredSides.map(s => `${s.id} (${s.u1}–${s.u2}): ${Number(s.length).toFixed(2)} ft`).join(", ");
+    html += `<div class="note">Based on measured boundaries/chords: ${sideSummary}.</div>`;
+  }
+
+  splitSuggestionOutput.style.display = "block";
+  splitSuggestionOutput.innerHTML = html;
+});
+
+/* ==========================================================
+   IRREGULAR QUADRILATERAL (4 SIDES + 1 DIAGONAL) IN TAB 2
+   ========================================================== */
+const modeTriCalcBtn = document.getElementById("modeTriCalcBtn");
+const modeQuadCalcBtn = document.getElementById("modeQuadCalcBtn");
+const quadCalcPanel = document.getElementById("quadCalcPanel");
+const triSinglePanel = document.getElementById("triSinglePanel");
+
+modeTriCalcBtn.addEventListener("click", function(){
+  modeTriCalcBtn.className = "primary smallBtn";
+  modeQuadCalcBtn.className = "secondary smallBtn";
+  triSinglePanel.style.display = "block";
+  quadCalcPanel.style.display = "none";
+});
+
+modeQuadCalcBtn.addEventListener("click", function(){
+  modeQuadCalcBtn.className = "primary smallBtn";
+  modeTriCalcBtn.className = "secondary smallBtn";
+  triSinglePanel.style.display = "none";
+  quadCalcPanel.style.display = "block";
+});
+
+const qdA = document.getElementById("qdA");
+const qdB = document.getElementById("qdB");
+const qdC = document.getElementById("qdC");
+const qdD = document.getElementById("qdD");
+const qdP = document.getElementById("qdP");
+const qdCalcBtn = document.getElementById("qdCalcBtn");
+const qdClearBtn = document.getElementById("qdClearBtn");
+const qdStatus = document.getElementById("qdStatus");
+const qdHeronSqft = document.getElementById("qdHeronSqft");
+const qdHeronUnits = document.getElementById("qdHeronUnits");
+const qdKahanSqft = document.getElementById("qdKahanSqft");
+const qdKahanUnits = document.getElementById("qdKahanUnits");
+const qdBreakdown = document.getElementById("qdBreakdown");
+
+function calculateQuadWithDiagonal(){
+  const a = parseLength(qdA.value);
+  const b = parseLength(qdB.value);
+  const c = parseLength(qdC.value);
+  const d = parseLength(qdD.value);
+  const p = parseLength(qdP.value);
+
+  if(a === null || b === null || c === null || d === null || p === null){
+    qdStatus.innerHTML = "Enter positive lengths for sides <b>a, b, c, d</b> and diagonal <b>p</b>.";
+    qdHeronSqft.textContent = "0.0000 sq ft";
+    qdKahanSqft.textContent = "0.0000 sq ft";
+    qdHeronUnits.textContent = formatUnitSubline(0);
+    qdKahanUnits.textContent = formatUnitSubline(0);
+    qdBreakdown.textContent = "&Delta;1 (a, b, p): — | &Delta;2 (c, d, p): —";
+    return;
+  }
+
+  const h1 = heronArea(a, b, p);
+  const h2 = heronArea(c, d, p);
+  const k1 = kahanArea(a, b, p);
+  const k2 = kahanArea(c, d, p);
+
+  if(h1 === null || h2 === null || k1 === null || k2 === null){
+    qdStatus.innerHTML = `<span class="bad">Invalid diagonal/sides:</span> Diagonal <b>p</b> must form valid triangles with (<b>a, b</b>) and (<b>c, d</b>).`;
+    qdHeronSqft.textContent = "Invalid";
+    qdKahanSqft.textContent = "Invalid";
+    return;
+  }
+
+  const totalH = h1 + h2;
+  const totalK = k1 + k2;
+  qdStatus.innerHTML = `<span class="good">Quadrilateral Area Calculated</span> by splitting along diagonal <b>p = ${p} ft</b>.`;
+  qdHeronSqft.textContent = `${totalH.toFixed(4)} sq ft`;
+  qdHeronUnits.textContent = formatUnitSubline(totalH);
+  qdKahanSqft.textContent = `${totalK.toFixed(4)} sq ft`;
+  qdKahanUnits.textContent = formatUnitSubline(totalK);
+  qdBreakdown.innerHTML =
+    `&Delta;1 (a=${a}, b=${b}, p=${p}): Heron <b>${h1.toFixed(2)}</b> | Kahan <b>${k1.toFixed(2)} sq ft</b> &nbsp;|&nbsp; ` +
+    `&Delta;2 (c=${c}, d=${d}, p=${p}): Heron <b>${h2.toFixed(2)}</b> | Kahan <b>${k2.toFixed(2)} sq ft</b>`;
+}
+
+[qdA, qdB, qdC, qdD, qdP].forEach(el => el.addEventListener("input", calculateQuadWithDiagonal));
+qdCalcBtn.addEventListener("click", calculateQuadWithDiagonal);
+qdClearBtn.addEventListener("click", () => {
+  [qdA, qdB, qdC, qdD, qdP].forEach(el => el.value = "");
+  calculateQuadWithDiagonal();
+});
+
+/* ==========================================================
+   BASIC CALCULATOR (TAB 5)
+   ========================================================== */
+const bcScreen = document.getElementById("bcScreen");
+let bcExpr = "";
+
+function setBcDisplay(val){
+  bcScreen.value = String(val);
+}
+
+document.getElementById("bcButtons").addEventListener("click", function(e){
+  const btn = e.target.closest("button[data-bc]");
+  if(!btn) return;
+  const tok = btn.dataset.bc;
+
+  if(tok === "C"){
+    bcExpr = "";
+    setBcDisplay("0");
+    return;
+  }
+  if(tok === "DEL"){
+    bcExpr = bcExpr.slice(0, -1);
+    setBcDisplay(bcExpr || "0");
+    return;
+  }
+  if(tok === "sqrt"){
+    try{
+      const cleanSqrtExpr = bcExpr.replace(/\^/g, "**").replace(/[^0-9+\-*/.%()*() ]/g, "");
+      const baseVal = cleanSqrtExpr ? Function('"use strict";return (' + cleanSqrtExpr + ')')() : parseFloat(bcScreen.value);
+      if(Number.isFinite(baseVal) && baseVal >= 0){
+        const r = Math.sqrt(baseVal);
+        bcExpr = String(Number(r.toFixed(6)));
+        setBcDisplay(bcExpr);
+      } else {
+        setBcDisplay("Error");
+        bcExpr = "";
+      }
+    } catch(_){
+      setBcDisplay("Error");
+      bcExpr = "";
+    }
+    return;
+  }
+  if(tok === "="){
+    if(!bcExpr) return;
+    try{
+      const sanitized = bcExpr.replace(/\^/g, "**").replace(/[^0-9+\-*/.%()*() ]/g, "");
+      const res = Function('"use strict";return (' + sanitized + ')')();
+      if(Number.isFinite(res)){
+        const formatted = String(Number(res.toFixed(6)));
+        bcExpr = formatted;
+        setBcDisplay(formatted);
+      } else {
+        setBcDisplay("Error");
+        bcExpr = "";
+      }
+    } catch(_){
+      setBcDisplay("Error");
+      bcExpr = "";
+    }
+    return;
+  }
+
+  bcExpr += tok;
+  setBcDisplay(bcExpr);
+});
+
+/* ==========================================================
+   FULL / ACTUAL VIEW FIT BEFORE TRIANGULATION
+   ========================================================== */
+document.getElementById("fitActualViewBtn").addEventListener("click", function(){
+  if(vertices.length === 0){
+    fieldStatus.className = "status warn";
+    fieldStatus.textContent = "Draw boundary points first to fit the sketch to full/actual view.";
+    return;
+  }
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  vertices.forEach(v => {
+    if(v.x < minX) minX = v.x;
+    if(v.x > maxX) maxX = v.x;
+    if(v.y < minY) minY = v.y;
+    if(v.y > maxY) maxY = v.y;
+  });
+  const spanX = Math.max(10, maxX - minX);
+  const spanY = Math.max(10, maxY - minY);
+  const padX = 140;
+  const padY = 95;
+  const scale = Math.min((canvas.width - padX * 2) / spanX, (canvas.height - padY * 2) / spanY);
+  const cx = (minX + maxX) / 2;
+  const cy = (minY + maxY) / 2;
+
+  vertices.forEach(v => {
+    v.x = canvas.width / 2 + (v.x - cx) * scale;
+    v.y = canvas.height / 2 + (v.y - cy) * scale;
+    v.sketchX = v.x;
+    v.sketchY = v.y;
+  });
+  fieldStatus.className = "status adjusted";
+  fieldStatus.textContent = "Sketch adjusted to full/actual view across the drawing area.";
+  redraw();
+});
+
+/* ==========================================================
+   SUGGESTED DIVISION OVERLAY & AREA-PRESERVING LINE ADJUSTMENT
+   ========================================================== */
+const DIV_COLORS = [
+  { fill: "rgba(37, 99, 235, 0.20)", stroke: "#1d4ed8", text: "#1e3a8a" },
+  { fill: "rgba(217, 119, 6, 0.20)", stroke: "#b45309", text: "#92400e" },
+  { fill: "rgba(126, 34, 206, 0.18)", stroke: "#7e22ce", text: "#581c87" },
+  { fill: "rgba(190, 18, 60, 0.18)", stroke: "#be123c", text: "#881337" },
+  { fill: "rgba(13, 148, 136, 0.20)", stroke: "#0f766e", text: "#115e59" }
+];
+
+let suggestedDivisionPlan = null; // { totalSqFt, parts: [{ name, sqft, share }], linePositions: [0..1] }
+
+const alignDivisionBtn = document.getElementById("alignDivisionBtn");
+const divisionAlignPanel = document.getElementById("divisionAlignPanel");
+const divSideSelect = document.getElementById("divSideSelect");
+const divAllSidesBtn = document.getElementById("divAllSidesBtn");
+const divLineIndexSelect = document.getElementById("divLineIndexSelect");
+const divMoveLeftBtn = document.getElementById("divMoveLeftBtn");
+const divMoveRightBtn = document.getElementById("divMoveRightBtn");
+const divStartSlider = document.getElementById("divStartSlider");
+const divStartPosLabel = document.getElementById("divStartPosLabel");
+const divEndSlider = document.getElementById("divEndSlider");
+const divEndPosLabel = document.getElementById("divEndPosLabel");
+const divResetLineBtn = document.getElementById("divResetLineBtn");
+const divClearSketchBtn = document.getElementById("divClearSketchBtn");
+const divAreaPreserveReadout = document.getElementById("divAreaPreserveReadout");
+
+function getSelectedDivisionSides(){
+  const keys = [...divSideSelect.selectedOptions].map(o => o.value);
+  const chosen = [];
+  keys.forEach(k => {
+    const s = sideMap.get(k);
+    if(s) chosen.push(s);
+  });
+  return chosen;
+}
+
+function populateDivisionSideOptions(){
+  const prevSelected = new Set([...divSideSelect.selectedOptions].map(o => o.value));
+  divSideSelect.innerHTML = "";
+  let firstKey = null;
+  sideMap.forEach((s, k) => {
+    if(!firstKey) firstKey = k;
+    const opt = document.createElement("option");
+    opt.value = k;
+    const lenTxt = parseLength(s.length) !== null ? ` (${Number(s.length).toFixed(1)} ft)` : "";
+    opt.textContent = `${s.id}: ${s.u1}–${s.u2}${lenTxt}`;
+    if(prevSelected.has(k)) opt.selected = true;
+    divSideSelect.appendChild(opt);
+  });
+  if(divSideSelect.selectedOptions.length === 0 && firstKey){
+    divSideSelect.options[0].selected = true;
+  }
+}
+
+divAllSidesBtn.addEventListener("click", function(){
+  if(divSideSelect.options.length > 0){
+    for(let i = 0; i < divSideSelect.options.length; i++){
+      divSideSelect.options[i].selected = (i === 0);
+    }
+  }
+  updateDivisionAreaReadout();
+  redraw();
+});
+
+divSideSelect.addEventListener("change", function(){
+  updateDivisionAreaReadout();
+  redraw();
+});
+
+function populateDivisionLineControls(){
+  populateDivisionSideOptions();
+  if(!suggestedDivisionPlan || suggestedDivisionPlan.parts.length < 2){
+    divisionAlignPanel.style.display = "none";
+    return;
+  }
+  const numLines = suggestedDivisionPlan.parts.length - 1;
+  divLineIndexSelect.innerHTML = "";
+  for(let i = 0; i < numLines; i++){
+    const leftP = suggestedDivisionPlan.parts[i].name;
+    const rightP = suggestedDivisionPlan.parts[i + 1].name;
+    const opt = document.createElement("option");
+    opt.value = String(i);
+    opt.textContent = `Line ${i + 1}: ${leftP} | ${rightP}`;
+    divLineIndexSelect.appendChild(opt);
+  }
+  syncDivisionSliderToSelectedLine();
+  updateDivisionAreaReadout();
+}
+
+function syncDivisionSliderToSelectedLine(){
+  if(!suggestedDivisionPlan || !suggestedDivisionPlan.lineEnds.length) return;
+  const lineIdx = parseInt(divLineIndexSelect.value, 10) || 0;
+  const ends = suggestedDivisionPlan.lineEnds[lineIdx] || { f1: 0.5, f2: 0.5 };
+  const pct1 = Math.round(ends.f1 * 100);
+  const pct2 = Math.round(ends.f2 * 100);
+  divStartSlider.value = String(pct1);
+  divStartPosLabel.textContent = `${pct1}%`;
+  divEndSlider.value = String(pct2);
+  divEndPosLabel.textContent = `${pct2}%`;
+}
+
+// Estimate division line length in feet from pixel span and measured side scale
+function estimateDivisionLineFeet(xA, yA, xB, yB){
+  const pxLen = Math.hypot(xB - xA, yB - yA);
+  const selSides = getSelectedDivisionSides();
+  const refSide = selSides[0] || [...sideMap.values()].find(s => parseLength(s.length) !== null);
+  if(refSide){
+    const v1 = getVertex(refSide.u1);
+    const v2 = getVertex(refSide.u2);
+    const measuredFt = parseLength(refSide.length);
+    if(v1 && v2 && measuredFt){
+      const refPx = Math.max(1, Math.hypot(v2.x - v1.x, v2.y - v1.y));
+      return (pxLen / refPx) * measuredFt;
+    }
+  }
+  return pxLen * 0.25;
+}
+
+function setDivisionLineEndFraction(lineIdx, whichEnd, newFrac){
+  if(!suggestedDivisionPlan || suggestedDivisionPlan.parts.length < 2) return;
+  const clamped = Math.max(0.05, Math.min(0.95, newFrac));
+  const ends = suggestedDivisionPlan.lineEnds[lineIdx];
+  if(!ends) return;
+
+  if(whichEnd === "start") ends.f1 = clamped;
+  else ends.f2 = clamped;
+
+  const avgFrac = (ends.f1 + ends.f2) / 2;
+
+  // Redistribute area between left and right adjacent portions while preserving combined area
+  const leftPart = suggestedDivisionPlan.parts[lineIdx];
+  const rightPart = suggestedDivisionPlan.parts[lineIdx + 1];
+  const combinedSqFt = leftPart.sqft + rightPart.sqft;
+
+  const leftStart = (lineIdx === 0) ? 0 : ((suggestedDivisionPlan.lineEnds[lineIdx - 1].f1 + suggestedDivisionPlan.lineEnds[lineIdx - 1].f2) / 2);
+  const rightEnd = (lineIdx === suggestedDivisionPlan.parts.length - 2)
+    ? 1
+    : ((suggestedDivisionPlan.lineEnds[lineIdx + 1].f1 + suggestedDivisionPlan.lineEnds[lineIdx + 1].f2) / 2);
+  const spanBetween = Math.max(0.05, rightEnd - leftStart);
+  const newLeftRatio = Math.max(0.05, Math.min(0.95, (avgFrac - leftStart) / spanBetween));
+
+  leftPart.sqft = combinedSqFt * newLeftRatio;
+  rightPart.sqft = combinedSqFt * (1 - newLeftRatio);
+  leftPart.share = leftPart.sqft / suggestedDivisionPlan.totalSqFt;
+  rightPart.share = rightPart.sqft / suggestedDivisionPlan.totalSqFt;
+
+  syncDivisionSliderToSelectedLine();
+  updateDivisionAreaReadout();
+  redraw();
+}
+
+function updateDivisionAreaReadout(){
+  if(!suggestedDivisionPlan) return;
+  const lineIdx = parseInt(divLineIndexSelect.value, 10) || 0;
+  const leftP = suggestedDivisionPlan.parts[lineIdx];
+  const rightP = suggestedDivisionPlan.parts[lineIdx + 1];
+  if(!leftP || !rightP) return;
+  const sumBoth = leftP.sqft + rightP.sqft;
+  const ends = suggestedDivisionPlan.lineEnds[lineIdx] || { f1: 0.5, f2: 0.5 };
+  divAreaPreserveReadout.innerHTML =
+    `<b>End 1:</b> ${Math.round(ends.f1*100)}% &nbsp;|&nbsp; <b>End 2:</b> ${Math.round(ends.f2*100)}% &nbsp;|&nbsp; ` +
+    `<b>${leftP.name}:</b> ${leftP.sqft.toFixed(2)} sq ft (${(leftP.sqft/272.25).toFixed(3)} Marla) &nbsp;|&nbsp; ` +
+    `<b>${rightP.name}:</b> ${rightP.sqft.toFixed(2)} sq ft (${(rightP.sqft/272.25).toFixed(3)} Marla) &nbsp;|&nbsp; ` +
+    `<b>Combined Area Preserved:</b> ${sumBoth.toFixed(2)} sq ft`;
+}
+
+function clearDivisionFromSketch(){
+  suggestedDivisionPlan = null;
+  divisionAlignPanel.style.display = "none";
+  splitSuggestionOutput.style.display = "none";
+  splitSuggestionOutput.innerHTML = "";
+  redraw();
+  fieldStatus.className = "status";
+  fieldStatus.textContent = "Cleared suggested division and reverted sketch to field view.";
+}
+
+alignDivisionBtn.addEventListener("click", function(){
+  if(!suggestedDivisionPlan){
+    alert("Click Suggest Division first to generate a division plan.");
+    return;
+  }
+  populateDivisionLineControls();
+  divisionAlignPanel.style.display = divisionAlignPanel.style.display === "none" ? "block" : "none";
+});
+
+divLineIndexSelect.addEventListener("change", function(){
+  syncDivisionSliderToSelectedLine();
+  updateDivisionAreaReadout();
+});
+
+divStartSlider.addEventListener("input", function(){
+  const lineIdx = parseInt(divLineIndexSelect.value, 10) || 0;
+  setDivisionLineEndFraction(lineIdx, "start", (parseFloat(this.value) || 50) / 100);
+});
+
+divEndSlider.addEventListener("input", function(){
+  const lineIdx = parseInt(divLineIndexSelect.value, 10) || 0;
+  setDivisionLineEndFraction(lineIdx, "end", (parseFloat(this.value) || 50) / 100);
+});
+
+divMoveLeftBtn.addEventListener("click", function(){
+  const lineIdx = parseInt(divLineIndexSelect.value, 10) || 0;
+  const ends = suggestedDivisionPlan.lineEnds[lineIdx] || { f1: 0.5, f2: 0.5 };
+  setDivisionLineEndFraction(lineIdx, "start", ends.f1 - 0.03);
+  setDivisionLineEndFraction(lineIdx, "end", ends.f2 - 0.03);
+});
+
+divMoveRightBtn.addEventListener("click", function(){
+  const lineIdx = parseInt(divLineIndexSelect.value, 10) || 0;
+  const ends = suggestedDivisionPlan.lineEnds[lineIdx] || { f1: 0.5, f2: 0.5 };
+  setDivisionLineEndFraction(lineIdx, "start", ends.f1 + 0.03);
+  setDivisionLineEndFraction(lineIdx, "end", ends.f2 + 0.03);
+});
+
+divResetLineBtn.addEventListener("click", function(){
+  if(!suggestedDivisionPlan) return;
+  const n = suggestedDivisionPlan.parts.length;
+  const origTotal = suggestedDivisionPlan.totalSqFt;
+  let acc = 0;
+  suggestedDivisionPlan.lineEnds = [];
+  suggestedDivisionPlan.parts.forEach((p, idx) => {
+    const targetFrac = Math.max(0.08, Math.min(0.92, p.sqft / origTotal));
+    if(idx < n - 1){
+      acc += targetFrac;
+      const clamped = Math.max(0.1, Math.min(0.9, acc));
+      suggestedDivisionPlan.lineEnds.push({ f1: clamped, f2: clamped });
+    }
+  });
+  syncDivisionSliderToSelectedLine();
+  updateDivisionAreaReadout();
+  redraw();
+});
+
+divClearSketchBtn.addEventListener("click", clearDivisionFromSketch);
+clearDivisionBtn.addEventListener("click", clearDivisionFromSketch);
+
+suggestDivisionBtn.addEventListener("click", function(){
+  const totals = computeCurrentTotalAreas();
+  const totalSqFt = totals.totalKahan;
+  if(!totalSqFt || totalSqFt <= 0) return;
+
+  const rows = [...splitInputsList.querySelectorAll(".splitRow")];
+  const validParts = [];
+  for(const r of rows){
+    const name = (r.querySelector(".spName").value || "Part").trim();
+    const val = parseFloat(r.querySelector(".spVal").value);
+    const unit = r.querySelector(".spUnit").value;
+    if(!Number.isFinite(val) || val <= 0) continue;
+    let sqft = val;
+    if(unit === "pct") sqft = (val / 100) * totalSqFt;
+    else if(unit === "marla") sqft = val * 272.25;
+    else if(unit === "kanal") sqft = val * 5445;
+    validParts.push({ name, sqft, share: sqft / totalSqFt });
+  }
+  if(validParts.length === 0) return;
+
+  const sumShare = validParts.reduce((s, p) => s + p.share, 0) || 1;
+  let cum = 0;
+  const lineEnds = [];
+  for(let i = 0; i < validParts.length - 1; i++){
+    cum += validParts[i].share / sumShare;
+    const f = Math.max(0.1, Math.min(0.9, cum));
+    lineEnds.push({ f1: f, f2: f });
+  }
+
+  suggestedDivisionPlan = {
+    totalSqFt,
+    parts: validParts,
+    lineEnds
+  };
+  populateDivisionLineControls();
+  redraw();
+});
+
+function drawSuggestedDivisionOnSketch(){
+  if(!suggestedDivisionPlan || !Array.isArray(suggestedDivisionPlan.parts) || suggestedDivisionPlan.parts.length === 0) return;
+  const pVerts = getBoundaryVertices();
+  if(pVerts.length < 3) return;
+
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  pVerts.forEach(v => {
+    if(v.x < minX) minX = v.x;
+    if(v.x > maxX) maxX = v.x;
+    if(v.y < minY) minY = v.y;
+    if(v.y > maxY) maxY = v.y;
+  });
+
+  const spanX = Math.max(20, maxX - minX);
+  const spanY = Math.max(20, maxY - minY);
+  const endsList = suggestedDivisionPlan.lineEnds || [];
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(pVerts[0].x, pVerts[0].y);
+  for(let i = 1; i < pVerts.length; i++){
+    ctx.lineTo(pVerts[i].x, pVerts[i].y);
+  }
+  ctx.closePath();
+  ctx.clip();
+
+  // Compute top and bottom division line endpoints across bounding box using independent End 1 & End 2 sliders
+  const divSegments = endsList.map(e => ({
+    xTop: minX + spanX * (e.f1 ?? 0.5),
+    yTop: minY - 10,
+    xBot: minX + spanX * (e.f2 ?? 0.5),
+    yBot: maxY + 10
+  }));
+
+  suggestedDivisionPlan.parts.forEach((part, idx) => {
+    const col = DIV_COLORS[idx % DIV_COLORS.length];
+    const leftTopX = (idx === 0) ? (minX - 10) : divSegments[idx - 1].xTop;
+    const leftBotX = (idx === 0) ? (minX - 10) : divSegments[idx - 1].xBot;
+    const rightTopX = (idx === suggestedDivisionPlan.parts.length - 1) ? (maxX + 10) : divSegments[idx].xTop;
+    const rightBotX = (idx === suggestedDivisionPlan.parts.length - 1) ? (maxX + 10) : divSegments[idx].xBot;
+
+    ctx.fillStyle = col.fill;
+    ctx.beginPath();
+    ctx.moveTo(leftTopX, minY - 10);
+    ctx.lineTo(rightTopX, minY - 10);
+    ctx.lineTo(rightBotX, maxY + 10);
+    ctx.lineTo(leftBotX, maxY + 10);
+    ctx.closePath();
+    ctx.fill();
+
+    // Draw area of divided portion on the sketch
+    const partCenterX = (leftTopX + leftBotX + rightTopX + rightBotX) / 4;
+    const partCenterY = (minY + maxY) / 2 + ((idx % 2 === 0) ? -12 : 14);
+    ctx.font = "bold 12px Arial";
+    ctx.textAlign = "center";
+    ctx.fillStyle = col.text;
+    ctx.fillText(`${part.name}: ${part.sqft.toFixed(1)} sq ft (${(part.sqft/272.25).toFixed(2)}M)`, partCenterX, partCenterY);
+  });
+
+  // Draw each division line + estimated length in feet
+  divSegments.forEach((seg, lIdx) => {
+    const col = DIV_COLORS[lIdx % DIV_COLORS.length];
+    ctx.strokeStyle = col.stroke;
+    ctx.lineWidth = 2.8;
+    ctx.setLineDash([7, 5]);
+    ctx.beginPath();
+    ctx.moveTo(seg.xTop, seg.yTop);
+    ctx.lineTo(seg.xBot, seg.yBot);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    const estFt = estimateDivisionLineFeet(seg.xTop, seg.yTop, seg.xBot, seg.yBot);
+    const midX = (seg.xTop + seg.xBot) / 2;
+    const midY = (seg.yTop + seg.yBot) / 2;
+    const lenLabel = `L${lIdx + 1} ≈ ${estFt.toFixed(1)} ft`;
+
+    ctx.font = "bold 11px Arial";
+    const tw = ctx.measureText(lenLabel).width + 10;
+    ctx.fillStyle = "rgba(255,255,255,0.92)";
+    ctx.strokeStyle = col.stroke;
+    ctx.lineWidth = 1.2;
+    ctx.fillRect(midX - tw/2, midY - 10, tw, 20);
+    ctx.strokeRect(midX - tw/2, midY - 10, tw, 20);
+    ctx.fillStyle = col.text;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(lenLabel, midX, midY);
+  });
+
+  ctx.restore();
+}
+
+/* ==========================================================
+   QUADRILATERAL (4 SIDES + 1 DIAGONAL) SKETCH DRAWING
+   ========================================================== */
+const quadCanvas = document.getElementById("quadCanvas");
+const qdCtx = quadCanvas ? quadCanvas.getContext("2d") : null;
+
+function drawQuadSketch(a, b, c, d, p){
+  if(!quadCanvas || !qdCtx) return;
+  const W = quadCanvas.width;
+  const H = quadCanvas.height;
+  qdCtx.clearRect(0, 0, W, H);
+
+  qdCtx.strokeStyle = "#edf2f4";
+  qdCtx.lineWidth = 1;
+  for(let x = 0; x < W; x += 35){
+    qdCtx.beginPath(); qdCtx.moveTo(x, 0); qdCtx.lineTo(x, H); qdCtx.stroke();
+  }
+  for(let y = 0; y < H; y += 35){
+    qdCtx.beginPath(); qdCtx.moveTo(0, y); qdCtx.lineTo(W, y); qdCtx.stroke();
+  }
+
+  if(!a || !b || !c || !d || !p){
+    qdCtx.fillStyle = "#64748b";
+    qdCtx.font = "14px Arial";
+    qdCtx.textAlign = "center";
+    qdCtx.fillText("Enter sides a, b, c, d and diagonal p above to preview quadrilateral sketch", W / 2, H / 2);
+    return;
+  }
+
+  // Place diagonal p along horizontal axis: A=(0,0) to C=(p,0)
+  const A = { x: 0, y: 0 };
+  const C = { x: p, y: 0 };
+  const cosA = Math.min(1, Math.max(-1, (a*a + p*p - b*b) / (2 * a * p)));
+  const sinA = Math.sqrt(Math.max(0, 1 - cosA * cosA));
+  const B = { x: a * cosA, y: -a * sinA };
+
+  const cosC2 = Math.min(1, Math.max(-1, (c*c + p*p - d*d) / (2 * c * p)));
+  const sinC2 = Math.sqrt(Math.max(0, 1 - cosC2 * cosC2));
+  const D = { x: p - c * cosC2, y: c * sinC2 };
+
+  const pts = [A, B, C, D];
+  const minX = Math.min(...pts.map(pt => pt.x));
+  const maxX = Math.max(...pts.map(pt => pt.x));
+  const minY = Math.min(...pts.map(pt => pt.y));
+  const maxY = Math.max(...pts.map(pt => pt.y));
+
+  const scale = Math.min((W - 140) / Math.max(1e-3, maxX - minX), (H - 90) / Math.max(1e-3, maxY - minY));
+  const cx = (minX + maxX) / 2;
+  const cy = (minY + maxY) / 2;
+  const mapPt = pt => ({ x: W / 2 + (pt.x - cx) * scale, y: H / 2 + (pt.y - cy) * scale });
+
+  const mA = mapPt(A), mB = mapPt(B), mC = mapPt(C), mD = mapPt(D);
+
+  // Fill delta 1 (A-B-C)
+  qdCtx.beginPath();
+  qdCtx.moveTo(mA.x, mA.y); qdCtx.lineTo(mB.x, mB.y); qdCtx.lineTo(mC.x, mC.y);
+  qdCtx.closePath();
+  qdCtx.fillStyle = "rgba(23, 107, 79, 0.16)";
+  qdCtx.fill();
+
+  // Fill delta 2 (A-C-D)
+  qdCtx.beginPath();
+  qdCtx.moveTo(mA.x, mA.y); qdCtx.lineTo(mC.x, mC.y); qdCtx.lineTo(mD.x, mD.y);
+  qdCtx.closePath();
+  qdCtx.fillStyle = "rgba(29, 78, 216, 0.14)";
+  qdCtx.fill();
+
+  // Outer boundary
+  qdCtx.strokeStyle = "#174f3f";
+  qdCtx.lineWidth = 3;
+  qdCtx.beginPath();
+  qdCtx.moveTo(mA.x, mA.y); qdCtx.lineTo(mB.x, mB.y); qdCtx.lineTo(mC.x, mC.y); qdCtx.lineTo(mD.x, mD.y);
+  qdCtx.closePath();
+  qdCtx.stroke();
+
+  // Diagonal p dashed line
+  qdCtx.save();
+  qdCtx.strokeStyle = "#b45309";
+  qdCtx.lineWidth = 2.4;
+  qdCtx.setLineDash([7, 5]);
+  qdCtx.beginPath();
+  qdCtx.moveTo(mA.x, mA.y);
+  qdCtx.lineTo(mC.x, mC.y);
+  qdCtx.stroke();
+  qdCtx.restore();
+
+  const labelEdge = (p1, p2, txt, col) => {
+    const mx = (p1.x + p2.x) / 2;
+    const my = (p1.y + p2.y) / 2;
+    qdCtx.font = "bold 11.5px Arial";
+    qdCtx.textAlign = "center";
+    qdCtx.textBaseline = "middle";
+    const tw = qdCtx.measureText(txt).width + 10;
+    qdCtx.fillStyle = "rgba(255,255,255,0.92)";
+    qdCtx.fillRect(mx - tw/2, my - 9, tw, 18);
+    qdCtx.fillStyle = col;
+    qdCtx.fillText(txt, mx, my);
+  };
+
+  labelEdge(mA, mB, `a=${a}ft`, "#174f3f");
+  labelEdge(mB, mC, `b=${b}ft`, "#174f3f");
+  labelEdge(mC, mD, `c=${c}ft`, "#1e3a8a");
+  labelEdge(mD, mA, `d=${d}ft`, "#1e3a8a");
+  labelEdge(mA, mC, `p=${p}ft`, "#b45309");
+}
+
+const origQuadCalcFn = calculateQuadWithDiagonal;
+calculateQuadWithDiagonal = function(){
+  origQuadCalcFn();
+  drawQuadSketch(
+    parseLength(qdA.value),
+    parseLength(qdB.value),
+    parseLength(qdC.value),
+    parseLength(qdD.value),
+    parseLength(qdP.value)
+  );
+};
+[qdA, qdB, qdC, qdD, qdP].forEach(el => el.addEventListener("input", calculateQuadWithDiagonal));
 
 /* ==========================================================
    INITIAL STATE
