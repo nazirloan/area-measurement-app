@@ -28,7 +28,7 @@ jobs:
         uses: android-actions/setup-android@v3
 
       - name: Install Capacitor dependencies
-        run: npm install
+        run: npm ci --no-audit --no-fund || npm install --no-audit --no-fund
 
       - name: Initialize Android project & sync offline web assets
         run: |
@@ -37,11 +37,12 @@ jobs:
           fi
           npx cap sync android
 
-      - name: Build Debug APK (Offline & Ad-Free)
+      - name: Accept SDK licenses & build Debug APK
         run: |
+          yes | sdkmanager --licenses >/dev/null 2>&1 || true
           cd android
           chmod +x gradlew
-          ./gradlew assembleDebug
+          ./gradlew assembleDebug --no-daemon
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
