@@ -3930,56 +3930,83 @@ function showExportNotice(msg){
 }
 
 async function triggerDownload(blob, filename){
-  // 1. Pop OS File Manager / Save Picker when supported by browser/WebView
-  if(typeof window.showSaveFilePicker === "function"){
+  // Robust Android + desktop save routine.
+  // The export buttons are intentionally kept as normal button clicks; no popup
+  // window is required for JPG/CSV/XLS files.
+
+  // A) Native Capacitor Filesystem (when this HTML is packaged as an Android app)
+  if(window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Filesystem){
     try{
-      const ext = filename.includes(".") ? "." + filename.split(".").pop().toLowerCase() : "";
+      const reader = new FileReader();
+      const base64Data = await new Promise((resolve, reject) => {
+        reader.onloadend = () => resolve(String(reader.result).split(',')[1] || '');
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+      const fs = window.Capacitor.Plugins.Filesystem;
+      await fs.writeFile({
+        path: "AreaMeasurement/" + filename,
+        data: base64Data,
+        directory: "DOCUMENTS",
+        recursive: true
+      });
+      showExportNotice(`File saved to the device Documents folder as <b>${filename}</b>.`);
+      return true;
+    }catch(e){
+      console.warn("Capacitor save failed; using browser save fallback:", e);
+    }
+  }
+
+  // B) Native browser Save As picker (Chrome/Edge on supported platforms)
+  if(typeof window.showSaveFilePicker === "function" && window.isSecureContext){
+    try{
+      const ext = filename.includes('.') ? '.' + filename.split('.').pop().toLowerCase() : '';
+      const mime = blob.type || 'application/octet-stream';
       const handle = await window.showSaveFilePicker({
         suggestedName: filename,
-        types: ext ? [{
-          description: "Saved Survey File",
-          accept: { [blob.type || "application/octet-stream"]: [ext] }
-        }] : undefined
+        types: ext ? [{description:'Survey file', accept:{[mime]:[ext]}}] : undefined
       });
       const writable = await handle.createWritable();
       await writable.write(blob);
       await writable.close();
-      return;
-    } catch(err){
-      if(err && err.name === "AbortError") return;
+      showExportNotice(`Saved <b>${filename}</b>.`);
+      return true;
+    }catch(e){
+      // User cancellation is not an error; continue only for other failures.
+      if(e && e.name === 'AbortError') return false;
     }
   }
 
-  // 2. Capacitor Android native storage write if plugin is present
-  if(window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Filesystem){
-    const reader = new FileReader();
-    reader.onloadend = async function(){
-      try{
-        const base64Data = reader.result.split(",")[1];
-        await window.Capacitor.Plugins.Filesystem.writeFile({
-          path: "AreaMeasurement/" + filename,
-          data: base64Data,
-          directory: "DOCUMENTS",
-          recursive: true
-        });
-      } catch(e){
-        console.warn("Native write fallback:", e);
-      }
-    };
-    reader.readAsDataURL(blob);
-  }
-
-  // 3. Fallback anchor download
+  // C) Standard Android/desktop browser download.
+  // Keep the anchor in the DOM until the browser has received the click.
   const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
+  const a = document.createElement('a');
+  a.style.display = 'none';
   a.href = url;
   a.download = filename;
+  a.rel = 'noopener';
   document.body.appendChild(a);
-  a.click();
+
+  try{
+    a.click();
+    showExportNotice(`Download started: <b>${filename}</b>. Check the browser's <b>Downloads</b> folder.`);
+  }catch(e){
+    // D) Last-resort fallback: open the actual generated file.
+    // The user can then use Android Share / Save / Download.
+    try{
+      window.open(url, '_blank', 'noopener');
+      showExportNotice(`The file was opened for saving. Use Android <b>Share / Save / Download</b> to store <b>${filename}</b>.`);
+    }catch(e2){
+      // If popups are blocked, navigate the current page to the file only as a final fallback.
+      location.href = url;
+    }
+  }
+
   setTimeout(() => {
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  }, 200);
+    try{ document.body.removeChild(a); }catch(_){ }
+    try{ URL.revokeObjectURL(url); }catch(_){ }
+  }, 5000);
+  return true;
 }
 
 // Helper: Render the ENTIRE sketch with all visible shapes & labels onto a clean export canvas
@@ -4195,7 +4222,7 @@ document.getElementById("exportPdfBtn").addEventListener("click", function(){
     </tr>`;
   }).join("");
 
-  const reportWin = window.open("", "_blank");
+  const reportWin = window.open("about:blank", "_blank");
   if(reportWin){
     reportWin.document.write(`<!DOCTYPE html><html><head><title>Area Measurement PDF Report</title>
       <style>
@@ -4233,7 +4260,7 @@ document.getElementById("exportPdfBtn").addEventListener("click", function(){
     // Fallback for Android WebView where window.open may be restricted
     window.print();
   }
-  showExportNotice(`Opened print/PDF dialog — choose <b>Save as PDF</b> to save your report.`);
+  showExportNotice(`Opened the PDF report. In Android/Chrome choose <b>Print → Save as PDF</b>. If the print window is blocked, use the browser menu and choose <b>Print</b>.`);
 });
 
 /* ==========================================================
