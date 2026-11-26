@@ -42,6 +42,90 @@ jobs:
           fi
           npx cap sync android
 
+      - name: Generate custom landscape app icons (replacing Capacitor icon)
+        run: |
+          python3 - <<'PY'
+          import os, struct, zlib
+
+          def write_png(path, width, height, rgba_bytes):
+              def chunk(tag, data):
+                  return struct.pack("!I", len(data)) + tag + data + struct.pack("!I", zlib.crc32(tag + data) & 0xffffffff)
+              raw = bytearray()
+              stride = width * 4
+              for y in range(height):
+                  raw.append(0)
+                  raw.extend(rgba_bytes[y*stride:(y+1)*stride])
+              ihdr = struct.pack("!IIBBBBB", width, height, 8, 6, 0, 0, 0)
+              png_data = b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", ihdr) + chunk(b"IDAT", zlib.compress(bytes(raw), 9)) + chunk(b"IEND", b"")
+              os.makedirs(os.path.dirname(path), exist_ok=True)
+              with open(path, "wb") as f:
+                  f.write(png_data)
+
+          def render_landscape_icon(size):
+              buf = bytearray(size * size * 4)
+              def set_px(x, y, r, g, b, a=255):
+                  if 0 <= x < size and 0 <= y < size:
+                      i = (y * size + x) * 4
+                      buf[i] = r; buf[i+1] = g; buf[i+2] = b; buf[i+3] = a
+
+              for y in range(size):
+                  for x in range(size):
+                      set_px(x, y, 0x17, 0x4f, 0x3f, 255)
+
+              sx, sy, sr = int(size * 0.72), int(size * 0.28), max(2, int(size * 0.095))
+              for y in range(sy - sr, sy + sr + 1):
+                  for x in range(sx - sr, sx + sr + 1):
+                      if (x - sx)**2 + (y - sy)**2 <= sr**2:
+                          set_px(x, y, 0xf4, 0xc4, 0x30, 255)
+
+              base_y = int(size * 0.76)
+              p1 = (int(size * 0.12), base_y)
+              p2 = (int(size * 0.37), int(size * 0.38))
+              p3 = (int(size * 0.57), int(size * 0.62))
+              p4 = (int(size * 0.70), int(size * 0.46))
+              p5 = (int(size * 0.89), base_y)
+
+              def fill_tri(a, b, c, col):
+                  min_x = max(0, min(a[0], b[0], c[0]))
+                  max_x = min(size - 1, max(a[0], b[0], c[0]))
+                  min_y = max(0, min(a[1], b[1], c[1]))
+                  max_y = min(size - 1, max(a[1], b[1], c[1]))
+                  def edge(u, v, px, py):
+                      return (px - u[0]) * (v[1] - u[1]) - (py - u[1]) * (v[0] - u[0])
+                  for y in range(min_y, max_y + 1):
+                      for x in range(min_x, max_x + 1):
+                          w0 = edge(b, c, x, y)
+                          w1 = edge(c, a, x, y)
+                          w2 = edge(a, b, x, y)
+                          if (w0 >= 0 and w1 >= 0 and w2 >= 0) or (w0 <= 0 and w1 <= 0 and w2 <= 0):
+                              set_px(x, y, col[0], col[1], col[2], 255)
+
+              fill_tri(p1, p2, p3, (0x34, 0xd3, 0x99))
+              fill_tri(p1, p2, (int(size * 0.46), base_y), (0xa7, 0xf3, 0xd0))
+              fill_tri(p3, p4, p5, (0x10, 0xb9, 0x81))
+
+              line_h = max(2, int(size * 0.045))
+              for y in range(base_y, min(size, base_y + line_h)):
+                  for x in range(int(size * 0.09), int(size * 0.91)):
+                      set_px(x, y, 0xff, 0xff, 0xff, 255)
+
+              return bytes(buf)
+
+          sizes = {
+              "mipmap-mdpi": 48,
+              "mipmap-hdpi": 72,
+              "mipmap-xhdpi": 96,
+              "mipmap-xxhdpi": 144,
+              "mipmap-xxxhdpi": 192,
+          }
+          res_root = "android/app/src/main/res"
+          for folder, px in sizes.items():
+              rgba = render_landscape_icon(px)
+              for fname in ("ic_launcher.png", "ic_launcher_round.png", "ic_launcher_foreground.png"):
+                  write_png(os.path.join(res_root, folder, fname), px, px, rgba)
+          print("Generated custom landscape launcher icons.")
+          PY
+
       - name: Build Debug APK (Offline & Ad-Free)
         run: |
           cd android
