@@ -883,6 +883,9 @@ table.show-vertices .vertex-col { display: table-cell; }
   <div class="canvasOverlayTopRight">
     <div class="scaleBadge" id="scaleBadge">Mode: Rough Sketch (Not to Scale)</div>
     <div class="canvasActionRow">
+      <button id="zoomOutSketchBtn" class="secondary overlayBtn" type="button">− Zoom Out</button>
+      <button id="zoomInSketchBtn" class="secondary overlayBtn" type="button">+ Zoom In</button>
+      <button id="resetSketchZoomBtn" class="secondary overlayBtn" type="button">Reset Zoom</button>
       <button id="undoPointBtn" class="secondary overlayBtn" disabled>Undo Point</button>
       <button id="finishBtn" class="primary overlayBtn" disabled>Finish Field</button>
       <button id="cancelTriBtn" class="secondary overlayBtn" disabled>Cancel Sel.</button>
@@ -1013,7 +1016,7 @@ table.show-vertices .vertex-col { display: table-cell; }
 <div class="exportBar">
   <span style="font-size:13px;font-weight:700;color:#174f3f;margin-right:4px">Save / Export Survey:</span>
   <button id="exportPdfBtn" class="exportBtn">Save as PDF</button>
-  <button id="exportJpgBtn" class="exportBtn">Save Sketch as JPG</button>
+  <button id="exportJpgBtn" class="exportBtn">Save Sketch Image (Gallery)</button>
   <button id="exportCsvBtn" class="exportBtn">Save Spreadsheet (CSV)</button>
   <button id="exportXlsBtn" class="exportBtn">Save Excel (.XLS)</button>
 </div>
@@ -1830,6 +1833,14 @@ function cleanupUnusedAuxVertices(){
    CANVAS / TOUCH HANDLING
    ========================================================== */
 
+let sketchZoom = 1;
+const SKETCH_ZOOM_MIN = 1;
+const SKETCH_ZOOM_MAX = 3.5;
+const SKETCH_ZOOM_STEP = 0.25;
+function setSketchZoom(z){ sketchZoom=Math.max(SKETCH_ZOOM_MIN,Math.min(SKETCH_ZOOM_MAX,Number(z)||1)); redraw(); }
+function resetSketchZoom(){ setSketchZoom(1); }
+function canvasPointToWorld(p){ const cx=canvas.width/2,cy=canvas.height/2; return {x:cx+(p.x-cx)/sketchZoom,y:cy+(p.y-cy)/sketchZoom}; }
+
 function getCanvasPoint(e){
   const rect = canvas.getBoundingClientRect();
   let clientX, clientY;
@@ -1842,10 +1853,10 @@ function getCanvasPoint(e){
     clientY = e.clientY;
   }
 
-  return {
+  return canvasPointToWorld({
     x: (clientX - rect.left) * (canvas.width / rect.width),
     y: (clientY - rect.top) * (canvas.height / rect.height)
-  };
+  });
 }
 
 function findNearestSideAtPoint(p, maxDist = 24){
@@ -1994,12 +2005,28 @@ movePolygonBtn.addEventListener("click", function(){
 
 let draggingDivisionHandle = null;
 
+document.getElementById("zoomInSketchBtn").addEventListener("click",()=>setSketchZoom(sketchZoom+SKETCH_ZOOM_STEP));
+document.getElementById("zoomOutSketchBtn").addEventListener("click",()=>setSketchZoom(sketchZoom-SKETCH_ZOOM_STEP));
+document.getElementById("resetSketchZoomBtn").addEventListener("click",resetSketchZoom);
+
 canvas.addEventListener("pointermove", function(e){
   if(draggingDivisionHandle){
     e.preventDefault();
     const p=getCanvasPoint(e);
     const lp=suggestedDivisionPlan && suggestedDivisionPlan.linePoints ? suggestedDivisionPlan.linePoints[draggingDivisionHandle.line] : null;
-    if(lp){ const q=nearestBoundaryPoint(p); if(q) lp[draggingDivisionHandle.end]=q; updateDivisionAreasFromSketch(); redraw(); }
+    if(lp){
+      const q=nearestBoundaryPoint(p);
+      if(q){
+        lp[draggingDivisionHandle.end]={x:q.x,y:q.y};
+        const hit=boundaryEdgeSplitInfo(lp[draggingDivisionHandle.end]);
+        if(hit && suggestedDivisionPlan.lineEnds && suggestedDivisionPlan.lineEnds[draggingDivisionHandle.line]){
+          const ends=suggestedDivisionPlan.lineEnds[draggingDivisionHandle.line];
+          if(draggingDivisionHandle.end === "a") ends.f1=Math.max(0,Math.min(1,hit.t));
+          else ends.f2=Math.max(0,Math.min(1,hit.t));
+        }
+        updateDivisionAreasFromSketch(); redraw();
+      }
+    }
     return;
   }
   if(!draggingPolygon || !lastDragPt) return;
@@ -3840,6 +3867,10 @@ function redraw(){
     ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
   }
 
+  ctx.save();
+  const zcx=canvas.width/2,zcy=canvas.height/2;
+  ctx.translate(zcx,zcy); ctx.scale(sketchZoom,sketchZoom); ctx.translate(-zcx,-zcy);
+
   const pVerts = getBoundaryVertices();
   if(pVerts.length >= 2){
     ctx.strokeStyle = "#174f3f";
@@ -3885,6 +3916,7 @@ function redraw(){
   vertices.forEach(v => {
     drawVertex(v, selectedVertexUids.includes(v.uid));
   });
+  ctx.restore();
 }
 
 /* ==========================================================
@@ -3955,6 +3987,7 @@ function renderEntireSketchForExport(){
   // Save current live state
   const prevCoords = vertices.map(v => ({ uid: v.uid, x: v.x, y: v.y }));
   const prevZoom = zoomedTriangleId;
+  const prevSketchZoom = sketchZoom;
   const prevCustomBg = customCanvasBg;
   const wasDark = document.body.classList.contains("dark-mode");
 
@@ -3962,6 +3995,7 @@ function renderEntireSketchForExport(){
   if(wasDark) document.body.classList.remove("dark-mode");
   customCanvasBg = "#ffffff";
   zoomedTriangleId = null;
+  sketchZoom = 1;
 
   if(vertices.length > 0){
     // Use adjustedX/adjustedY if adjusted, otherwise sketchX/sketchY
@@ -4029,6 +4063,7 @@ function renderEntireSketchForExport(){
     if(v){ v.x = saved.x; v.y = saved.y; }
   });
   zoomedTriangleId = prevZoom;
+  sketchZoom = prevSketchZoom;
   customCanvasBg = prevCustomBg;
   if(wasDark) document.body.classList.add("dark-mode");
   redraw();
@@ -4186,6 +4221,11 @@ document.getElementById("exportPdfBtn").addEventListener("click", function(){
         <b>Kanal:</b> ${document.getElementById("kanal").textContent} &nbsp;|&nbsp;
         <b>Acre:</b> ${document.getElementById("acre").textContent}
       </div>
+      <h2 style="font-size:16px;color:#174f3f;margin-top:16px">Unique Side Register</h2>
+      <table><thead><tr><th>Side ID</th><th>Type</th><th>Endpoints</th><th>Measured Length (ft)</th></tr></thead>
+      <tbody>${[...sideMap.values()].map(s => `<tr><td>${s.id}</td><td>${s.type}</td><td>${s.u1} – ${s.u2}</td><td>${s.length || "—"}</td></tr>`).join("") || '<tr><td colspan="4">No side measurements recorded</td></tr>'}</tbody></table>
+      <h2 style="font-size:16px;color:#174f3f;margin-top:16px">Division / Split Information</h2>
+      <div class="totals">${suggestedDivisionPlan && suggestedDivisionPlan.parts ? suggestedDivisionPlan.parts.map(p => `<b>${p.name}:</b> ${p.sqft.toFixed(2)} sq ft (${(p.sqft/272.25).toFixed(3)} Marla)`).join("<br>") : "No field division plan recorded."}</div>
       <script>window.onload=function(){window.print();}<\/script>
       </body></html>`);
     reportWin.document.close();
