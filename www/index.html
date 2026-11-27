@@ -383,6 +383,10 @@ input[type=number], select{
   flex:1;padding:5px 8px;font-size:11.5px;margin:0;
 }
 
+/* Additional Shape Calculator Styling */
+.shapeCalcPane{background:var(--bg-card);border:1px solid var(--border-color);border-radius:9px;padding:9px;margin-top:8px}
+.shapeCalcPane h4{color:var(--accent-primary)}
+
 /* Standalone Triangle Calculator Styling */
 .calcGrid{
   display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
@@ -838,7 +842,7 @@ table.show-vertices .vertex-col { display: table-cell; }
 
 <nav class="navTabs">
   <button class="navTab active" data-tab="fieldTab">1. Field Sketch</button>
-  <button class="navTab" data-tab="standaloneTab">2. Triangle Calc</button>
+  <button class="navTab" data-tab="standaloneTab">2. Shape Area Calc</button>
   <button class="navTab" data-tab="formulasTab">3. Shape Formulas</button>
   <button class="navTab" data-tab="howtoTab">4. How to Use</button>
   <button class="navTab" data-tab="basicCalcTab">5. Basic Calc</button>
@@ -855,8 +859,11 @@ table.show-vertices .vertex-col { display: table-cell; }
 <div class="controls">
   <button id="startBtn" class="primary">Start / Redraw Field</button>
   <button id="nextSketchBtn" class="warning">New Field (+ Save Current)</button>
-  <button id="fitActualViewBtn" class="accent" type="button">Full / Actual View</button>
+  <button id="fitActualViewBtn" class="accent" type="button">Fit Sketch to Screen</button>
+  <button id="panSketchBtn" class="secondary" type="button">✋ Pan Sketch: OFF</button>
   <button id="movePolygonBtn" class="secondary" type="button">Move Polygon: OFF</button>
+  <button id="gpsBoundaryBtn" class="secondary" type="button">📍 GPS Boundary: OFF</button>
+  <button id="captureGpsPtBtn" class="accent" type="button" style="display:none">+ Add GPS Corner</button>
   <button id="clearBtn" class="danger">Clear Current</button>
 </div>
 
@@ -886,6 +893,7 @@ table.show-vertices .vertex-col { display: table-cell; }
       <button id="zoomOutSketchBtn" class="secondary overlayBtn" type="button">− Zoom Out</button>
       <button id="zoomInSketchBtn" class="secondary overlayBtn" type="button">+ Zoom In</button>
       <button id="resetSketchZoomBtn" class="secondary overlayBtn" type="button">Reset Zoom</button>
+      <button id="canvasFitScreenBtn" class="accent overlayBtn" type="button">Fit Sketch to Screen</button>
       <button id="undoPointBtn" class="secondary overlayBtn" disabled>Undo Point</button>
       <button id="finishBtn" class="primary overlayBtn" disabled>Finish Field</button>
       <button id="cancelTriBtn" class="secondary overlayBtn" disabled>Cancel Sel.</button>
@@ -1095,35 +1103,75 @@ table.show-vertices .vertex-col { display: table-cell; }
 </div>
 
 <!-- =====================================================================
-     TAB 2: STANDALONE TRIANGLE AREA CALCULATOR (HERON & KAHAN)
+     TAB 2: SHAPE AREA CALC (10 GEOMETRIC & SURVEY SHAPES WITH LIVE SKETCHES)
      ===================================================================== -->
 <div id="standaloneTab" class="tabSection">
 <div class="container">
 <div class="card">
-  <h2>Standalone Triangle &amp; Quadrilateral Area Calculator (Heron &amp; Kahan)</h2>
-  <div class="controls" style="margin-bottom:8px">
-    <button id="modeTriCalcBtn" class="primary smallBtn" type="button">Triangle (3 Sides)</button>
-    <button id="modeQuadCalcBtn" class="secondary smallBtn" type="button">Irregular Quadrilateral (4 Sides + 1 Diagonal)</button>
+  <h2>Shape Area Calc — Interactive True-Proportion Geometry</h2>
+  <p class="note" style="margin-top:0">
+    Select a shape below. A default reference sketch with corner IDs (<b>A, B, C…</b>) and side IDs (<b>AB, BC…</b>) appears automatically; once you enter side lengths, angles, or coordinates, the sketch adjusts to true scale with your values labeled on every side.
+  </p>
+
+  <div class="controls" id="shapeCalcTabsBar" style="margin-bottom:10px;gap:5px">
+    <button class="scTabBtn primary smallBtn" data-sc="scTriangle" type="button">Triangle</button>
+    <button class="scTabBtn secondary smallBtn" data-sc="scQuadDiag" type="button">Irregular quadrilateral — 4 sides + diagonal</button>
+    <button class="scTabBtn secondary smallBtn" data-sc="scQuadAngles" type="button">quadrilateral — 4 sides + 4 angles</button>
+    <button class="scTabBtn secondary smallBtn" data-sc="scRectangle" type="button">Rectangle</button>
+    <button class="scTabBtn secondary smallBtn" data-sc="scSquare" type="button">Square</button>
+    <button class="scTabBtn secondary smallBtn" data-sc="scParallelogram" type="button">Parallelogram</button>
+    <button class="scTabBtn secondary smallBtn" data-sc="scRhombus" type="button">Rhombus</button>
+    <button class="scTabBtn secondary smallBtn" data-sc="scTrapezium" type="button">Trapezium/Trapezoid</button>
+    <button class="scTabBtn secondary smallBtn" data-sc="scRegularPoly" type="button">Regular polygon</button>
+    <button class="scTabBtn secondary smallBtn" data-sc="scCoordPoly" type="button">Any polygon using ordered X,Y coordinates</button>
   </div>
 
-  <!-- Quadrilateral with 1 Diagonal Panel -->
-  <div id="quadCalcPanel" style="display:none;background:var(--bg-subtle);border:1px solid var(--border-color);border-radius:10px;padding:12px;margin-bottom:10px">
-    <h3 style="margin:0 0 6px;color:var(--accent-primary)">Irregular Quadrilateral Area (Sides a, b, c, d + Diagonal p)</h3>
-    <p class="note" style="margin-top:0">
-      Diagonal <b>p</b> splits the quadrilateral into <b>&Delta;1 (a, b, p)</b> and <b>&Delta;2 (c, d, p)</b>. Computed via both Heron and Kahan formulas.
-    </p>
+  <!-- 1. TRIANGLE -->
+  <div id="scTriangle" class="scPane">
+    <h3 style="margin:4px 0 6px;color:var(--accent-primary)">Triangle (3 Sides — Heron &amp; Kahan)</h3>
     <div class="calcGrid">
-      <div class="fieldGroup"><label for="qdA">Side a (ft)</label><input type="number" id="qdA" min="0" step="0.01" placeholder="e.g. 100"></div>
-      <div class="fieldGroup"><label for="qdB">Side b (ft)</label><input type="number" id="qdB" min="0" step="0.01" placeholder="e.g. 120"></div>
-      <div class="fieldGroup"><label for="qdC">Side c (ft)</label><input type="number" id="qdC" min="0" step="0.01" placeholder="e.g. 90"></div>
-      <div class="fieldGroup"><label for="qdD">Side d (ft)</label><input type="number" id="qdD" min="0" step="0.01" placeholder="e.g. 110"></div>
-      <div class="fieldGroup"><label for="qdP">Diagonal p (ft)</label><input type="number" id="qdP" min="0" step="0.01" placeholder="e.g. 150"></div>
+      <div class="fieldGroup"><label for="stSideA">Side AB (a, ft)</label><input type="number" id="stSideA" min="0" step="0.01" placeholder="e.g. 120"></div>
+      <div class="fieldGroup"><label for="stSideB">Side BC (b, ft)</label><input type="number" id="stSideB" min="0" step="0.01" placeholder="e.g. 145"></div>
+      <div class="fieldGroup"><label for="stSideC">Side CA (c, ft)</label><input type="number" id="stSideC" min="0" step="0.01" placeholder="e.g. 180"></div>
     </div>
-    <div class="controls" style="margin-top:10px">
-      <button id="qdCalcBtn" class="primary" type="button">Calculate Quadrilateral Area</button>
-      <button id="qdClearBtn" class="secondary" type="button">Clear Quad</button>
+    <div class="controls" style="margin-top:8px">
+      <button id="stCalcBtn" class="primary smallBtn" type="button">Calculate &amp; Adjust Sketch</button>
+      <button id="stClearBtn" class="secondary smallBtn" type="button">Reset Default</button>
     </div>
-    <div class="status" id="qdStatus">Enter sides a, b, c, d and diagonal p (each triangle must satisfy the triangle inequality).</div>
+    <div class="status" id="stStatus">Default triangle preview shown below. Enter sides AB, BC, CA to adjust shape.</div>
+    <canvas id="standaloneCanvas" width="760" height="320" style="width:100%;max-width:100%;height:auto;border:1px solid var(--border-color);border-radius:10px;background:var(--canvas-bg);margin-top:8px"></canvas>
+    <div class="resultRow">
+      <div class="resCard">
+        <div class="title">Heron's Formula Area</div>
+        <div class="bigVal" id="stHeronSqft">0.0000 sq ft</div>
+        <div class="subVal" id="stHeronUnits">0.0000 Marla • 0.0000 Kanal • 0.0000 Acre</div>
+      </div>
+      <div class="resCard kahan">
+        <div class="title">Kahan's Formula Area (Stable)</div>
+        <div class="bigVal" id="stKahanSqft">0.0000 sq ft</div>
+        <div class="subVal" id="stKahanUnits">0.0000 Marla • 0.0000 Kanal • 0.0000 Acre</div>
+      </div>
+    </div>
+    <div class="status" id="stExtraMetrics" style="margin-top:8px">Semi-perimeter (s): — | Perimeter: — | Angles (A, B, C): —</div>
+  </div>
+
+  <!-- 2. IRREGULAR QUADRILATERAL — 4 SIDES + DIAGONAL -->
+  <div id="scQuadDiag" class="scPane" style="display:none">
+    <h3 style="margin:4px 0 6px;color:var(--accent-primary)">Irregular Quadrilateral — 4 Sides + Diagonal AC</h3>
+    <p class="note" style="margin-top:0">Diagonal <b>AC (p)</b> divides quadrilateral <b>ABCD</b> into <b>&Delta;ABC</b> and <b>&Delta;ACD</b>.</p>
+    <div class="calcGrid">
+      <div class="fieldGroup"><label for="qdA">Side AB (a, ft)</label><input type="number" id="qdA" min="0" step="0.01" placeholder="e.g. 100"></div>
+      <div class="fieldGroup"><label for="qdB">Side BC (b, ft)</label><input type="number" id="qdB" min="0" step="0.01" placeholder="e.g. 120"></div>
+      <div class="fieldGroup"><label for="qdC">Side CD (c, ft)</label><input type="number" id="qdC" min="0" step="0.01" placeholder="e.g. 90"></div>
+      <div class="fieldGroup"><label for="qdD">Side DA (d, ft)</label><input type="number" id="qdD" min="0" step="0.01" placeholder="e.g. 110"></div>
+      <div class="fieldGroup"><label for="qdP">Diagonal AC (p, ft)</label><input type="number" id="qdP" min="0" step="0.01" placeholder="e.g. 150"></div>
+    </div>
+    <div class="controls" style="margin-top:8px">
+      <button id="qdCalcBtn" class="primary smallBtn" type="button">Calculate &amp; Adjust Sketch</button>
+      <button id="qdClearBtn" class="secondary smallBtn" type="button">Reset Default</button>
+    </div>
+    <div class="status" id="qdStatus">Default quadrilateral ABCD preview shown below. Enter AB, BC, CD, DA and diagonal AC.</div>
+    <canvas id="quadCanvas" width="760" height="320" style="width:100%;max-width:100%;height:auto;border:1px solid var(--border-color);border-radius:10px;background:var(--canvas-bg);margin-top:8px"></canvas>
     <div class="resultRow">
       <div class="resCard">
         <div class="title">Quad Area — Heron's Formula</div>
@@ -1136,56 +1184,118 @@ table.show-vertices .vertex-col { display: table-cell; }
         <div class="subVal" id="qdKahanUnits">0.0000 Marla • 0.0000 Kanal • 0.0000 Acre</div>
       </div>
     </div>
-    <canvas id="quadCanvas" width="700" height="300" style="width:100%;max-width:100%;height:auto;border:1px solid var(--border-color);border-radius:10px;background:var(--canvas-bg);margin-top:10px"></canvas>
-    <div class="status" id="qdBreakdown" style="margin-top:8px">&Delta;1 (a, b, p): — | &Delta;2 (c, d, p): —</div>
+    <div class="status" id="qdBreakdown" style="margin-top:8px">&Delta;ABC: — | &Delta;ACD: —</div>
   </div>
 
-  <div id="triSinglePanel">
-  <p class="note">
-    Calculate the area of any single triangle independently using both <b>Heron's Formula</b> and <b>Kahan's Numerically Stable Formula</b>.
-  </p>
-
-  <div class="calcGrid">
-    <div class="fieldGroup">
-      <label for="stSideA">Side a (ft)</label>
-      <input type="number" id="stSideA" min="0" step="0.01" placeholder="Enter side a (e.g. 120)">
+  <!-- 3. QUADRILATERAL — 4 SIDES + 4 ANGLES -->
+  <div id="scQuadAngles" class="scPane" style="display:none">
+    <h3 style="margin:4px 0 6px;color:var(--accent-primary)">Quadrilateral — 4 Sides + 4 Interior Angles</h3>
+    <p class="note" style="margin-top:0">Corners <b>A, B, C, D</b> and sides <b>AB, BC, CD, DA</b>. Interior angles must sum to <b>360&deg;</b>.</p>
+    <div class="calcGrid">
+      <div class="fieldGroup"><label for="qaA">Side AB (ft)</label><input type="number" id="qaA" min="0" step="0.01" placeholder="e.g. 100"></div>
+      <div class="fieldGroup"><label for="qaB">Side BC (ft)</label><input type="number" id="qaB" min="0" step="0.01" placeholder="e.g. 85"></div>
+      <div class="fieldGroup"><label for="qaC">Side CD (ft)</label><input type="number" id="qaC" min="0" step="0.01" placeholder="e.g. 110"></div>
+      <div class="fieldGroup"><label for="qaD">Side DA (ft)</label><input type="number" id="qaD" min="0" step="0.01" placeholder="e.g. 90"></div>
+      <div class="fieldGroup"><label for="qaAngA">Angle A (&deg;)</label><input type="number" id="qaAngA" min="0" max="360" step="0.01" placeholder="e.g. 85"></div>
+      <div class="fieldGroup"><label for="qaAngB">Angle B (&deg;)</label><input type="number" id="qaAngB" min="0" max="360" step="0.01" placeholder="e.g. 95"></div>
+      <div class="fieldGroup"><label for="qaAngC">Angle C (&deg;)</label><input type="number" id="qaAngC" min="0" max="360" step="0.01" placeholder="e.g. 88"></div>
+      <div class="fieldGroup"><label for="qaAngD">Angle D (&deg;)</label><input type="number" id="qaAngD" min="0" max="360" step="0.01" placeholder="e.g. 92"></div>
     </div>
-    <div class="fieldGroup">
-      <label for="stSideB">Side b (ft)</label>
-      <input type="number" id="stSideB" min="0" step="0.01" placeholder="Enter side b (e.g. 145)">
+    <div class="controls" style="margin-top:8px">
+      <button id="qaCalcBtn" class="primary smallBtn" type="button">Calculate &amp; Adjust Sketch</button>
+      <button id="qaClearBtn" class="secondary smallBtn" type="button">Reset Default</button>
     </div>
-    <div class="fieldGroup">
-      <label for="stSideC">Side c (ft)</label>
-      <input type="number" id="stSideC" min="0" step="0.01" placeholder="Enter side c (e.g. 180)">
-    </div>
-  </div>
-
-  <div class="controls" style="margin-top:10px">
-    <button id="stCalcBtn" class="primary">Calculate Area</button>
-    <button id="stClearBtn" class="secondary">Clear</button>
-  </div>
-
-  <div class="status" id="stStatus">Enter three valid positive side lengths (sum of any two sides must exceed the third).</div>
-
-  <canvas id="standaloneCanvas" width="700" height="300" style="width:100%;max-width:100%;height:auto;border:1px solid var(--border-color);border-radius:10px;background:var(--canvas-bg);margin-top:10px"></canvas>
-
-  <div class="resultRow">
-    <div class="resCard">
-      <div class="title">Heron's Formula Area</div>
-      <div class="bigVal" id="stHeronSqft">0.0000 sq ft</div>
-      <div class="subVal" id="stHeronUnits">0.0000 Marla • 0.0000 Kanal • 0.0000 Acre</div>
-    </div>
-    <div class="resCard kahan">
-      <div class="title">Kahan's Formula Area (Stable)</div>
-      <div class="bigVal" id="stKahanSqft">0.0000 sq ft</div>
-      <div class="subVal" id="stKahanUnits">0.0000 Marla • 0.0000 Kanal • 0.0000 Acre</div>
+    <div class="status" id="qaStatus">Default quadrilateral ABCD preview shown below. Enter 4 sides and 4 interior angles.</div>
+    <canvas id="quadAnglesCanvas" width="760" height="320" style="width:100%;max-width:100%;height:auto;border:1px solid var(--border-color);border-radius:10px;background:var(--canvas-bg);margin-top:8px"></canvas>
+    <div class="resultRow">
+      <div class="resCard"><div class="title">Area</div><div class="bigVal" id="qaArea">0.0000 sq ft</div><div class="subVal" id="qaUnits">0.0000 Marla • 0.0000 Kanal • 0.0000 Acre</div></div>
+      <div class="resCard kahan"><div class="title">Consistency Check</div><div class="bigVal" id="qaCheck">—</div><div class="subVal" id="qaDiag">Diagonal AC: —</div></div>
     </div>
   </div>
 
-  <div class="status" id="stExtraMetrics" style="margin-top:10px">
-    Semi-perimeter (s): — | Perimeter: — | Angles (A, B, C): —
+  <!-- 4. RECTANGLE -->
+  <div id="scRectangle" class="scPane" style="display:none">
+    <h3 style="margin:4px 0 6px;color:var(--accent-primary)">Rectangle (ABCD)</h3>
+    <div class="calcGrid">
+      <div class="fieldGroup"><label for="rcL">Length AB = CD (ft)</label><input type="number" id="rcL" min="0" step="0.01" placeholder="e.g. 120"></div>
+      <div class="fieldGroup"><label for="rcW">Width BC = DA (ft)</label><input type="number" id="rcW" min="0" step="0.01" placeholder="e.g. 60"></div>
+    </div>
+    <div class="controls" style="margin-top:8px"><button id="rcClearBtn" class="secondary smallBtn" type="button">Reset Default</button></div>
+    <div class="status" id="rcResult">Default rectangle ABCD preview shown below. Enter Length and Width to adjust proportions.</div>
+    <canvas id="rectCanvas" width="760" height="300" style="width:100%;max-width:100%;height:auto;border:1px solid var(--border-color);border-radius:10px;background:var(--canvas-bg);margin-top:8px"></canvas>
   </div>
+
+  <!-- 5. SQUARE -->
+  <div id="scSquare" class="scPane" style="display:none">
+    <h3 style="margin:4px 0 6px;color:var(--accent-primary)">Square (ABCD)</h3>
+    <div class="calcGrid">
+      <div class="fieldGroup"><label for="sqSide">Side AB = BC = CD = DA (ft)</label><input type="number" id="sqSide" min="0" step="0.01" placeholder="e.g. 75"></div>
+    </div>
+    <div class="controls" style="margin-top:8px"><button id="sqClearBtn" class="secondary smallBtn" type="button">Reset Default</button></div>
+    <div class="status" id="sqResult">Default square ABCD preview shown below. Enter Side length.</div>
+    <canvas id="squareCanvas" width="760" height="300" style="width:100%;max-width:100%;height:auto;border:1px solid var(--border-color);border-radius:10px;background:var(--canvas-bg);margin-top:8px"></canvas>
   </div>
+
+  <!-- 6. PARALLELOGRAM -->
+  <div id="scParallelogram" class="scPane" style="display:none">
+    <h3 style="margin:4px 0 6px;color:var(--accent-primary)">Parallelogram (ABCD)</h3>
+    <div class="calcGrid">
+      <div class="fieldGroup"><label for="pgA">Base AB = CD (ft)</label><input type="number" id="pgA" min="0" step="0.01" placeholder="e.g. 110"></div>
+      <div class="fieldGroup"><label for="pgB">Side BC = DA (ft)</label><input type="number" id="pgB" min="0" step="0.01" placeholder="e.g. 70"></div>
+      <div class="fieldGroup"><label for="pgAng">Interior Angle A (&deg;)</label><input type="number" id="pgAng" min="0.01" max="179.99" step="0.01" placeholder="e.g. 65"></div>
+    </div>
+    <div class="controls" style="margin-top:8px"><button id="pgClearBtn" class="secondary smallBtn" type="button">Reset Default</button></div>
+    <div class="status" id="pgResult">Default parallelogram ABCD preview shown below. Enter AB, BC, and Angle A.</div>
+    <canvas id="paraCanvas" width="760" height="300" style="width:100%;max-width:100%;height:auto;border:1px solid var(--border-color);border-radius:10px;background:var(--canvas-bg);margin-top:8px"></canvas>
+  </div>
+
+  <!-- 7. RHOMBUS -->
+  <div id="scRhombus" class="scPane" style="display:none">
+    <h3 style="margin:4px 0 6px;color:var(--accent-primary)">Rhombus (ABCD)</h3>
+    <div class="calcGrid">
+      <div class="fieldGroup"><label for="rhSide">Side AB = BC = CD = DA (ft)</label><input type="number" id="rhSide" min="0" step="0.01" placeholder="e.g. 85"></div>
+      <div class="fieldGroup"><label for="rhAng">Interior Angle A (&deg;)</label><input type="number" id="rhAng" min="0.01" max="179.99" step="0.01" placeholder="e.g. 60"></div>
+    </div>
+    <div class="controls" style="margin-top:8px"><button id="rhClearBtn" class="secondary smallBtn" type="button">Reset Default</button></div>
+    <div class="status" id="rhResult">Default rhombus ABCD preview shown below. Enter Side length and Angle A.</div>
+    <canvas id="rhombusCanvas" width="760" height="300" style="width:100%;max-width:100%;height:auto;border:1px solid var(--border-color);border-radius:10px;background:var(--canvas-bg);margin-top:8px"></canvas>
+  </div>
+
+  <!-- 8. TRAPEZIUM / TRAPEZOID -->
+  <div id="scTrapezium" class="scPane" style="display:none">
+    <h3 style="margin:4px 0 6px;color:var(--accent-primary)">Trapezium / Trapezoid (ABCD, AB &parallel; DC)</h3>
+    <div class="calcGrid">
+      <div class="fieldGroup"><label for="tzA">Bottom Parallel Side AB (ft)</label><input type="number" id="tzA" min="0" step="0.01" placeholder="e.g. 130"></div>
+      <div class="fieldGroup"><label for="tzB">Top Parallel Side CD (ft)</label><input type="number" id="tzB" min="0" step="0.01" placeholder="e.g. 80"></div>
+      <div class="fieldGroup"><label for="tzH">Perpendicular Height h (ft)</label><input type="number" id="tzH" min="0" step="0.01" placeholder="e.g. 55"></div>
+    </div>
+    <div class="controls" style="margin-top:8px"><button id="tzClearBtn" class="secondary smallBtn" type="button">Reset Default</button></div>
+    <div class="status" id="tzResult">Default trapezium ABCD preview shown below. Enter parallel sides AB, CD and height h.</div>
+    <canvas id="trapCanvas" width="760" height="300" style="width:100%;max-width:100%;height:auto;border:1px solid var(--border-color);border-radius:10px;background:var(--canvas-bg);margin-top:8px"></canvas>
+  </div>
+
+  <!-- 9. REGULAR POLYGON -->
+  <div id="scRegularPoly" class="scPane" style="display:none">
+    <h3 style="margin:4px 0 6px;color:var(--accent-primary)">Regular Polygon (Equal Sides &amp; Equal Angles)</h3>
+    <div class="calcGrid">
+      <div class="fieldGroup"><label for="rpN">Number of Sides (n &ge; 3)</label><input type="number" id="rpN" min="3" max="36" step="1" placeholder="e.g. 6"></div>
+      <div class="fieldGroup"><label for="rpS">Each Side Length (ft)</label><input type="number" id="rpS" min="0" step="0.01" placeholder="e.g. 50"></div>
+    </div>
+    <div class="controls" style="margin-top:8px"><button id="rpClearBtn" class="secondary smallBtn" type="button">Reset Default</button></div>
+    <div class="status" id="rpResult">Default regular hexagon preview shown below. Enter number of sides (n) and side length.</div>
+    <canvas id="regPolyCanvas" width="760" height="320" style="width:100%;max-width:100%;height:auto;border:1px solid var(--border-color);border-radius:10px;background:var(--canvas-bg);margin-top:8px"></canvas>
+  </div>
+
+  <!-- 10. ANY POLYGON USING ORDERED X,Y COORDINATES -->
+  <div id="scCoordPoly" class="scPane" style="display:none">
+    <h3 style="margin:4px 0 6px;color:var(--accent-primary)">Any Polygon Using Ordered (X, Y) Coordinates</h3>
+    <p class="note" style="margin-top:0">Enter vertices as <b>x,y</b> pairs in boundary order separated by semicolons (e.g. <b>0,0; 120,0; 140,75; 50,110; -10,60</b>). Side IDs (AB, BC…) and computed side lengths appear automatically on the sketch.</p>
+    <div class="fieldGroup"><label for="polyCoords">Ordered Coordinates (x,y; x,y; … in ft)</label><input type="text" id="polyCoords" placeholder="0,0; 120,0; 140,75; 50,110; -10,60"></div>
+    <div class="controls" style="margin-top:8px"><button id="polyClearBtn" class="secondary smallBtn" type="button">Reset Default</button></div>
+    <div class="status" id="polyResult">Default coordinate polygon preview shown below. Enter ordered X,Y coordinates to plot &amp; calculate.</div>
+    <canvas id="coordPolyCanvas" width="760" height="320" style="width:100%;max-width:100%;height:auto;border:1px solid var(--border-color);border-radius:10px;background:var(--canvas-bg);margin-top:8px"></canvas>
+  </div>
+
 </div>
 </div>
 </div>
@@ -1425,7 +1535,7 @@ table.show-vertices .vertex-col { display: table-cell; }
     </div>
     <div class="step">
       <b>Step 6 — Standalone Triangle Calculator &amp; Shape Formulas:</b><br>
-      Use <b>2. Triangle Calc</b> to compute any single triangle directly from three sides using both Heron's and Kahan's formulas, and browse <b>3. Shape Formulas</b> for definitions, applications, and formulas for irregular quadrilaterals, squares, rectangles, rhombuses, trapeziums, and parallelograms.
+      Use <b>2. Shape Area Calc</b> to compute any single triangle directly from three sides using both Heron's and Kahan's formulas, and browse <b>3. Shape Formulas</b> for definitions, applications, and formulas for irregular quadrilaterals, squares, rectangles, rhombuses, trapeziums, and parallelograms.
     </div>
   </div>
 </div>
@@ -1513,8 +1623,7 @@ document.querySelectorAll(".navTab").forEach(btn => {
     btn.classList.add("active");
     document.getElementById(btn.dataset.tab).classList.add("active");
     if(btn.dataset.tab === "fieldTab") redraw();
-    if(btn.dataset.tab === "standaloneTab") drawStandaloneTriangle(null, null, null);
-drawQuadSketch(null, null, null, null, null);
+    if(btn.dataset.tab === "standaloneTab") { calculateStandaloneTriangle(); calculateQuadWithDiagonal(); calculateQuadAllAngles(); calcCommonShapes(); }
   });
 });
 
@@ -1834,12 +1943,96 @@ function cleanupUnusedAuxVertices(){
    ========================================================== */
 
 let sketchZoom = 1;
-const SKETCH_ZOOM_MIN = 1;
-const SKETCH_ZOOM_MAX = 3.5;
+let panX = 0;
+let panY = 0;
+let panSketchMode = false;
+let draggingSketchPan = false;
+let lastPanPt = null;
+
+const SKETCH_ZOOM_MIN = 0.4;
+const SKETCH_ZOOM_MAX = 4.0;
 const SKETCH_ZOOM_STEP = 0.25;
-function setSketchZoom(z){ sketchZoom=Math.max(SKETCH_ZOOM_MIN,Math.min(SKETCH_ZOOM_MAX,Number(z)||1)); redraw(); }
-function resetSketchZoom(){ setSketchZoom(1); }
-function canvasPointToWorld(p){ const cx=canvas.width/2,cy=canvas.height/2; return {x:cx+(p.x-cx)/sketchZoom,y:cy+(p.y-cy)/sketchZoom}; }
+
+function setSketchZoom(z){
+  sketchZoom = Math.max(SKETCH_ZOOM_MIN, Math.min(SKETCH_ZOOM_MAX, Number(z) || 1));
+  redraw();
+}
+
+function resetSketchZoom(){
+  sketchZoom = 1;
+  panX = 0;
+  panY = 0;
+  redraw();
+}
+
+function canvasPointToWorld(p){
+  const cx = canvas.width / 2;
+  const cy = canvas.height / 2;
+  return {
+    x: cx + (p.x - cx - panX) / sketchZoom,
+    y: cy + (p.y - cy - panY) / sketchZoom
+  };
+}
+
+function fitEntireSketchToScreen(){
+  panX = 0;
+  panY = 0;
+  if(vertices.length === 0){
+    sketchZoom = 1;
+    redraw();
+    return;
+  }
+  const srcX = v => (shapeAdjusted && Number.isFinite(v.adjustedX)) ? v.adjustedX : v.sketchX;
+  const srcY = v => (shapeAdjusted && Number.isFinite(v.adjustedY)) ? v.adjustedY : v.sketchY;
+
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  vertices.forEach(v => {
+    const vx = srcX(v);
+    const vy = srcY(v);
+    if(vx < minX) minX = vx;
+    if(vx > maxX) maxX = vx;
+    if(vy < minY) minY = vy;
+    if(vy > maxY) maxY = vy;
+  });
+
+  const spanX = Math.max(10, maxX - minX);
+  const spanY = Math.max(10, maxY - minY);
+  const padX = 140;
+  const padY = 95;
+  const scale = Math.min((canvas.width - padX * 2) / spanX, (canvas.height - padY * 2) / spanY);
+  const cx = (minX + maxX) / 2;
+  const cy = (minY + maxY) / 2;
+
+  vertices.forEach(v => {
+    const nx = canvas.width / 2 + (srcX(v) - cx) * scale;
+    const ny = canvas.height / 2 + (srcY(v) - cy) * scale;
+    v.x = nx;
+    v.y = ny;
+    v.sketchX = nx;
+    v.sketchY = ny;
+  });
+
+  sketchZoom = 1;
+  fieldStatus.className = "status adjusted";
+  fieldStatus.textContent = "Entire sketch fitted to screen and pan reset.";
+  redraw();
+}
+
+function getRawCanvasPoint(e){
+  const rect = canvas.getBoundingClientRect();
+  let clientX, clientY;
+  if(e.touches && e.touches.length){
+    clientX = e.touches[0].clientX;
+    clientY = e.touches[0].clientY;
+  } else {
+    clientX = e.clientX;
+    clientY = e.clientY;
+  }
+  return {
+    x: (clientX - rect.left) * (canvas.width / rect.width),
+    y: (clientY - rect.top) * (canvas.height / rect.height)
+  };
+}
 
 function getCanvasPoint(e){
   const rect = canvas.getBoundingClientRect();
@@ -1960,7 +2153,7 @@ edInches.addEventListener("input", handleEditorFtInInput);
   inp.addEventListener("keydown", function(e){
     if(e.key === "Enter"){
       e.preventDefault();
-      closeSketchSideEditor();
+      // The later auto-advance handler manages the next side.
     }
   });
 });
@@ -1969,7 +2162,7 @@ sketchEditSidesBtn.addEventListener("click", function(){
   if(!fieldFinished || sketchSideValuePopupLocked) return;
   enteringSidesOnSketch = !enteringSidesOnSketch;
   if(enteringSidesOnSketch){
-    sketchEditSidesBtn.textContent = "Done Entering Sides";
+    sketchEditSidesBtn.textContent = "Side Entry Active";
     sketchEditSidesBtn.className = "primary overlayBtn";
     modeLabel.textContent = "Mode: Enter Side Values on Sketch";
     fieldStatus.className = "status adjusted";
@@ -1989,11 +2182,49 @@ let movePolygonMode = false;
 let draggingPolygon = false;
 let lastDragPt = null;
 
+const panSketchBtn = document.getElementById("panSketchBtn");
 const movePolygonBtn = document.getElementById("movePolygonBtn");
+
+function syncPanModeUI(){
+  if(panSketchBtn){
+    panSketchBtn.textContent = panSketchMode ? "✋ Pan Sketch: ON" : "✋ Pan Sketch: OFF";
+    panSketchBtn.className = panSketchMode ? "warning" : "secondary";
+  }
+  if(!panSketchMode && !movePolygonMode){
+    canvas.style.cursor = "crosshair";
+  }
+}
+
+panSketchBtn.addEventListener("click", function(){
+  panSketchMode = !panSketchMode;
+  draggingSketchPan = false;
+  lastPanPt = null;
+  if(panSketchMode && movePolygonMode){
+    movePolygonMode = false;
+    draggingPolygon = false;
+    movePolygonBtn.textContent = "Move Polygon: OFF";
+    movePolygonBtn.className = "secondary";
+  }
+  syncPanModeUI();
+  if(panSketchMode){
+    canvas.style.cursor = "grab";
+    fieldStatus.className = "status adjusted";
+    fieldStatus.textContent = "✋ Pan Sketch ON: Drag anywhere with one finger or mouse to pan the view (geometry & area stay unchanged).";
+  } else {
+    fieldStatus.className = "status";
+    fieldStatus.textContent = "✋ Pan Sketch OFF.";
+  }
+});
+
 movePolygonBtn.addEventListener("click", function(){
   movePolygonMode = !movePolygonMode;
   draggingPolygon = false;
   lastDragPt = null;
+  if(movePolygonMode && panSketchMode){
+    panSketchMode = false;
+    draggingSketchPan = false;
+    syncPanModeUI();
+  }
   this.textContent = movePolygonMode ? "Move Polygon: ON (Drag)" : "Move Polygon: OFF";
   this.className = movePolygonMode ? "warning" : "secondary";
   canvas.style.cursor = movePolygonMode ? "grab" : "crosshair";
@@ -2010,6 +2241,15 @@ document.getElementById("zoomOutSketchBtn").addEventListener("click",()=>setSket
 document.getElementById("resetSketchZoomBtn").addEventListener("click",resetSketchZoom);
 
 canvas.addEventListener("pointermove", function(e){
+  if(draggingSketchPan && lastPanPt){
+    e.preventDefault();
+    const rp = getRawCanvasPoint(e);
+    panX += rp.x - lastPanPt.x;
+    panY += rp.y - lastPanPt.y;
+    lastPanPt = rp;
+    redraw();
+    return;
+  }
   if(draggingDivisionHandle){
     e.preventDefault();
     const p=getCanvasPoint(e);
@@ -2048,6 +2288,12 @@ canvas.addEventListener("pointermove", function(e){
 });
 
 window.addEventListener("pointerup", function(){
+  if(draggingSketchPan){
+    draggingSketchPan = false;
+    lastPanPt = null;
+    canvas.style.cursor = panSketchMode ? "grab" : (movePolygonMode ? "grab" : "crosshair");
+    return;
+  }
   if(draggingDivisionHandle){ draggingDivisionHandle=null; canvas.style.cursor=movePolygonMode?'grab':'crosshair'; saveOrUpdateCurrentSlot(true); return; }
   if(draggingPolygon){
     draggingPolygon = false;
@@ -2059,6 +2305,12 @@ window.addEventListener("pointerup", function(){
 
 canvas.addEventListener("pointerdown", function(e){
   e.preventDefault();
+  if(panSketchMode){
+    draggingSketchPan = true;
+    lastPanPt = getRawCanvasPoint(e);
+    canvas.style.cursor = "grabbing";
+    return;
+  }
   const p = getCanvasPoint(e);
 
   if(!movePolygonMode && suggestedDivisionPlan && suggestedDivisionPlan.linePoints){
@@ -2155,6 +2407,8 @@ function resetCurrentWorkspace(startDrawing = true){
   shapeAdjusted = false;
   triangulationComplete = false;
   zoomedTriangleId = null;
+  panX = 0;
+  panY = 0;
 
   updateScaleBadge();
   triZoomBar.classList.remove("visible");
@@ -3267,6 +3521,8 @@ function revertToHandSketch(){
   });
   shapeAdjusted = false;
   zoomedTriangleId = null;
+  panX = 0;
+  panY = 0;
   updateScaleBadge();
   revertSketchBtn.style.display = "none";
   canvasRevertBtn.style.display = "none";
@@ -3868,8 +4124,11 @@ function redraw(){
   }
 
   ctx.save();
-  const zcx=canvas.width/2,zcy=canvas.height/2;
-  ctx.translate(zcx,zcy); ctx.scale(sketchZoom,sketchZoom); ctx.translate(-zcx,-zcy);
+  const zcx = canvas.width / 2;
+  const zcy = canvas.height / 2;
+  ctx.translate(zcx + panX, zcy + panY);
+  ctx.scale(sketchZoom, sketchZoom);
+  ctx.translate(-zcx, -zcy);
 
   const pVerts = getBoundaryVertices();
   if(pVerts.length >= 2){
@@ -3930,102 +4189,93 @@ function showExportNotice(msg){
 }
 
 async function triggerDownload(blob, filename){
-  // Robust Android + desktop save routine.
-  // The export buttons are intentionally kept as normal button clicks; no popup
-  // window is required for JPG/CSV/XLS files.
+  const dataUrl = await new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result);
+    r.onerror = () => reject(r.error);
+    r.readAsDataURL(blob);
+  });
 
-  // A) Native Capacitor Filesystem (when this HTML is packaged as an Android app)
+  // 1. Capacitor Android native storage write + Share sheet if available
+  let nativeSavedPath = null;
   if(window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Filesystem){
     try{
-      const reader = new FileReader();
-      const base64Data = await new Promise((resolve, reject) => {
-        reader.onloadend = () => resolve(String(reader.result).split(',')[1] || '');
-        reader.onerror = reject;
-        reader.readAsDataURL(blob);
-      });
-      const fs = window.Capacitor.Plugins.Filesystem;
-      await fs.writeFile({
-        path: "AreaMeasurement/" + filename,
-        data: base64Data,
-        directory: "DOCUMENTS",
-        recursive: true
-      });
-      showExportNotice(`File saved to the device Documents folder as <b>${filename}</b>.`);
-      return true;
-    }catch(e){
-      console.warn("Capacitor save failed; using browser save fallback:", e);
+      const Fs = window.Capacitor.Plugins.Filesystem;
+      if(typeof Fs.requestPermissions === "function"){
+        try{ await Fs.requestPermissions(); } catch(_){}
+      }
+      const base64Data = String(dataUrl).split(",")[1] || "";
+      const dirs = ["DOCUMENTS", "EXTERNAL", "CACHE", "DATA"];
+      for(const dirName of dirs){
+        try{
+          await Fs.writeFile({
+            path: "AreaMeasurement/" + filename,
+            data: base64Data,
+            directory: dirName,
+            recursive: true
+          });
+          nativeSavedPath = `${dirName}/AreaMeasurement/${filename}`;
+          break;
+        } catch(_){}
+      }
+    } catch(e){
+      console.warn("Capacitor Filesystem error:", e);
     }
   }
 
-  // B) Native browser Save As picker (Chrome/Edge on supported platforms)
-  if(typeof window.showSaveFilePicker === "function" && window.isSecureContext){
-    try{
-      const ext = filename.includes('.') ? '.' + filename.split('.').pop().toLowerCase() : '';
-      const mime = blob.type || 'application/octet-stream';
-      const handle = await window.showSaveFilePicker({
-        suggestedName: filename,
-        types: ext ? [{description:'Survey file', accept:{[mime]:[ext]}}] : undefined
-      });
-      const writable = await handle.createWritable();
-      await writable.write(blob);
-      await writable.close();
-      showExportNotice(`Saved <b>${filename}</b>.`);
-      return true;
-    }catch(e){
-      // User cancellation is not an error; continue only for other failures.
-      if(e && e.name === 'AbortError') return false;
-    }
-  }
-
-  // C) Standard Android/desktop browser download.
-  // Keep the anchor in the DOM until the browser has received the click.
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.style.display = 'none';
-  a.href = url;
-  a.download = filename;
-  a.rel = 'noopener';
-  document.body.appendChild(a);
-
+  // 2. Try standard browser/WebView download link (using data URL so WebView handles MIME/extension reliably)
+  let anchorStarted = false;
   try{
+    const a = document.createElement("a");
+    a.href = dataUrl;
+    a.download = filename;
+    a.style.display = "none";
+    document.body.appendChild(a);
     a.click();
-    showExportNotice(`Download started: <b>${filename}</b>. Check the browser's <b>Downloads</b> folder.`);
-  }catch(e){
-    // D) Last-resort fallback: open the actual generated file.
-    // The user can then use Android Share / Save / Download.
-    try{
-      window.open(url, '_blank', 'noopener');
-      showExportNotice(`The file was opened for saving. Use Android <b>Share / Save / Download</b> to store <b>${filename}</b>.`);
-    }catch(e2){
-      // If popups are blocked, navigate the current page to the file only as a final fallback.
-      location.href = url;
-    }
+    anchorStarted = true;
+    setTimeout(() => {
+      if(a.parentNode) a.parentNode.removeChild(a);
+    }, 500);
+  } catch(e){
+    console.warn("Anchor download error:", e);
   }
 
-  setTimeout(() => {
-    try{ document.body.removeChild(a); }catch(_){ }
-    try{ URL.revokeObjectURL(url); }catch(_){ }
-  }, 5000);
-  return true;
+  // 3. Also provide a direct tap-to-save/open link inside #exportStatus so mobile WebViews never leave the user stuck
+  return { dataUrl, nativeSavedPath, anchorStarted };
+}
+
+function buildDirectSaveStatusHtml(summaryText, dataUrl, filename, nativeSavedPath){
+  const isImage = filename.toLowerCase().endsWith(".jpg") || filename.toLowerCase().endsWith(".jpeg") || filename.toLowerCase().endsWith(".png");
+  let extra = `<div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;">`;
+  extra += `<a href="${dataUrl}" download="${filename}" style="display:inline-block;padding:6px 11px;background:#176b4f;color:#fff;border-radius:6px;text-decoration:none;font-weight:700;font-size:12px;">Tap to Download ${filename}</a>`;
+  if(isImage){
+    extra += `<img src="${dataUrl}" alt="${filename}" style="max-height:90px;border:1px solid #cbd5e1;border-radius:6px;">`;
+  }
+  extra += `</div>`;
+  if(nativeSavedPath){
+    extra += `<div style="margin-top:4px;font-size:11.5px;">Saved to device storage: <b>${nativeSavedPath}</b></div>`;
+  }
+  return summaryText + extra;
 }
 
 // Helper: Render the ENTIRE sketch with all visible shapes & labels onto a clean export canvas
 function renderEntireSketchForExport(){
-  // Save current live state
   const prevCoords = vertices.map(v => ({ uid: v.uid, x: v.x, y: v.y }));
   const prevZoom = zoomedTriangleId;
   const prevSketchZoom = sketchZoom;
+  const prevPanX = panX;
+  const prevPanY = panY;
   const prevCustomBg = customCanvasBg;
   const wasDark = document.body.classList.contains("dark-mode");
 
-  // Switch temporarily to crisp light background and full-plot framing so every shape & edge is 100% visible
   if(wasDark) document.body.classList.remove("dark-mode");
   customCanvasBg = "#ffffff";
   zoomedTriangleId = null;
   sketchZoom = 1;
+  panX = 0;
+  panY = 0;
 
   if(vertices.length > 0){
-    // Use adjustedX/adjustedY if adjusted, otherwise sketchX/sketchY
     const srcX = v => (shapeAdjusted && Number.isFinite(v.adjustedX)) ? v.adjustedX : v.sketchX;
     const srcY = v => (shapeAdjusted && Number.isFinite(v.adjustedY)) ? v.adjustedY : v.sketchY;
 
@@ -4054,7 +4304,6 @@ function renderEntireSketchForExport(){
 
   redraw();
 
-  // Copy full canvas + stamped header/footer banner onto export canvas
   const expCanvas = document.createElement("canvas");
   expCanvas.width = canvas.width;
   expCanvas.height = canvas.height + 76;
@@ -4064,12 +4313,10 @@ function renderEntireSketchForExport(){
   eCtx.fillRect(0, 0, expCanvas.width, expCanvas.height);
   eCtx.drawImage(canvas, 0, 0);
 
-  // Outer border around entire exported sketch
   eCtx.strokeStyle = "#174f3f";
   eCtx.lineWidth = 3;
   eCtx.strokeRect(1.5, 1.5, canvas.width - 3, canvas.height - 3);
 
-  // Stamp summary bar at bottom
   eCtx.fillStyle = "#174f3f";
   eCtx.fillRect(0, canvas.height, expCanvas.width, 76);
   eCtx.fillStyle = "#ffffff";
@@ -4084,13 +4331,14 @@ function renderEntireSketchForExport(){
   eCtx.font = "14px Arial";
   eCtx.fillText(`Total Area (Kahan): ${sqftTxt} sq ft  |  Heron: ${heronTxt} sq ft  |  ${marlaTxt} Marla  |  ${kanalTxt} Kanal  |  ${acreTxt} Acre`, 22, canvas.height + 55);
 
-  // Restore exact previous user viewport & theme state
   prevCoords.forEach(saved => {
     const v = getVertex(saved.uid);
     if(v){ v.x = saved.x; v.y = saved.y; }
   });
   zoomedTriangleId = prevZoom;
   sketchZoom = prevSketchZoom;
+  panX = prevPanX;
+  panY = prevPanY;
   customCanvasBg = prevCustomBg;
   if(wasDark) document.body.classList.add("dark-mode");
   redraw();
@@ -4100,19 +4348,28 @@ function renderEntireSketchForExport(){
 
 // 1. Save Entire Sketch as High-Res JPG
 document.getElementById("exportJpgBtn").addEventListener("click", function(){
+  const baseName = (fieldNameInput.value.trim() || ("Field_" + currentSketchNum)).replace(/[^a-zA-Z0-9_-]+/g, "_");
+  const filename = `${baseName}.jpg`;
   const expCanvas = renderEntireSketchForExport();
-  expCanvas.toBlob(blob => {
-    if(blob){
-      triggerDownload(blob, `${(fieldNameInput.value.trim() || 'Field_' + currentSketchNum).replace(/[^a-zA-Z0-9_-]+/g, '_')}.jpg`);
-      showExportNotice(`Saved complete sketch with all shapes as <b>Area_Measurement_Plot_${currentSketchNum}.jpg</b>.`);
-    }
+  const dataUrl = expCanvas.toDataURL("image/jpeg", 0.96);
+  expCanvas.toBlob(async blob => {
+    const effectiveBlob = blob || (await (await fetch(dataUrl)).blob());
+    const res = await triggerDownload(effectiveBlob, filename);
+    showExportNotice(buildDirectSaveStatusHtml(
+      `Prepared JPG sketch <b>${filename}</b>.`,
+      res.dataUrl || dataUrl,
+      filename,
+      res.nativeSavedPath
+    ));
   }, "image/jpeg", 0.96);
 });
 
 // 2. Save as CSV Spreadsheet
-document.getElementById("exportCsvBtn").addEventListener("click", function(){
+document.getElementById("exportCsvBtn").addEventListener("click", async function(){
+  const baseName = (fieldNameInput.value.trim() || ("Field_" + currentSketchNum)).replace(/[^a-zA-Z0-9_-]+/g, "_");
+  const filename = `${baseName}.csv`;
   let lines = [];
-  lines.push(`"J&K Irregular Field Area Report - ${fieldNameInput.value.trim() || ('Field ' + currentSketchNum)}"`);
+  lines.push(`"Field Area Report - ${fieldNameInput.value.trim() || ('Field ' + currentSketchNum)}"`);
   lines.push("");
   lines.push(`"TRIANGLE MEASUREMENTS"`);
   lines.push(`"Triangle","Vertex 1","Vertex 2","Vertex 3","Side 1","Length 1 (ft)","Side 2","Length 2 (ft)","Side 3","Length 3 (ft)","Heron Area (sq ft)","Kahan Area (sq ft)"`);
@@ -4148,12 +4405,19 @@ document.getElementById("exportCsvBtn").addEventListener("click", function(){
   lines.push(`"Acre (43560 sq ft)","${document.getElementById("acre").textContent}"`);
 
   const blob = new Blob([lines.join("\r\n")], { type: "text/csv;charset=utf-8;" });
-  triggerDownload(blob, `${(fieldNameInput.value.trim() || 'Field_' + currentSketchNum).replace(/[^a-zA-Z0-9_-]+/g, '_')}.csv`);
-  showExportNotice(`Saved spreadsheet as <b>Area_Measurement_Plot_${currentSketchNum}.csv</b>.`);
+  const res = await triggerDownload(blob, filename);
+  showExportNotice(buildDirectSaveStatusHtml(
+    `Prepared CSV spreadsheet <b>${filename}</b>.`,
+    res.dataUrl,
+    filename,
+    res.nativeSavedPath
+  ));
 });
 
 // 3. Save as Excel (.XLS) Workbook
-document.getElementById("exportXlsBtn").addEventListener("click", function(){
+document.getElementById("exportXlsBtn").addEventListener("click", async function(){
+  const baseName = (fieldNameInput.value.trim() || ("Field_" + currentSketchNum)).replace(/[^a-zA-Z0-9_-]+/g, "_");
+  const filename = `${baseName}.xls`;
   let triRows = triangles.map(t => {
     const s1 = getSide(t.v[0], t.v[1]);
     const s2 = getSide(t.v[1], t.v[2]);
@@ -4178,7 +4442,7 @@ document.getElementById("exportXlsBtn").addEventListener("click", function(){
     <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel">
     <head><meta charset="UTF-8"></head>
     <body>
-      <h3>J&amp;K Irregular Field Survey Report — ${fieldNameInput.value.trim() || ('Field ' + currentSketchNum)}</h3>
+      <h3>Field Survey Report — ${fieldNameInput.value.trim() || ('Field ' + currentSketchNum)}</h3>
       <table border="1">
         <tr><th>Triangle</th><th>V1</th><th>V2</th><th>V3</th><th>Side 1</th><th>Length (ft)</th><th>Side 2</th><th>Length (ft)</th><th>Side 3</th><th>Length (ft)</th><th>Heron Area (sq ft)</th><th>Kahan Area (sq ft)</th></tr>
         ${triRows}
@@ -4200,73 +4464,346 @@ document.getElementById("exportXlsBtn").addEventListener("click", function(){
     </body></html>`;
 
   const blob = new Blob([xlsHtml], { type: "application/vnd.ms-excel;charset=utf-8;" });
-  triggerDownload(blob, `${(fieldNameInput.value.trim() || 'Field_' + currentSketchNum).replace(/[^a-zA-Z0-9_-]+/g, '_')}.xls`);
-  showExportNotice(`Saved Excel spreadsheet as <b>Area_Measurement_Plot_${currentSketchNum}.xls</b>.`);
+  const res = await triggerDownload(blob, filename);
+  showExportNotice(buildDirectSaveStatusHtml(
+    `Prepared Excel workbook <b>${filename}</b>.`,
+    res.dataUrl,
+    filename,
+    res.nativeSavedPath
+  ));
 });
 
-// 4. Save as PDF Report (Generates clean printable PDF report with embedded canvas image + tables)
-document.getElementById("exportPdfBtn").addEventListener("click", function(){
-  const imgData = renderEntireSketchForExport().toDataURL("image/png");
-  let triRows = triangles.map(t => {
-    const s1 = getSide(t.v[0], t.v[1]);
-    const s2 = getSide(t.v[1], t.v[2]);
-    const s3 = getSide(t.v[2], t.v[0]);
-    const areas = getTriangleAreas(t);
-    return `<tr>
-      <td><b>${t.id}</b></td><td>${t.v.join(" – ")}</td>
-      <td>${s1.id}: ${s1.length || "—"} ft</td>
-      <td>${s2.id}: ${s2.length || "—"} ft</td>
-      <td>${s3.id}: ${s3.length || "—"} ft</td>
-      <td>${areas.heron !== null ? areas.heron.toFixed(2) : "—"}</td>
-      <td><b>${areas.kahan !== null ? areas.kahan.toFixed(2) : "—"}</b></td>
-    </tr>`;
-  }).join("");
+// 4. Save as PDF Report (Generates a genuine downloadable .pdf file with embedded sketch image & survey summary)
+function createSurveyPdfBlob(expCanvas, titleText, summaryLines){
+  const jpgUrl = expCanvas.toDataURL("image/jpeg", 0.90);
+  const b64 = jpgUrl.split(",")[1] || "";
+  const binStr = atob(b64);
+  const imgBytes = new Uint8Array(binStr.length);
+  for(let i = 0; i < binStr.length; i++) imgBytes[i] = binStr.charCodeAt(i);
 
-  const reportWin = window.open("about:blank", "_blank");
-  if(reportWin){
-    reportWin.document.write(`<!DOCTYPE html><html><head><title>Area Measurement PDF Report</title>
-      <style>
-        body{font-family:Arial,sans-serif;padding:20px;color:#18212a}
-        h1{color:#174f3f;font-size:20px;margin-bottom:4px}
-        img{max-width:100%;border:1px solid #ccc;border-radius:8px;margin:10px 0}
-        table{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px}
-        th,td{border:1px solid #cbd5e1;padding:6px;text-align:center}
-        th{background:#eef7f3;color:#174f3f}
-        .totals{margin-top:14px;padding:10px;background:#f0fdf4;border:1px solid #bbf7d0;font-size:14px}
-      </style></head><body>
-      <h1>Area Measurement — Field Survey Report — ${fieldNameInput.value.trim() || ('Field ' + currentSketchNum)}</h1>
-      <div>Status: ${shapeAdjusted ? "True-to-Scale Adjusted Geometry" : "Manual Triangulation Layout"}</div>
-      <img src="${imgData}" />
-      <table>
-        <thead><tr><th>Triangle</th><th>Vertices</th><th>Side 1</th><th>Side 2</th><th>Side 3</th><th>Heron (sq ft)</th><th>Kahan (sq ft)</th></tr></thead>
-        <tbody>${triRows || '<tr><td colspan="7">No triangles recorded</td></tr>'}</tbody>
-      </table>
-      <div class="totals">
-        <b>Total Area (Kahan):</b> ${document.getElementById("sqft").textContent} sq ft &nbsp;|&nbsp;
-        <b>Total Area (Heron):</b> ${document.getElementById("heronSqft").textContent} sq ft<br>
-        <b>Marla:</b> ${document.getElementById("marla").textContent} &nbsp;|&nbsp;
-        <b>Kanal:</b> ${document.getElementById("kanal").textContent} &nbsp;|&nbsp;
-        <b>Acre:</b> ${document.getElementById("acre").textContent}
-      </div>
-      <h2 style="font-size:16px;color:#174f3f;margin-top:16px">Unique Side Register</h2>
-      <table><thead><tr><th>Side ID</th><th>Type</th><th>Endpoints</th><th>Measured Length (ft)</th></tr></thead>
-      <tbody>${[...sideMap.values()].map(s => `<tr><td>${s.id}</td><td>${s.type}</td><td>${s.u1} – ${s.u2}</td><td>${s.length || "—"}</td></tr>`).join("") || '<tr><td colspan="4">No side measurements recorded</td></tr>'}</tbody></table>
-      <h2 style="font-size:16px;color:#174f3f;margin-top:16px">Division / Split Information</h2>
-      <div class="totals">${suggestedDivisionPlan && suggestedDivisionPlan.parts ? suggestedDivisionPlan.parts.map(p => `<b>${p.name}:</b> ${p.sqft.toFixed(2)} sq ft (${(p.sqft/272.25).toFixed(3)} Marla)`).join("<br>") : "No field division plan recorded."}</div>
-      <script>window.onload=function(){window.print();}<\/script>
-      </body></html>`);
-    reportWin.document.close();
-  } else {
-    // Fallback for Android WebView where window.open may be restricted
-    window.print();
+  const imgW = expCanvas.width;
+  const imgH = expCanvas.height;
+  const pageW = 595;
+  const pageH = 842;
+  const drawW = pageW - 64;
+  const drawH = Math.min(360, (drawW * imgH) / imgW);
+  const imgY = pageH - 64 - drawH;
+
+  const escPdf = s => String(s).replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)");
+
+  let textOps = `BT /F1 14 Tf 32 ${pageH - 42} Td (${escPdf(titleText)}) Tj ET\n`;
+  let ty = imgY - 24;
+  summaryLines.forEach(line => {
+    if(ty > 40){
+      textOps += `BT /F1 10.5 Tf 32 ${ty} Td (${escPdf(line)}) Tj ET\n`;
+      ty -= 16;
+    }
+  });
+  const contentStream = `${textOps}q ${drawW.toFixed(1)} 0 0 ${drawH.toFixed(1)} 32 ${imgY.toFixed(1)} cm /Im1 Do Q\n`;
+
+  const enc = new TextEncoder();
+  const chunks = [];
+  const offsets = [0];
+  let curLen = 0;
+
+  function pushStr(str){
+    const bytes = enc.encode(str);
+    chunks.push(bytes);
+    curLen += bytes.length;
   }
-  showExportNotice(`Opened the PDF report. In Android/Chrome choose <b>Print → Save as PDF</b>. If the print window is blocked, use the browser menu and choose <b>Print</b>.`);
+  function pushBytes(bytes){
+    chunks.push(bytes);
+    curLen += bytes.length;
+  }
+
+  pushStr("%PDF-1.4\n");
+  offsets.push(curLen);
+  pushStr("1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n");
+
+  offsets.push(curLen);
+  pushStr("2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n");
+
+  offsets.push(curLen);
+  pushStr(`3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pageW} ${pageH}] /Resources << /Font << /F1 4 0 R >> /XObject << /Im1 5 0 R >> >> /Contents 6 0 R >>\nendobj\n`);
+
+  offsets.push(curLen);
+  pushStr("4 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\nendobj\n");
+
+  offsets.push(curLen);
+  pushStr(`5 0 obj\n<< /Type /XObject /Subtype /Image /Width ${imgW} /Height ${imgH} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${imgBytes.length} >>\nstream\n`);
+  pushBytes(imgBytes);
+  pushStr("\nendstream\nendobj\n");
+
+  const cBytes = enc.encode(contentStream);
+  offsets.push(curLen);
+  pushStr(`6 0 obj\n<< /Length ${cBytes.length} >>\nstream\n`);
+  pushBytes(cBytes);
+  pushStr("\nendstream\nendobj\n");
+
+  const xrefPos = curLen;
+  pushStr(`xref\n0 ${offsets.length}\n`);
+  pushStr("0000000000 65535 f \n");
+  for(let i = 1; i < offsets.length; i++){
+    pushStr(String(offsets[i]).padStart(10, "0") + " 00000 n \n");
+  }
+  pushStr(`trailer\n<< /Size ${offsets.length} /Root 1 0 R >>\nstartxref\n${xrefPos}\n%%EOF`);
+
+  return new Blob(chunks, { type: "application/pdf" });
+}
+
+document.getElementById("exportPdfBtn").addEventListener("click", async function(){
+  const baseName = (fieldNameInput.value.trim() || ("Field_" + currentSketchNum)).replace(/[^a-zA-Z0-9_-]+/g, "_");
+  const filename = `${baseName}.pdf`;
+  const expCanvas = renderEntireSketchForExport();
+
+  const summaryLines = [
+    `Status: ${shapeAdjusted ? "True-to-Scale Adjusted Geometry" : "Manual Triangulation Layout"}`,
+    `Total Area (Kahan): ${document.getElementById("sqft").textContent} sq ft | Heron: ${document.getElementById("heronSqft").textContent} sq ft`,
+    `Marla: ${document.getElementById("marla").textContent} | Kanal: ${document.getElementById("kanal").textContent} | Acre: ${document.getElementById("acre").textContent}`,
+    ...triangles.map(t => {
+      const a = getTriangleAreas(t);
+      return `${t.id} (${t.v.join("-")}): Kahan ${a.kahan !== null ? a.kahan.toFixed(2) : "-"} sq ft | Heron ${a.heron !== null ? a.heron.toFixed(2) : "-"} sq ft`;
+    })
+  ];
+
+  const pdfBlob = createSurveyPdfBlob(
+    expCanvas,
+    `Area Measurement Report - ${fieldNameInput.value.trim() || ("Field " + currentSketchNum)}`,
+    summaryLines
+  );
+  const res = await triggerDownload(pdfBlob, filename);
+  showExportNotice(buildDirectSaveStatusHtml(
+    `Prepared PDF report <b>${filename}</b>.`,
+    res.dataUrl,
+    filename,
+    res.nativeSavedPath
+  ));
 });
 
 /* ==========================================================
-   TAB 2: STANDALONE TRIANGLE CALCULATOR (HERON & KAHAN)
+   TAB 2: SHAPE AREA CALC — UNIVERSAL POLYGON SKETCH & 10 SHAPE CALCULATORS
    ========================================================== */
 
+function formatUnitSubline(sqft){
+  const marla = (sqft / 272.25).toFixed(4);
+  const kanal = (sqft / 5445).toFixed(4);
+  const acre = (sqft / 43560).toFixed(4);
+  return `${marla} Marla • ${kanal} Kanal • ${acre} Acre`;
+}
+
+function areaUnitText(area){
+  return formatUnitSubline(area);
+}
+
+function vertexLetters(n){
+  const out = [];
+  for(let i = 0; i < n; i++){
+    if(i < 26) out.push(String.fromCharCode(65 + i));
+    else out.push("P" + (i + 1));
+  }
+  return out;
+}
+
+// Universal proportional polygon renderer with corner IDs (A, B, C...) & side IDs + values (AB = 100 ft)
+function renderShapeSketch(canvasEl, opts){
+  if(!canvasEl) return;
+  const c = canvasEl.getContext("2d");
+  const W = canvasEl.width;
+  const H = canvasEl.height;
+  const isDark = document.body.classList.contains("dark-mode");
+
+  c.fillStyle = isDark ? "#0b1120" : "#fafafa";
+  c.fillRect(0, 0, W, H);
+
+  c.strokeStyle = isDark ? "#1e293b" : "#edf2f4";
+  c.lineWidth = 1;
+  for(let x = 0; x < W; x += 35){
+    c.beginPath(); c.moveTo(x, 0); c.lineTo(x, H); c.stroke();
+  }
+  for(let y = 0; y < H; y += 35){
+    c.beginPath(); c.moveTo(0, y); c.lineTo(W, y); c.stroke();
+  }
+
+  const pts = opts.points || [];
+  if(pts.length < 3) return;
+
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  pts.forEach(p => {
+    if(p.x < minX) minX = p.x;
+    if(p.x > maxX) maxX = p.x;
+    if(p.y < minY) minY = p.y;
+    if(p.y > maxY) maxY = p.y;
+  });
+
+  const padX = 115;
+  const padY = 68;
+  const scale = Math.min(
+    (W - padX * 2) / Math.max(1e-3, maxX - minX),
+    (H - padY * 2) / Math.max(1e-3, maxY - minY)
+  );
+  const cx = (minX + maxX) / 2;
+  const cy = (minY + maxY) / 2;
+
+  const mapPt = p => ({
+    x: W / 2 + (p.x - cx) * scale,
+    y: H / 2 + (p.y - cy) * scale
+  });
+
+  const mPts = pts.map(mapPt);
+  const labels = opts.cornerLabels || vertexLetters(mPts.length);
+
+  // Polygon fill & border
+  c.beginPath();
+  c.moveTo(mPts[0].x, mPts[0].y);
+  for(let i = 1; i < mPts.length; i++) c.lineTo(mPts[i].x, mPts[i].y);
+  c.closePath();
+  c.fillStyle = opts.isDefault ? "rgba(100, 116, 139, 0.10)" : "rgba(23, 107, 79, 0.16)";
+  c.fill();
+  c.strokeStyle = opts.isDefault ? "#475569" : "#176b4f";
+  c.lineWidth = 3;
+  c.stroke();
+
+  // Optional internal lines (diagonal p or height h)
+  (opts.extraLines || []).forEach(line => {
+    const p1 = mapPt(line.from);
+    const p2 = mapPt(line.to);
+    c.save();
+    c.strokeStyle = line.color || "#b45309";
+    c.lineWidth = 2.2;
+    c.setLineDash(line.dash || [7, 5]);
+    c.beginPath();
+    c.moveTo(p1.x, p1.y);
+    c.lineTo(p2.x, p2.y);
+    c.stroke();
+    c.restore();
+
+    if(line.label){
+      const mx = (p1.x + p2.x) / 2;
+      const my = (p1.y + p2.y) / 2;
+      c.font = "bold 11.5px Arial";
+      const tw = c.measureText(line.label).width + 12;
+      c.fillStyle = "rgba(255,255,255,0.94)";
+      c.strokeStyle = line.color || "#b45309";
+      c.lineWidth = 1.3;
+      c.fillRect(mx - tw / 2, my - 10, tw, 20);
+      c.strokeRect(mx - tw / 2, my - 10, tw, 20);
+      c.fillStyle = line.color || "#b45309";
+      c.textAlign = "center";
+      c.textBaseline = "middle";
+      c.fillText(line.label, mx, my);
+    }
+  });
+
+  // Side IDs & values on every edge
+  const polyCx = mPts.reduce((s, p) => s + p.x, 0) / mPts.length;
+  const polyCy = mPts.reduce((s, p) => s + p.y, 0) / mPts.length;
+
+  for(let i = 0; i < mPts.length; i++){
+    const j = (i + 1) % mPts.length;
+    const p1 = mPts[i];
+    const p2 = mPts[j];
+    const defaultSideId = `${labels[i]}${labels[j]}`;
+    const sideText = (opts.sideLabels && opts.sideLabels[i]) ? opts.sideLabels[i] : defaultSideId;
+
+    const mx = (p1.x + p2.x) / 2;
+    const my = (p1.y + p2.y) / 2;
+    const dx = p2.x - p1.x;
+    const dy = p2.y - p1.y;
+    const len = Math.max(1, Math.hypot(dx, dy));
+    let nx = -dy / len;
+    let ny = dx / len;
+    // Push edge label slightly outward away from polygon center
+    if((mx - polyCx) * nx + (my - polyCy) * ny < 0){
+      nx = -nx;
+      ny = -ny;
+    }
+    const lx = mx + nx * 16;
+    const ly = my + ny * 16;
+
+    c.font = "bold 11.5px Arial";
+    const tw = c.measureText(sideText).width + 12;
+    c.fillStyle = opts.isDefault ? "rgba(255,255,255,0.92)" : "rgba(236,253,245,0.96)";
+    c.strokeStyle = opts.isDefault ? "#64748b" : "#176b4f";
+    c.lineWidth = 1.3;
+    c.fillRect(lx - tw / 2, ly - 10, tw, 20);
+    c.strokeRect(lx - tw / 2, ly - 10, tw, 20);
+    c.fillStyle = opts.isDefault ? "#334155" : "#065f46";
+    c.textAlign = "center";
+    c.textBaseline = "middle";
+    c.fillText(sideText, lx, ly);
+  }
+
+  // Corner IDs (and optional angle tags)
+  for(let i = 0; i < mPts.length; i++){
+    const pt = mPts[i];
+    const vx = pt.x - polyCx;
+    const vy = pt.y - polyCy;
+    const vLen = Math.max(1, Math.hypot(vx, vy));
+    const ux = vx / vLen;
+    const uy = vy / vLen;
+
+    c.beginPath();
+    c.arc(pt.x, pt.y, 6, 0, Math.PI * 2);
+    c.fillStyle = opts.isDefault ? "#475569" : "#174f3f";
+    c.fill();
+    c.lineWidth = 1.5;
+    c.strokeStyle = "#ffffff";
+    c.stroke();
+
+    const cornerText = (opts.cornerTexts && opts.cornerTexts[i]) ? opts.cornerTexts[i] : labels[i];
+    c.font = "bold 12.5px Arial";
+    c.textAlign = "center";
+    c.textBaseline = "middle";
+    const tx = pt.x + ux * 18;
+    const ty = pt.y + uy * 18;
+    c.lineWidth = 3;
+    c.strokeStyle = isDark ? "rgba(11,17,32,0.9)" : "rgba(255,255,255,0.95)";
+    c.strokeText(cornerText, tx, ty);
+    c.fillStyle = isDark ? "#f8fafc" : "#174f3f";
+    c.fillText(cornerText, tx, ty);
+  }
+
+  // Top-left preview status badge
+  c.font = "bold 11px Arial";
+  const badge = opts.isDefault ? "Default Reference Sketch (Not to Scale)" : "Adjusted True-Proportion Sketch";
+  const bw = c.measureText(badge).width + 14;
+  c.fillStyle = opts.isDefault ? "rgba(71,85,105,0.88)" : "rgba(23,107,79,0.92)";
+  c.fillRect(10, 10, bw, 22);
+  c.fillStyle = "#ffffff";
+  c.textAlign = "left";
+  c.textBaseline = "middle";
+  c.fillText(badge, 17, 21);
+}
+
+/* --- Shape Tab Switching --- */
+const scPaneIds = [
+  "scTriangle", "scQuadDiag", "scQuadAngles", "scRectangle", "scSquare",
+  "scParallelogram", "scRhombus", "scTrapezium", "scRegularPoly", "scCoordPoly"
+];
+
+function redrawActiveShapeTab(activeId){
+  if(activeId === "scTriangle") calculateStandaloneTriangle();
+  else if(activeId === "scQuadDiag") calculateQuadWithDiagonal();
+  else if(activeId === "scQuadAngles") calculateQuadAllAngles();
+  else calcCommonShapes();
+}
+
+document.querySelectorAll(".scTabBtn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".scTabBtn").forEach(b => b.className = "scTabBtn secondary smallBtn");
+    btn.className = "scTabBtn primary smallBtn";
+    scPaneIds.forEach(id => {
+      const el = document.getElementById(id);
+      if(el) el.style.display = "none";
+    });
+    const targetId = btn.dataset.sc;
+    const target = document.getElementById(targetId);
+    if(target) target.style.display = "block";
+    redrawActiveShapeTab(targetId);
+  });
+});
+
+/* --- 1. TRIANGLE CALCULATOR & SKETCH --- */
 const stSideA = document.getElementById("stSideA");
 const stSideB = document.getElementById("stSideB");
 const stSideC = document.getElementById("stSideC");
@@ -4279,13 +4816,34 @@ const stKahanSqft = document.getElementById("stKahanSqft");
 const stKahanUnits = document.getElementById("stKahanUnits");
 const stExtraMetrics = document.getElementById("stExtraMetrics");
 const standaloneCanvas = document.getElementById("standaloneCanvas");
-const stCtx = standaloneCanvas.getContext("2d");
 
-function formatUnitSubline(sqft){
-  const marla = (sqft / 272.25).toFixed(4);
-  const kanal = (sqft / 5445).toFixed(4);
-  const acre = (sqft / 43560).toFixed(4);
-  return `${marla} Marla • ${kanal} Kanal • ${acre} Acre`;
+function drawStandaloneTriangle(a, b, c){
+  if(!a || !b || !c){
+    renderShapeSketch(standaloneCanvas, {
+      isDefault: true,
+      points: [{x: 0, y: 0}, {x: 140, y: 0}, {x: 55, y: -95}],
+      cornerLabels: ["A", "B", "C"],
+      sideLabels: [
+        a ? `AB = ${a} ft` : "AB (a)",
+        b ? `BC = ${b} ft` : "BC (b)",
+        c ? `CA = ${c} ft` : "CA (c)"
+      ]
+    });
+    return;
+  }
+  // Place A=(0,0), B=(a,0), and find C using sides c (AC) and b (BC)
+  const cosA = Math.min(1, Math.max(-1, (a*a + c*c - b*b) / (2 * a * c)));
+  const sinA = Math.sqrt(Math.max(0, 1 - cosA * cosA));
+  const pA = { x: 0, y: 0 };
+  const pB = { x: a, y: 0 };
+  const pC = { x: c * cosA, y: -c * sinA };
+
+  renderShapeSketch(standaloneCanvas, {
+    isDefault: false,
+    points: [pA, pB, pC],
+    cornerLabels: ["A", "B", "C"],
+    sideLabels: [`AB = ${a} ft`, `BC = ${b} ft`, `CA = ${c} ft`]
+  });
 }
 
 function calculateStandaloneTriangle(){
@@ -4294,13 +4852,13 @@ function calculateStandaloneTriangle(){
   const c = parseLength(stSideC.value);
 
   if(a === null || b === null || c === null){
-    stStatus.innerHTML = "Please enter positive numerical values for all three sides <b>a</b>, <b>b</b>, and <b>c</b>.";
+    stStatus.innerHTML = "Default triangle preview shown below. Enter positive lengths for sides <b>AB (a)</b>, <b>BC (b)</b>, and <b>CA (c)</b>.";
     stHeronSqft.textContent = "0.0000 sq ft";
-    stHeronUnits.textContent = "0.0000 Marla • 0.0000 Kanal • 0.0000 Acre";
+    stHeronUnits.textContent = formatUnitSubline(0);
     stKahanSqft.textContent = "0.0000 sq ft";
-    stKahanUnits.textContent = "0.0000 Marla • 0.0000 Kanal • 0.0000 Acre";
+    stKahanUnits.textContent = formatUnitSubline(0);
     stExtraMetrics.textContent = "Semi-perimeter (s): — | Perimeter: — | Angles (A, B, C): —";
-    drawStandaloneTriangle(null, null, null);
+    drawStandaloneTriangle(a, b, c);
     return;
   }
 
@@ -4311,18 +4869,20 @@ function calculateStandaloneTriangle(){
     stStatus.innerHTML = `<span class="bad">Invalid Triangle:</span> The sum of any two sides must be strictly greater than the third side.`;
     stHeronSqft.textContent = "Invalid";
     stKahanSqft.textContent = "Invalid";
-    drawStandaloneTriangle(null, null, null);
+    calculateStandaloneTriangle();
+calculateQuadWithDiagonal();
+calculateQuadAllAngles();
+calcCommonShapes();
     return;
   }
 
   const perim = a + b + c;
   const semi = perim / 2;
-
-  const angA = Math.acos(Math.min(1, Math.max(-1, (b*b + c*c - a*a) / (2*b*c)))) * (180 / Math.PI);
-  const angB = Math.acos(Math.min(1, Math.max(-1, (a*a + c*c - b*b) / (2*a*c)))) * (180 / Math.PI);
+  const angA = Math.acos(Math.min(1, Math.max(-1, (a*a + c*c - b*b) / (2*a*c)))) * (180 / Math.PI);
+  const angB = Math.acos(Math.min(1, Math.max(-1, (a*a + b*b - c*c) / (2*a*b)))) * (180 / Math.PI);
   const angC = 180 - angA - angB;
 
-  stStatus.innerHTML = `<span class="good">Valid Triangle Calculated!</span> Diagram below is drawn to true proportional scale.`;
+  stStatus.innerHTML = `<span class="good">Valid Triangle Calculated!</span> Sketch adjusted to true proportional scale.`;
   stHeronSqft.textContent = `${hArea.toFixed(4)} sq ft`;
   stHeronUnits.textContent = formatUnitSubline(hArea);
   stKahanSqft.textContent = `${kArea.toFixed(4)} sq ft`;
@@ -4334,102 +4894,406 @@ function calculateStandaloneTriangle(){
   drawStandaloneTriangle(a, b, c);
 }
 
-function drawStandaloneTriangle(a, b, c){
-  const W = standaloneCanvas.width;
-  const H = standaloneCanvas.height;
-  stCtx.clearRect(0, 0, W, H);
+[stSideA, stSideB, stSideC].forEach(inp => inp.addEventListener("input", calculateStandaloneTriangle));
+stCalcBtn.addEventListener("click", calculateStandaloneTriangle);
+stClearBtn.addEventListener("click", () => {
+  stSideA.value = ""; stSideB.value = ""; stSideC.value = "";
+  calculateStandaloneTriangle();
+});
 
-  stCtx.strokeStyle = "#edf2f4";
-  stCtx.lineWidth = 1;
-  for(let x = 0; x < W; x += 35){
-    stCtx.beginPath(); stCtx.moveTo(x, 0); stCtx.lineTo(x, H); stCtx.stroke();
-  }
-  for(let y = 0; y < H; y += 35){
-    stCtx.beginPath(); stCtx.moveTo(0, y); stCtx.lineTo(W, y); stCtx.stroke();
-  }
+/* --- 2. IRREGULAR QUADRILATERAL (4 SIDES + DIAGONAL) --- */
+const qdA = document.getElementById("qdA");
+const qdB = document.getElementById("qdB");
+const qdC = document.getElementById("qdC");
+const qdD = document.getElementById("qdD");
+const qdP = document.getElementById("qdP");
+const qdCalcBtn = document.getElementById("qdCalcBtn");
+const qdClearBtn = document.getElementById("qdClearBtn");
+const qdStatus = document.getElementById("qdStatus");
+const qdHeronSqft = document.getElementById("qdHeronSqft");
+const qdHeronUnits = document.getElementById("qdHeronUnits");
+const qdKahanSqft = document.getElementById("qdKahanSqft");
+const qdKahanUnits = document.getElementById("qdKahanUnits");
+const qdBreakdown = document.getElementById("qdBreakdown");
+const quadCanvas = document.getElementById("quadCanvas");
 
-  if(!a || !b || !c){
-    stCtx.fillStyle = "#64748b";
-    stCtx.font = "14px Arial";
-    stCtx.textAlign = "center";
-    stCtx.fillText("Enter sides a, b, c above to preview proportional triangle", W / 2, H / 2);
+function drawQuadSketch(a, b, c, d, p){
+  if(!quadCanvas) return;
+  if(!a || !b || !c || !d || !p){
+    const defA = {x: 0, y: 0}, defB = {x: 110, y: -70}, defC = {x: 165, y: 0}, defD = {x: 65, y: 75};
+    renderShapeSketch(quadCanvas, {
+      isDefault: true,
+      points: [defA, defB, defC, defD],
+      cornerLabels: ["A", "B", "C", "D"],
+      sideLabels: [
+        a ? `AB = ${a} ft` : "AB (a)",
+        b ? `BC = ${b} ft` : "BC (b)",
+        c ? `CD = ${c} ft` : "CD (c)",
+        d ? `DA = ${d} ft` : "DA (d)"
+      ],
+      extraLines: [{
+        from: defA, to: defC,
+        label: p ? `AC = ${p} ft` : "AC (p)",
+        color: "#b45309", dash: [7, 5]
+      }]
+    });
     return;
   }
 
-  const cosB = (a*a + c*c - b*b) / (2 * a * c);
-  const sinB = Math.sqrt(Math.max(0, 1 - cosB * cosB));
-  const pB = { x: 0, y: 0 };
-  const pA = { x: c, y: 0 };
-  const pC = { x: a * cosB, y: -a * sinB };
+  const A = { x: 0, y: 0 };
+  const C = { x: p, y: 0 };
+  const cosA = Math.min(1, Math.max(-1, (a*a + p*p - b*b) / (2 * a * p)));
+  const sinA = Math.sqrt(Math.max(0, 1 - cosA * cosA));
+  const B = { x: a * cosA, y: -a * sinA };
 
-  const minX = Math.min(pB.x, pA.x, pC.x);
-  const maxX = Math.max(pB.x, pA.x, pC.x);
-  const minY = Math.min(pB.y, pA.y, pC.y);
-  const maxY = Math.max(pB.y, pA.y, pC.y);
+  const cosC2 = Math.min(1, Math.max(-1, (c*c + p*p - d*d) / (2 * c * p)));
+  const sinC2 = Math.sqrt(Math.max(0, 1 - cosC2 * cosC2));
+  const D = { x: p - c * cosC2, y: c * sinC2 };
 
-  const scale = Math.min((W - 140) / Math.max(1e-3, maxX - minX), (H - 95) / Math.max(1e-3, maxY - minY));
-  const cx = (minX + maxX) / 2;
-  const cy = (minY + maxY) / 2;
-
-  const mapPt = pt => ({
-    x: W / 2 + (pt.x - cx) * scale,
-    y: H / 2 + (pt.y - cy) * scale
-  });
-
-  const vA = mapPt(pA), vB = mapPt(pB), vC = mapPt(pC);
-
-  stCtx.beginPath();
-  stCtx.moveTo(vB.x, vB.y);
-  stCtx.lineTo(vA.x, vA.y);
-  stCtx.lineTo(vC.x, vC.y);
-  stCtx.closePath();
-  stCtx.fillStyle = "rgba(23, 107, 79, 0.14)";
-  stCtx.fill();
-  stCtx.strokeStyle = "#176b4f";
-  stCtx.lineWidth = 3;
-  stCtx.stroke();
-
-  const drawMid = (p1, p2, txt) => {
-    const mx = (p1.x + p2.x) / 2;
-    const my = (p1.y + p2.y) / 2;
-    stCtx.font = "bold 12px Arial";
-    const tw = stCtx.measureText(txt).width + 12;
-    stCtx.fillStyle = "rgba(255,255,255,0.92)";
-    stCtx.strokeStyle = "#176b4f";
-    stCtx.lineWidth = 1.2;
-    stCtx.fillRect(mx - tw/2, my - 10, tw, 20);
-    stCtx.strokeRect(mx - tw/2, my - 10, tw, 20);
-    stCtx.fillStyle = "#18212a";
-    stCtx.textAlign = "center";
-    stCtx.textBaseline = "middle";
-    stCtx.fillText(txt, mx, my);
-  };
-
-  drawMid(vB, vA, `c = ${c} ft`);
-  drawMid(vB, vC, `a = ${a} ft`);
-  drawMid(vA, vC, `b = ${b} ft`);
-
-  [[vA, "A"], [vB, "B"], [vC, "C"]].forEach(([pt, name]) => {
-    stCtx.beginPath();
-    stCtx.arc(pt.x, pt.y, 6, 0, Math.PI * 2);
-    stCtx.fillStyle = "#174f3f";
-    stCtx.fill();
-    stCtx.font = "bold 13px Arial";
-    stCtx.fillStyle = "#174f3f";
-    stCtx.fillText(name, pt.x + 10, pt.y - 8);
+  renderShapeSketch(quadCanvas, {
+    isDefault: false,
+    points: [A, B, C, D],
+    cornerLabels: ["A", "B", "C", "D"],
+    sideLabels: [`AB = ${a} ft`, `BC = ${b} ft`, `CD = ${c} ft`, `DA = ${d} ft`],
+    extraLines: [{
+      from: A, to: C,
+      label: `AC = ${p} ft`,
+      color: "#b45309", dash: [7, 5]
+    }]
   });
 }
 
-[stSideA, stSideB, stSideC].forEach(inp => {
-  inp.addEventListener("input", calculateStandaloneTriangle);
+function calculateQuadWithDiagonal(){
+  const a = parseLength(qdA.value);
+  const b = parseLength(qdB.value);
+  const c = parseLength(qdC.value);
+  const d = parseLength(qdD.value);
+  const p = parseLength(qdP.value);
+
+  if(a === null || b === null || c === null || d === null || p === null){
+    qdStatus.innerHTML = "Default quadrilateral ABCD preview shown below. Enter sides <b>AB, BC, CD, DA</b> and diagonal <b>AC (p)</b>.";
+    qdHeronSqft.textContent = "0.0000 sq ft";
+    qdKahanSqft.textContent = "0.0000 sq ft";
+    qdHeronUnits.textContent = formatUnitSubline(0);
+    qdKahanUnits.textContent = formatUnitSubline(0);
+    qdBreakdown.textContent = "ΔABC: — | ΔACD: —";
+    drawQuadSketch(a, b, c, d, p);
+    return;
+  }
+
+  const h1 = heronArea(a, b, p);
+  const h2 = heronArea(c, d, p);
+  const k1 = kahanArea(a, b, p);
+  const k2 = kahanArea(c, d, p);
+
+  if(h1 === null || h2 === null || k1 === null || k2 === null){
+    qdStatus.innerHTML = `<span class="bad">Invalid diagonal/sides:</span> Diagonal <b>AC (p)</b> must form valid triangles with (<b>AB, BC</b>) and (<b>CD, DA</b>).`;
+    qdHeronSqft.textContent = "Invalid";
+    qdKahanSqft.textContent = "Invalid";
+    drawQuadSketch(null, null, null, null, null);
+    return;
+  }
+
+  const totalH = h1 + h2;
+  const totalK = k1 + k2;
+  qdStatus.innerHTML = `<span class="good">Quadrilateral Area Calculated</span> and sketch adjusted along diagonal <b>AC = ${p} ft</b>.`;
+  qdHeronSqft.textContent = `${totalH.toFixed(4)} sq ft`;
+  qdHeronUnits.textContent = formatUnitSubline(totalH);
+  qdKahanSqft.textContent = `${totalK.toFixed(4)} sq ft`;
+  qdKahanUnits.textContent = formatUnitSubline(totalK);
+  qdBreakdown.innerHTML =
+    `&Delta;ABC (AB=${a}, BC=${b}, AC=${p}): Heron <b>${h1.toFixed(2)}</b> | Kahan <b>${k1.toFixed(2)} sq ft</b> &nbsp;|&nbsp; ` +
+    `&Delta;ACD (CD=${c}, DA=${d}, AC=${p}): Heron <b>${h2.toFixed(2)}</b> | Kahan <b>${k2.toFixed(2)} sq ft</b>`;
+  drawQuadSketch(a, b, c, d, p);
+}
+
+[qdA, qdB, qdC, qdD, qdP].forEach(el => el.addEventListener("input", calculateQuadWithDiagonal));
+qdCalcBtn.addEventListener("click", calculateQuadWithDiagonal);
+qdClearBtn.addEventListener("click", () => {
+  [qdA, qdB, qdC, qdD, qdP].forEach(el => el.value = "");
+  calculateQuadWithDiagonal();
 });
-stCalcBtn.addEventListener("click", calculateStandaloneTriangle);
-stClearBtn.addEventListener("click", () => {
-  stSideA.value = "";
-  stSideB.value = "";
-  stSideC.value = "";
-  calculateStandaloneTriangle();
+
+/* --- 3 to 10: ALL REMAINING SHAPES WITH LIVE SKETCHES --- */
+function val(id){ return parseFloat(document.getElementById(id)?.value); }
+function validPos(...xs){ return xs.every(x => Number.isFinite(x) && x > 0); }
+
+function setSimpleShapeResult(id, area, defaultMsg){
+  const el = document.getElementById(id);
+  if(!el) return;
+  if(area === null || !Number.isFinite(area) || area <= 0){
+    el.innerHTML = defaultMsg || '<span class="bad">Enter valid positive values.</span>';
+    return;
+  }
+  el.innerHTML = `<b>Area:</b> ${area.toFixed(4)} sq ft &nbsp;|&nbsp; ${areaUnitText(area)}`;
+}
+
+const quadAnglesCanvas = document.getElementById("quadAnglesCanvas");
+
+function calculateQuadAllAngles(){
+  const a = val("qaA"), b = val("qaB"), c = val("qaC"), d = val("qaD");
+  const A = val("qaAngA"), B = val("qaAngB"), C = val("qaAngC"), D = val("qaAngD");
+  const status = document.getElementById("qaStatus"),
+        areaEl = document.getElementById("qaArea"),
+        unitsEl = document.getElementById("qaUnits"),
+        checkEl = document.getElementById("qaCheck"),
+        diagEl = document.getElementById("qaDiag");
+
+  if(!validPos(a, b, c, d, A, B, C, D)){
+    status.textContent = "Default quadrilateral ABCD preview shown below. Enter four sides and four interior angles.";
+    areaEl.textContent = "0.0000 sq ft";
+    unitsEl.textContent = areaUnitText(0);
+    checkEl.textContent = "—";
+    diagEl.textContent = "Diagonal AC: —";
+    renderShapeSketch(quadAnglesCanvas, {
+      isDefault: true,
+      points: [{x:0,y:0}, {x:130,y:0}, {x:115,y:-85}, {x:15,y:-95}],
+      cornerLabels: ["A", "B", "C", "D"],
+      cornerTexts: [
+        Number.isFinite(A) ? `A (${A}°)` : "A",
+        Number.isFinite(B) ? `B (${B}°)` : "B",
+        Number.isFinite(C) ? `C (${C}°)` : "C",
+        Number.isFinite(D) ? `D (${D}°)` : "D"
+      ],
+      sideLabels: [
+        Number.isFinite(a) && a > 0 ? `AB = ${a} ft` : "AB",
+        Number.isFinite(b) && b > 0 ? `BC = ${b} ft` : "BC",
+        Number.isFinite(c) && c > 0 ? `CD = ${c} ft` : "CD",
+        Number.isFinite(d) && d > 0 ? `DA = ${d} ft` : "DA"
+      ]
+    });
+    return;
+  }
+
+  const angleSum = A + B + C + D;
+  if(Math.abs(angleSum - 360) > 0.1){
+    status.innerHTML = `<span class="bad">Invalid angles:</span> A+B+C+D = ${angleSum.toFixed(2)}&deg;, but a quadrilateral must total 360&deg;.`;
+    return;
+  }
+
+  const rad = x => x * Math.PI / 180;
+  const p1 = Math.sqrt(Math.max(0, a*a + b*b - 2*a*b*Math.cos(rad(B))));
+  const p2 = Math.sqrt(Math.max(0, c*c + d*d - 2*c*d*Math.cos(rad(D))));
+  const rel = Math.abs(p1 - p2) / Math.max(1, (p1 + p2) / 2);
+  const area = 0.5 * a * b * Math.sin(rad(B)) + 0.5 * c * d * Math.sin(rad(D));
+  if(area <= 0 || !Number.isFinite(area)){
+    status.innerHTML = '<span class="bad">Unable to form a valid quadrilateral from the supplied data.</span>';
+    return;
+  }
+
+  // Construct vertex coordinates A, B, C, D using side AB along +X and exterior turn angles
+  const ptA = { x: 0, y: 0 };
+  const ptB = { x: a, y: 0 };
+  const dirBC = rad(180 - B);
+  const ptC = { x: ptB.x + b * Math.cos(dirBC), y: ptB.y - b * Math.sin(dirBC) };
+  const dirDA = rad(A);
+  const ptD = { x: ptA.x + d * Math.cos(dirDA), y: ptA.y - d * Math.sin(dirDA) };
+
+  renderShapeSketch(quadAnglesCanvas, {
+    isDefault: false,
+    points: [ptA, ptB, ptC, ptD],
+    cornerLabels: ["A", "B", "C", "D"],
+    cornerTexts: [`A (${A}°)`, `B (${B}°)`, `C (${C}°)`, `D (${D}°)`],
+    sideLabels: [`AB = ${a} ft`, `BC = ${b} ft`, `CD = ${c} ft`, `DA = ${d} ft`]
+  });
+
+  areaEl.textContent = area.toFixed(4) + " sq ft";
+  unitsEl.textContent = areaUnitText(area);
+  diagEl.textContent = `Diagonal AC from AB,BC,B: ${p1.toFixed(3)} ft | from CD,DA,D: ${p2.toFixed(3)} ft`;
+  if(rel <= 0.01){
+    checkEl.innerHTML = '<span class="good">Consistent</span>';
+    status.innerHTML = `<span class="good">Quadrilateral area calculated &amp; sketch adjusted.</span> Geometric closure within ${(rel*100).toFixed(2)}%.`;
+  } else {
+    checkEl.innerHTML = '<span class="bad">Check data</span>';
+    status.innerHTML = `<span class="bad">Side/angle discrepancy:</span> computed AC diagonals differ by ${(rel*100).toFixed(2)}%. Check field angles/lengths.`;
+  }
+}
+
+["qaA","qaB","qaC","qaD","qaAngA","qaAngB","qaAngC","qaAngD"].forEach(id => {
+  document.getElementById(id).addEventListener("input", calculateQuadAllAngles);
 });
+document.getElementById("qaCalcBtn").addEventListener("click", calculateQuadAllAngles);
+document.getElementById("qaClearBtn").addEventListener("click", () => {
+  ["qaA","qaB","qaC","qaD","qaAngA","qaAngB","qaAngC","qaAngD"].forEach(id => document.getElementById(id).value = "");
+  calculateQuadAllAngles();
+});
+
+function calcCommonShapes(){
+  // 4. Rectangle
+  const rcL = val("rcL"), rcW = val("rcW");
+  const rcValid = validPos(rcL, rcW);
+  setSimpleShapeResult("rcResult", rcValid ? rcL * rcW : null, "Default rectangle ABCD preview shown below. Enter Length and Width to adjust proportions.");
+  const rL = rcValid ? rcL : 140, rW = rcValid ? rcW : 75;
+  renderShapeSketch(document.getElementById("rectCanvas"), {
+    isDefault: !rcValid,
+    points: [{x:0,y:0}, {x:rL,y:0}, {x:rL,y:-rW}, {x:0,y:-rW}],
+    cornerLabels: ["A", "B", "C", "D"],
+    sideLabels: [
+      Number.isFinite(rcL) && rcL > 0 ? `AB = ${rcL} ft` : "AB (Length)",
+      Number.isFinite(rcW) && rcW > 0 ? `BC = ${rcW} ft` : "BC (Width)",
+      Number.isFinite(rcL) && rcL > 0 ? `CD = ${rcL} ft` : "CD (Length)",
+      Number.isFinite(rcW) && rcW > 0 ? `DA = ${rcW} ft` : "DA (Width)"
+    ]
+  });
+
+  // 5. Square
+  const sqS = val("sqSide");
+  const sqValid = validPos(sqS);
+  setSimpleShapeResult("sqResult", sqValid ? sqS * sqS : null, "Default square ABCD preview shown below. Enter Side length.");
+  const sLen = sqValid ? sqS : 90;
+  renderShapeSketch(document.getElementById("squareCanvas"), {
+    isDefault: !sqValid,
+    points: [{x:0,y:0}, {x:sLen,y:0}, {x:sLen,y:-sLen}, {x:0,y:-sLen}],
+    cornerLabels: ["A", "B", "C", "D"],
+    sideLabels: sqValid
+      ? [`AB = ${sqS} ft`, `BC = ${sqS} ft`, `CD = ${sqS} ft`, `DA = ${sqS} ft`]
+      : ["AB (s)", "BC (s)", "CD (s)", "DA (s)"]
+  });
+
+  // 6. Parallelogram
+  const pgA = val("pgA"), pgB = val("pgB"), pgAng = val("pgAng");
+  const pgValid = validPos(pgA, pgB, pgAng) && pgAng < 180;
+  setSimpleShapeResult("pgResult", pgValid ? pgA * pgB * Math.sin(pgAng * Math.PI / 180) : null, "Default parallelogram ABCD preview shown below. Enter AB, BC, and Angle A.");
+  const pBase = pgValid ? pgA : 130;
+  const pSide = pgValid ? pgB : 75;
+  const pRad = (pgValid ? pgAng : 62) * Math.PI / 180;
+  const pDx = pSide * Math.cos(pRad), pDy = pSide * Math.sin(pRad);
+  renderShapeSketch(document.getElementById("paraCanvas"), {
+    isDefault: !pgValid,
+    points: [{x:0,y:0}, {x:pBase,y:0}, {x:pBase+pDx,y:-pDy}, {x:pDx,y:-pDy}],
+    cornerLabels: ["A", "B", "C", "D"],
+    cornerTexts: [pgValid ? `A (${pgAng}°)` : "A", "B", "C", "D"],
+    sideLabels: [
+      Number.isFinite(pgA) && pgA > 0 ? `AB = ${pgA} ft` : "AB (Base)",
+      Number.isFinite(pgB) && pgB > 0 ? `BC = ${pgB} ft` : "BC (Side)",
+      Number.isFinite(pgA) && pgA > 0 ? `CD = ${pgA} ft` : "CD (Base)",
+      Number.isFinite(pgB) && pgB > 0 ? `DA = ${pgB} ft` : "DA (Side)"
+    ]
+  });
+
+  // 7. Rhombus
+  const rhS = val("rhSide"), rhAng = val("rhAng");
+  const rhValid = validPos(rhS, rhAng) && rhAng < 180;
+  setSimpleShapeResult("rhResult", rhValid ? rhS * rhS * Math.sin(rhAng * Math.PI / 180) : null, "Default rhombus ABCD preview shown below. Enter Side length and Angle A.");
+  const rSide = rhValid ? rhS : 95;
+  const rRad = (rhValid ? rhAng : 60) * Math.PI / 180;
+  const rDx = rSide * Math.cos(rRad), rDy = rSide * Math.sin(rRad);
+  renderShapeSketch(document.getElementById("rhombusCanvas"), {
+    isDefault: !rhValid,
+    points: [{x:0,y:0}, {x:rSide,y:0}, {x:rSide+rDx,y:-rDy}, {x:rDx,y:-rDy}],
+    cornerLabels: ["A", "B", "C", "D"],
+    cornerTexts: [rhValid ? `A (${rhAng}°)` : "A", "B", "C", "D"],
+    sideLabels: (Number.isFinite(rhS) && rhS > 0)
+      ? [`AB = ${rhS} ft`, `BC = ${rhS} ft`, `CD = ${rhS} ft`, `DA = ${rhS} ft`]
+      : ["AB (s)", "BC (s)", "CD (s)", "DA (s)"]
+  });
+
+  // 8. Trapezium / Trapezoid
+  const tzA = val("tzA"), tzB = val("tzB"), tzH = val("tzH");
+  const tzValid = validPos(tzA, tzB, tzH);
+  setSimpleShapeResult("tzResult", tzValid ? 0.5 * (tzA + tzB) * tzH : null, "Default trapezium ABCD preview shown below. Enter parallel sides AB, CD and height h.");
+  const tBot = tzValid ? tzA : 145;
+  const tTop = tzValid ? tzB : 85;
+  const tHgt = tzValid ? tzH : 65;
+  const tOff = (tBot - tTop) * 0.45;
+  const tPtA = {x:0, y:0}, tPtB = {x:tBot, y:0}, tPtC = {x:tOff + tTop, y:-tHgt}, tPtD = {x:tOff, y:-tHgt};
+  const legBC = Math.hypot(tPtC.x - tPtB.x, tPtC.y - tPtB.y);
+  const legDA = Math.hypot(tPtA.x - tPtD.x, tPtA.y - tPtD.y);
+  const footH = {x: tPtD.x, y: 0};
+  renderShapeSketch(document.getElementById("trapCanvas"), {
+    isDefault: !tzValid,
+    points: [tPtA, tPtB, tPtC, tPtD],
+    cornerLabels: ["A", "B", "C", "D"],
+    sideLabels: [
+      Number.isFinite(tzA) && tzA > 0 ? `AB = ${tzA} ft` : "AB (a)",
+      tzValid ? `BC ≈ ${legBC.toFixed(1)} ft` : "BC",
+      Number.isFinite(tzB) && tzB > 0 ? `CD = ${tzB} ft` : "CD (b)",
+      tzValid ? `DA ≈ ${legDA.toFixed(1)} ft` : "DA"
+    ],
+    extraLines: [{
+      from: tPtD, to: footH,
+      label: (Number.isFinite(tzH) && tzH > 0) ? `h = ${tzH} ft` : "h",
+      color: "#b45309", dash: [6, 4]
+    }]
+  });
+
+  // 9. Regular Polygon
+  const rpN = Math.floor(val("rpN")), rpS = val("rpS");
+  const rpValid = Number.isFinite(rpN) && rpN >= 3 && rpN <= 36 && validPos(rpS);
+  setSimpleShapeResult("rpResult", rpValid ? (rpN * rpS * rpS) / (4 * Math.tan(Math.PI / rpN)) : null, "Default regular hexagon preview shown below. Enter number of sides (n) and side length.");
+  const polyN = (Number.isFinite(rpN) && rpN >= 3 && rpN <= 36) ? rpN : 6;
+  const polySide = (Number.isFinite(rpS) && rpS > 0) ? rpS : 50;
+  const circumR = polySide / (2 * Math.sin(Math.PI / polyN));
+  const regPts = [];
+  const regSideLabels = [];
+  const regLetters = vertexLetters(polyN);
+  for(let i = 0; i < polyN; i++){
+    const ang = -Math.PI / 2 + (2 * Math.PI * i) / polyN;
+    regPts.push({ x: circumR * Math.cos(ang), y: circumR * Math.sin(ang) });
+    const j = (i + 1) % polyN;
+    regSideLabels.push((Number.isFinite(rpS) && rpS > 0) ? `${regLetters[i]}${regLetters[j]} = ${rpS} ft` : `${regLetters[i]}${regLetters[j]}`);
+  }
+  renderShapeSketch(document.getElementById("regPolyCanvas"), {
+    isDefault: !rpValid,
+    points: regPts,
+    cornerLabels: regLetters,
+    sideLabels: regSideLabels
+  });
+
+  // 10. Any Polygon Using Ordered X,Y Coordinates
+  const txt = document.getElementById("polyCoords").value.trim();
+  let coordPts = null;
+  let area = null;
+  if(txt){
+    const parsed = txt.split(";").map(x => x.trim()).filter(Boolean).map(x => x.split(",").map(Number));
+    if(parsed.length >= 3 && parsed.every(p => p.length === 2 && p.every(Number.isFinite))){
+      coordPts = parsed.map(([x, y]) => ({ x, y: -y })); // Flip Y so +Y is upward on screen
+      let sum = 0;
+      for(let i = 0; i < parsed.length; i++){
+        const [x1, y1] = parsed[i], [x2, y2] = parsed[(i + 1) % parsed.length];
+        sum += x1 * y2 - y1 * x2;
+      }
+      area = Math.abs(sum) / 2;
+      const cLetters = vertexLetters(parsed.length);
+      const cSideLabels = parsed.map((pt, i) => {
+        const nxt = parsed[(i + 1) % parsed.length];
+        const d = Math.hypot(nxt[0] - pt[0], nxt[1] - pt[1]);
+        const j = (i + 1) % parsed.length;
+        return `${cLetters[i]}${cLetters[j]} = ${d.toFixed(2)} ft`;
+      });
+      const cCornerTexts = parsed.map((pt, i) => `${cLetters[i]} (${pt[0]},${pt[1]})`);
+      renderShapeSketch(document.getElementById("coordPolyCanvas"), {
+        isDefault: false,
+        points: coordPts,
+        cornerLabels: cLetters,
+        cornerTexts: cCornerTexts,
+        sideLabels: cSideLabels
+      });
+    }
+  }
+  if(!coordPts){
+    const defCoords = [{x:0,y:0}, {x:120,y:0}, {x:140,y:-75}, {x:50,y:-110}, {x:-10,y:-60}];
+    renderShapeSketch(document.getElementById("coordPolyCanvas"), {
+      isDefault: true,
+      points: defCoords,
+      cornerLabels: ["A", "B", "C", "D", "E"],
+      sideLabels: ["AB", "BC", "CD", "DE", "EA"]
+    });
+  }
+  setSimpleShapeResult("polyResult", area, "Default coordinate polygon preview shown below. Enter ordered X,Y coordinates (e.g. 0,0; 120,0; 140,75; 50,110).");
+}
+
+["rcL","rcW","sqSide","pgA","pgB","pgAng","rhSide","rhAng","tzA","tzB","tzH","rpN","rpS","polyCoords"].forEach(id => {
+  document.getElementById(id).addEventListener("input", calcCommonShapes);
+});
+
+document.getElementById("rcClearBtn").addEventListener("click", () => { ["rcL","rcW"].forEach(i => document.getElementById(i).value = ""); calcCommonShapes(); });
+document.getElementById("sqClearBtn").addEventListener("click", () => { document.getElementById("sqSide").value = ""; calcCommonShapes(); });
+document.getElementById("pgClearBtn").addEventListener("click", () => { ["pgA","pgB","pgAng"].forEach(i => document.getElementById(i).value = ""); calcCommonShapes(); });
+document.getElementById("rhClearBtn").addEventListener("click", () => { ["rhSide","rhAng"].forEach(i => document.getElementById(i).value = ""); calcCommonShapes(); });
+document.getElementById("tzClearBtn").addEventListener("click", () => { ["tzA","tzB","tzH"].forEach(i => document.getElementById(i).value = ""); calcCommonShapes(); });
+document.getElementById("rpClearBtn").addEventListener("click", () => { ["rpN","rpS"].forEach(i => document.getElementById(i).value = ""); calcCommonShapes(); });
+document.getElementById("polyClearBtn").addEventListener("click", () => { document.getElementById("polyCoords").value = ""; calcCommonShapes(); });
 
 /* ==========================================================
    DARK MODE & COLOR ADJUSTMENT CONTROLS
@@ -4453,11 +5317,10 @@ darkModeBtn.addEventListener("click", function(){
   customCanvasBg = null;
   canvasBgPicker.value = isDark ? "#0b1120" : "#fafafa";
   redraw();
-  drawStandaloneTriangle(
-    parseLength(stSideA.value),
-    parseLength(stSideB.value),
-    parseLength(stSideC.value)
-  );
+  calculateStandaloneTriangle();
+  calculateQuadWithDiagonal();
+  calculateQuadAllAngles();
+  calcCommonShapes();
 });
 
 accentColorPicker.addEventListener("input", function(){
@@ -4649,90 +5512,6 @@ suggestDivisionBtn.addEventListener("click", function(){
 });
 
 /* ==========================================================
-   IRREGULAR QUADRILATERAL (4 SIDES + 1 DIAGONAL) IN TAB 2
-   ========================================================== */
-const modeTriCalcBtn = document.getElementById("modeTriCalcBtn");
-const modeQuadCalcBtn = document.getElementById("modeQuadCalcBtn");
-const quadCalcPanel = document.getElementById("quadCalcPanel");
-const triSinglePanel = document.getElementById("triSinglePanel");
-
-modeTriCalcBtn.addEventListener("click", function(){
-  modeTriCalcBtn.className = "primary smallBtn";
-  modeQuadCalcBtn.className = "secondary smallBtn";
-  triSinglePanel.style.display = "block";
-  quadCalcPanel.style.display = "none";
-});
-
-modeQuadCalcBtn.addEventListener("click", function(){
-  modeQuadCalcBtn.className = "primary smallBtn";
-  modeTriCalcBtn.className = "secondary smallBtn";
-  triSinglePanel.style.display = "none";
-  quadCalcPanel.style.display = "block";
-});
-
-const qdA = document.getElementById("qdA");
-const qdB = document.getElementById("qdB");
-const qdC = document.getElementById("qdC");
-const qdD = document.getElementById("qdD");
-const qdP = document.getElementById("qdP");
-const qdCalcBtn = document.getElementById("qdCalcBtn");
-const qdClearBtn = document.getElementById("qdClearBtn");
-const qdStatus = document.getElementById("qdStatus");
-const qdHeronSqft = document.getElementById("qdHeronSqft");
-const qdHeronUnits = document.getElementById("qdHeronUnits");
-const qdKahanSqft = document.getElementById("qdKahanSqft");
-const qdKahanUnits = document.getElementById("qdKahanUnits");
-const qdBreakdown = document.getElementById("qdBreakdown");
-
-function calculateQuadWithDiagonal(){
-  const a = parseLength(qdA.value);
-  const b = parseLength(qdB.value);
-  const c = parseLength(qdC.value);
-  const d = parseLength(qdD.value);
-  const p = parseLength(qdP.value);
-
-  if(a === null || b === null || c === null || d === null || p === null){
-    qdStatus.innerHTML = "Enter positive lengths for sides <b>a, b, c, d</b> and diagonal <b>p</b>.";
-    qdHeronSqft.textContent = "0.0000 sq ft";
-    qdKahanSqft.textContent = "0.0000 sq ft";
-    qdHeronUnits.textContent = formatUnitSubline(0);
-    qdKahanUnits.textContent = formatUnitSubline(0);
-    qdBreakdown.textContent = "&Delta;1 (a, b, p): — | &Delta;2 (c, d, p): —";
-    return;
-  }
-
-  const h1 = heronArea(a, b, p);
-  const h2 = heronArea(c, d, p);
-  const k1 = kahanArea(a, b, p);
-  const k2 = kahanArea(c, d, p);
-
-  if(h1 === null || h2 === null || k1 === null || k2 === null){
-    qdStatus.innerHTML = `<span class="bad">Invalid diagonal/sides:</span> Diagonal <b>p</b> must form valid triangles with (<b>a, b</b>) and (<b>c, d</b>).`;
-    qdHeronSqft.textContent = "Invalid";
-    qdKahanSqft.textContent = "Invalid";
-    return;
-  }
-
-  const totalH = h1 + h2;
-  const totalK = k1 + k2;
-  qdStatus.innerHTML = `<span class="good">Quadrilateral Area Calculated</span> by splitting along diagonal <b>p = ${p} ft</b>.`;
-  qdHeronSqft.textContent = `${totalH.toFixed(4)} sq ft`;
-  qdHeronUnits.textContent = formatUnitSubline(totalH);
-  qdKahanSqft.textContent = `${totalK.toFixed(4)} sq ft`;
-  qdKahanUnits.textContent = formatUnitSubline(totalK);
-  qdBreakdown.innerHTML =
-    `&Delta;1 (a=${a}, b=${b}, p=${p}): Heron <b>${h1.toFixed(2)}</b> | Kahan <b>${k1.toFixed(2)} sq ft</b> &nbsp;|&nbsp; ` +
-    `&Delta;2 (c=${c}, d=${d}, p=${p}): Heron <b>${h2.toFixed(2)}</b> | Kahan <b>${k2.toFixed(2)} sq ft</b>`;
-}
-
-[qdA, qdB, qdC, qdD, qdP].forEach(el => el.addEventListener("input", calculateQuadWithDiagonal));
-qdCalcBtn.addEventListener("click", calculateQuadWithDiagonal);
-qdClearBtn.addEventListener("click", () => {
-  [qdA, qdB, qdC, qdD, qdP].forEach(el => el.value = "");
-  calculateQuadWithDiagonal();
-});
-
-/* ==========================================================
    BASIC CALCULATOR (TAB 5)
    ========================================================== */
 const bcScreen = document.getElementById("bcScreen");
@@ -4802,37 +5581,8 @@ document.getElementById("bcButtons").addEventListener("click", function(e){
 /* ==========================================================
    FULL / ACTUAL VIEW FIT BEFORE TRIANGULATION
    ========================================================== */
-document.getElementById("fitActualViewBtn").addEventListener("click", function(){
-  if(vertices.length === 0){
-    fieldStatus.className = "status warn";
-    fieldStatus.textContent = "Draw boundary points first to fit the sketch to full/actual view.";
-    return;
-  }
-  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-  vertices.forEach(v => {
-    if(v.x < minX) minX = v.x;
-    if(v.x > maxX) maxX = v.x;
-    if(v.y < minY) minY = v.y;
-    if(v.y > maxY) maxY = v.y;
-  });
-  const spanX = Math.max(10, maxX - minX);
-  const spanY = Math.max(10, maxY - minY);
-  const padX = 140;
-  const padY = 95;
-  const scale = Math.min((canvas.width - padX * 2) / spanX, (canvas.height - padY * 2) / spanY);
-  const cx = (minX + maxX) / 2;
-  const cy = (minY + maxY) / 2;
-
-  vertices.forEach(v => {
-    v.x = canvas.width / 2 + (v.x - cx) * scale;
-    v.y = canvas.height / 2 + (v.y - cy) * scale;
-    v.sketchX = v.x;
-    v.sketchY = v.y;
-  });
-  fieldStatus.className = "status adjusted";
-  fieldStatus.textContent = "Sketch adjusted to full/actual view across the drawing area.";
-  redraw();
-});
+document.getElementById("fitActualViewBtn").addEventListener("click", fitEntireSketchToScreen);
+document.getElementById("canvasFitScreenBtn").addEventListener("click", fitEntireSketchToScreen);
 
 /* ==========================================================
    SUGGESTED DIVISION OVERLAY & AREA-PRESERVING LINE ADJUSTMENT
@@ -5442,124 +6192,190 @@ function drawSuggestedDivisionOnSketch(){
   });
 }
 
+
 /* ==========================================================
-   QUADRILATERAL (4 SIDES + 1 DIAGONAL) SKETCH DRAWING
+   MOBILE GPS POLYGON BOUNDARY CAPTURE
    ========================================================== */
-const quadCanvas = document.getElementById("quadCanvas");
-const qdCtx = quadCanvas ? quadCanvas.getContext("2d") : null;
+const gpsBoundaryBtn = document.getElementById("gpsBoundaryBtn");
+const captureGpsPtBtn = document.getElementById("captureGpsPtBtn");
 
-function drawQuadSketch(a, b, c, d, p){
-  if(!quadCanvas || !qdCtx) return;
-  const W = quadCanvas.width;
-  const H = quadCanvas.height;
-  qdCtx.clearRect(0, 0, W, H);
+let gpsBoundaryActive = false;
+let gpsWatchId = null;
+let latestGpsFix = null; // { lat, lon, acc, ts }
+let gpsOrigin = null;    // { lat, lon } first GPS point anchor
+let gpsPointsMeta = [];  // array of { uid, lat, lon, acc }
 
-  qdCtx.strokeStyle = "#edf2f4";
-  qdCtx.lineWidth = 1;
-  for(let x = 0; x < W; x += 35){
-    qdCtx.beginPath(); qdCtx.moveTo(x, 0); qdCtx.lineTo(x, H); qdCtx.stroke();
-  }
-  for(let y = 0; y < H; y += 35){
-    qdCtx.beginPath(); qdCtx.moveTo(0, y); qdCtx.lineTo(W, y); qdCtx.stroke();
-  }
+const GPS_SCALE_PX_PER_METER = 12;
 
-  if(!a || !b || !c || !d || !p){
-    qdCtx.fillStyle = "#64748b";
-    qdCtx.font = "14px Arial";
-    qdCtx.textAlign = "center";
-    qdCtx.fillText("Enter sides a, b, c, d and diagonal p above to preview quadrilateral sketch", W / 2, H / 2);
-    return;
-  }
-
-  // Place diagonal p along horizontal axis: A=(0,0) to C=(p,0)
-  const A = { x: 0, y: 0 };
-  const C = { x: p, y: 0 };
-  const cosA = Math.min(1, Math.max(-1, (a*a + p*p - b*b) / (2 * a * p)));
-  const sinA = Math.sqrt(Math.max(0, 1 - cosA * cosA));
-  const B = { x: a * cosA, y: -a * sinA };
-
-  const cosC2 = Math.min(1, Math.max(-1, (c*c + p*p - d*d) / (2 * c * p)));
-  const sinC2 = Math.sqrt(Math.max(0, 1 - cosC2 * cosC2));
-  const D = { x: p - c * cosC2, y: c * sinC2 };
-
-  const pts = [A, B, C, D];
-  const minX = Math.min(...pts.map(pt => pt.x));
-  const maxX = Math.max(...pts.map(pt => pt.x));
-  const minY = Math.min(...pts.map(pt => pt.y));
-  const maxY = Math.max(...pts.map(pt => pt.y));
-
-  const scale = Math.min((W - 140) / Math.max(1e-3, maxX - minX), (H - 90) / Math.max(1e-3, maxY - minY));
-  const cx = (minX + maxX) / 2;
-  const cy = (minY + maxY) / 2;
-  const mapPt = pt => ({ x: W / 2 + (pt.x - cx) * scale, y: H / 2 + (pt.y - cy) * scale });
-
-  const mA = mapPt(A), mB = mapPt(B), mC = mapPt(C), mD = mapPt(D);
-
-  // Fill delta 1 (A-B-C)
-  qdCtx.beginPath();
-  qdCtx.moveTo(mA.x, mA.y); qdCtx.lineTo(mB.x, mB.y); qdCtx.lineTo(mC.x, mC.y);
-  qdCtx.closePath();
-  qdCtx.fillStyle = "rgba(23, 107, 79, 0.16)";
-  qdCtx.fill();
-
-  // Fill delta 2 (A-C-D)
-  qdCtx.beginPath();
-  qdCtx.moveTo(mA.x, mA.y); qdCtx.lineTo(mC.x, mC.y); qdCtx.lineTo(mD.x, mD.y);
-  qdCtx.closePath();
-  qdCtx.fillStyle = "rgba(29, 78, 216, 0.14)";
-  qdCtx.fill();
-
-  // Outer boundary
-  qdCtx.strokeStyle = "#174f3f";
-  qdCtx.lineWidth = 3;
-  qdCtx.beginPath();
-  qdCtx.moveTo(mA.x, mA.y); qdCtx.lineTo(mB.x, mB.y); qdCtx.lineTo(mC.x, mC.y); qdCtx.lineTo(mD.x, mD.y);
-  qdCtx.closePath();
-  qdCtx.stroke();
-
-  // Diagonal p dashed line
-  qdCtx.save();
-  qdCtx.strokeStyle = "#b45309";
-  qdCtx.lineWidth = 2.4;
-  qdCtx.setLineDash([7, 5]);
-  qdCtx.beginPath();
-  qdCtx.moveTo(mA.x, mA.y);
-  qdCtx.lineTo(mC.x, mC.y);
-  qdCtx.stroke();
-  qdCtx.restore();
-
-  const labelEdge = (p1, p2, txt, col) => {
-    const mx = (p1.x + p2.x) / 2;
-    const my = (p1.y + p2.y) / 2;
-    qdCtx.font = "bold 11.5px Arial";
-    qdCtx.textAlign = "center";
-    qdCtx.textBaseline = "middle";
-    const tw = qdCtx.measureText(txt).width + 10;
-    qdCtx.fillStyle = "rgba(255,255,255,0.92)";
-    qdCtx.fillRect(mx - tw/2, my - 9, tw, 18);
-    qdCtx.fillStyle = col;
-    qdCtx.fillText(txt, mx, my);
-  };
-
-  labelEdge(mA, mB, `a=${a}ft`, "#174f3f");
-  labelEdge(mB, mC, `b=${b}ft`, "#174f3f");
-  labelEdge(mC, mD, `c=${c}ft`, "#1e3a8a");
-  labelEdge(mD, mA, `d=${d}ft`, "#1e3a8a");
-  labelEdge(mA, mC, `p=${p}ft`, "#b45309");
+function haversineMeters(lat1, lon1, lat2, lon2){
+  const R = 6371000;
+  const toRad = d => d * Math.PI / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a = Math.sin(dLat / 2) ** 2 +
+            Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+  return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-const origQuadCalcFn = calculateQuadWithDiagonal;
-calculateQuadWithDiagonal = function(){
-  origQuadCalcFn();
-  drawQuadSketch(
-    parseLength(qdA.value),
-    parseLength(qdB.value),
-    parseLength(qdC.value),
-    parseLength(qdD.value),
-    parseLength(qdP.value)
+function gpsToCanvasPoint(lat, lon){
+  if(!gpsOrigin){
+    gpsOrigin = { lat, lon };
+  }
+  const lat0Rad = gpsOrigin.lat * Math.PI / 180;
+  const metersEast = (lon - gpsOrigin.lon) * 111320 * Math.cos(lat0Rad);
+  const metersNorth = (lat - gpsOrigin.lat) * 110540;
+
+  const cx = canvas.width / 2;
+  const cy = canvas.height / 2;
+  return {
+    x: cx + metersEast * GPS_SCALE_PX_PER_METER,
+    y: cy - metersNorth * GPS_SCALE_PX_PER_METER
+  };
+}
+
+function getCurrentMobileGpsFix(timeoutMs = 12000){
+  return new Promise((resolve, reject) => {
+    if(!navigator.geolocation){
+      reject(new Error("GPS / Geolocation is not supported on this device."));
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      pos => resolve({
+        lat: pos.coords.latitude,
+        lon: pos.coords.longitude,
+        acc: pos.coords.accuracy,
+        ts: Date.now()
+      }),
+      err => reject(err),
+      { enableHighAccuracy: true, timeout: timeoutMs, maximumAge: 0 }
+    );
+  });
+}
+
+function startGpsWatch(){
+  if(!navigator.geolocation) return;
+  if(gpsWatchId !== null){
+    try{ navigator.geolocation.clearWatch(gpsWatchId); } catch(_){}
+    gpsWatchId = null;
+  }
+  gpsWatchId = navigator.geolocation.watchPosition(
+    pos => {
+      latestGpsFix = {
+        lat: pos.coords.latitude,
+        lon: pos.coords.longitude,
+        acc: pos.coords.accuracy,
+        ts: Date.now()
+      };
+      if(gpsBoundaryActive){
+        const accStr = Number.isFinite(latestGpsFix.acc) ? `±${latestGpsFix.acc.toFixed(1)}m` : "";
+        fieldStatus.className = "status adjusted";
+        fieldStatus.innerHTML = `📍 GPS Ready (${latestGpsFix.lat.toFixed(6)}, ${latestGpsFix.lon.toFixed(6)} ${accStr}). Walk to a corner and tap <b>+ Add GPS Corner</b>.`;
+      }
+    },
+    err => {
+      if(gpsBoundaryActive){
+        fieldStatus.className = "status warn";
+        fieldStatus.textContent = `GPS status: ${err.message || "Waiting for location signal..."}`;
+      }
+    },
+    { enableHighAccuracy: true, timeout: 15000, maximumAge: 2000 }
   );
-};
-[qdA, qdB, qdC, qdD, qdP].forEach(el => el.addEventListener("input", calculateQuadWithDiagonal));
+}
+
+function stopGpsWatch(){
+  if(gpsWatchId !== null){
+    try{ navigator.geolocation.clearWatch(gpsWatchId); } catch(_){}
+    gpsWatchId = null;
+  }
+}
+
+async function addGpsBoundaryCorner(){
+  if(!gpsBoundaryActive) return;
+
+  // Ensure boundary drawing mode is active
+  if(!drawingField){
+    if(fieldFinished){
+      resetCurrentWorkspace(true);
+      gpsOrigin = null;
+      gpsPointsMeta = [];
+    } else {
+      drawingField = true;
+      modeLabel.textContent = "Mode: Draw Field (GPS)";
+      modeLabel.classList.add("active");
+    }
+  }
+
+  captureGpsPtBtn.disabled = true;
+  fieldStatus.className = "status";
+  fieldStatus.textContent = "📍 Fetching GPS coordinates for this corner...";
+
+  try{
+    const fix = await getCurrentMobileGpsFix(12000);
+    latestGpsFix = fix;
+    if(!gpsOrigin && boundaryCount === 0){
+      gpsOrigin = { lat: fix.lat, lon: fix.lon };
+    }
+    const pt = gpsToCanvasPoint(fix.lat, fix.lon);
+
+    // Prevent accidental duplicate tap at same spot unless at least 12px away
+    const near = findNearestVertex(pt, 12);
+    if(near){
+      fieldStatus.className = "status warn";
+      fieldStatus.textContent = `GPS fix is very close to ${near.uid}. Move to the next field corner and tap + Add GPS Corner.`;
+      captureGpsPtBtn.disabled = false;
+      return;
+    }
+
+    addBoundaryPoint(pt);
+    const currentUid = "P" + boundaryCount;
+    gpsPointsMeta.push({ uid: currentUid, lat: fix.lat, lon: fix.lon, acc: fix.acc });
+
+    const accTxt = Number.isFinite(fix.acc) ? `±${fix.acc.toFixed(1)} m` : "";
+    fieldStatus.className = "status adjusted";
+    fieldStatus.innerHTML =
+      `📍 Captured <b>${currentUid}</b> at (${fix.lat.toFixed(6)}, ${fix.lon.toFixed(6)}) ${accTxt}. ` +
+      (boundaryCount >= 3
+        ? `Tap <b>+ Add GPS Corner</b> for more corners or press <b>Finish Field</b>.`
+        : `Move to next corner and tap <b>+ Add GPS Corner</b>.`);
+  } catch(err){
+    fieldStatus.className = "status warn";
+    fieldStatus.textContent = `Could not capture GPS corner: ${err.message || "Check GPS / location permission"}.`;
+  } finally {
+    captureGpsPtBtn.disabled = false;
+  }
+}
+
+gpsBoundaryBtn.addEventListener("click", async function(){
+  gpsBoundaryActive = !gpsBoundaryActive;
+  if(gpsBoundaryActive){
+    this.textContent = "📍 GPS Boundary: ON";
+    this.className = "warning";
+    captureGpsPtBtn.style.display = "inline-block";
+    captureGpsPtBtn.disabled = false;
+
+    if(boundaryCount === 0){
+      gpsOrigin = null;
+      gpsPointsMeta = [];
+      drawingField = true;
+      fieldFinished = false;
+      modeLabel.textContent = "Mode: Draw Field (GPS)";
+      modeLabel.classList.add("active");
+    }
+
+    startGpsWatch();
+    fieldStatus.className = "status adjusted";
+    fieldStatus.innerHTML = `📍 <b>GPS Boundary Mode ON:</b> Stand at a field corner and tap <b>+ Add GPS Corner</b> to plot boundary points P1, P2, P3…`;
+  } else {
+    this.textContent = "📍 GPS Boundary: OFF";
+    this.className = "secondary";
+    captureGpsPtBtn.style.display = "none";
+    stopGpsWatch();
+    fieldStatus.className = "status";
+    fieldStatus.textContent = "📍 GPS Boundary Mode OFF.";
+  }
+});
+
+captureGpsPtBtn.addEventListener("click", addGpsBoundaryCorner);
 
 /* ==========================================================
    INITIAL STATE
@@ -5574,7 +6390,10 @@ updatePointList();
 renderTables();
 adaptCanvasAspectToDevice();
 redraw();
-drawStandaloneTriangle(null, null, null);
+calculateStandaloneTriangle();
+calculateQuadWithDiagonal();
+calculateQuadAllAngles();
+calcCommonShapes();
 
 </script>
 </body>
