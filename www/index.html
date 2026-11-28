@@ -930,6 +930,198 @@ body.large-field-mode input, body.large-field-mode select{
   min-height:42px;font-size:14.5px;
 }
 
+
+/* Bottom-of-Sketch Split Portions Area Readout (shown when field is divided) */
+.canvasSplitBottomBar{
+  display:flex;
+  background:rgba(15, 23, 42, 0.94);
+  color:#f8fafc;
+  border-top:1.5px solid rgba(255,255,255,0.22);
+  padding:8px 12px;
+  font-size:12px;
+  line-height:1.45;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:8px;
+}
+.canvasSplitBottomBar.visible{
+  display:flex;
+}
+.canvasSplitBottomTitle{
+  font-size:10.5px;
+  text-transform:uppercase;
+  letter-spacing:.5px;
+  color:#93c5fd;
+  font-weight:800;
+  margin-right:4px;
+}
+.canvasSplitPartChip{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  background:rgba(255,255,255,0.10);
+  border:1px solid rgba(255,255,255,0.22);
+  border-left-width:4px;
+  border-radius:7px;
+  padding:4px 9px;
+  font-size:11.5px;
+}
+.canvasSplitPartChip strong{
+  color:#ffffff;
+}
+.canvasSplitPartChip .spValMain{
+  color:#34d399;
+  font-weight:800;
+}
+.canvasSplitPartChip .spValSub{
+  color:#cbd5e1;
+  font-size:10.5px;
+}
+
+
+.customSideBadge{
+  position:absolute;
+  pointer-events:none;
+}
+.sketchSideEditor .edRow input[type=text]{
+  width:100%;padding:6px 8px;font-size:12.5px;
+  border:1px solid var(--border-color);border-radius:6px;
+  background:var(--input-bg);color:var(--input-text);
+}
+
+
+.splitStylePanel{
+  margin-top:8px;padding:9px 11px;border-radius:8px;
+  background:var(--bg-card);border:1px solid var(--border-color);
+  display:flex;flex-wrap:wrap;gap:10px;align-items:center;
+}
+.splitStyleItem{
+  display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;color:var(--text-main);
+}
+.splitStyleItem input[type=color]{
+  width:28px;height:26px;padding:0;border:1px solid var(--border-color);border-radius:5px;cursor:pointer;background:none;
+}
+.splitStyleItem select{
+  width:auto;min-width:95px;padding:5px 7px;font-size:12px;
+}
+.splitRow .spFillColor{
+  width:30px;height:30px;padding:0;border:1px solid var(--border-color);border-radius:6px;cursor:pointer;background:none;
+}
+
+
+/* On-Sketch Interactive Tabs Bar (Top-Left of Sketch Canvas) */
+.sketchTopTabsBar{
+  position:absolute;
+  left:12px;
+  top:12px;
+  z-index:18;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  max-width:320px;
+}
+.sketchTabStrip{
+  display:flex;
+  flex-wrap:wrap;
+  gap:4px;
+  background:rgba(15, 23, 42, 0.88);
+  padding:5px;
+  border-radius:9px;
+  border:1.5px solid rgba(255,255,255,0.32);
+  box-shadow:0 2px 8px rgba(0,0,0,.28);
+}
+.skTabBtn{
+  padding:5px 9px;
+  border-radius:6px;
+  font-size:11.5px;
+  font-weight:800;
+  margin:0;
+  min-height:28px;
+  border:0;
+  cursor:pointer;
+  background:transparent;
+  color:#e2e8f0;
+}
+.skTabBtn.active{
+  background:#f4c430;
+  color:#0f172a;
+}
+.sketchTabDrawer{
+  display:none;
+  background:var(--bg-card);
+  color:var(--text-main);
+  border:2px solid var(--accent-primary);
+  border-radius:10px;
+  padding:9px 11px;
+  box-shadow:0 6px 18px rgba(0,0,0,.32);
+  max-height:290px;
+  overflow-y:auto;
+  font-size:12px;
+}
+.sketchTabDrawer.visible{
+  display:block;
+}
+.skDrawerHead{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  font-weight:800;
+  color:var(--accent-primary);
+  margin-bottom:6px;
+  padding-bottom:4px;
+  border-bottom:1px solid var(--border-color);
+}
+.skSideNameRow{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  margin-bottom:5px;
+}
+.skSideNameRow span{
+  min-width:68px;
+  font-weight:800;
+  color:var(--accent-primary);
+  font-size:11.5px;
+}
+.skSideNameRow input{
+  flex:1;
+  padding:5px 7px;
+  font-size:12px;
+  border:1px solid var(--border-color);
+  border-radius:6px;
+  background:var(--input-bg);
+  color:var(--input-text);
+}
+.skStyleGrid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:6px;
+  margin-top:6px;
+}
+.skStyleField{
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+  font-size:11px;
+  font-weight:700;
+}
+.skStyleField input[type=color], .skStyleField select{
+  width:100%;
+  height:28px;
+  padding:2px 4px;
+  font-size:11.5px;
+}
+@media (max-width: 600px){
+  .sketchTopTabsBar{
+    position:static;
+    max-width:100%;
+    width:100%;
+    padding:6px 8px;
+    background:var(--bg-subtle);
+    border-bottom:1px solid var(--border-color);
+  }
+}
+
 </style>
 </head>
 <body>
@@ -1124,6 +1316,72 @@ body.large-field-mode input, body.large-field-mode select{
 
 
 <div class="canvasWrap" id="canvasWrap">
+
+  <!-- Interactive Sketch Tabs (Top-Left of Sketch): Sketch View | Outer Side Names | Split Fill & Font -->
+  <div class="sketchTopTabsBar" id="sketchTopTabsBar">
+    <div class="sketchTabStrip" role="tablist" aria-label="Sketch Feature Tabs">
+      <button type="button" class="skTabBtn active" data-skpane="skPaneView">Sketch &amp; Split Area</button>
+      <button type="button" class="skTabBtn" data-skpane="skPaneSideNames">Outer Side Names</button>
+      <button type="button" class="skTabBtn" data-skpane="skPaneSplitStyle">Split Fill &amp; Font</button>
+    </div>
+
+    <!-- Tab 2 Drawer: Custom Outer Side Naming (away from boundary lines) -->
+    <div class="sketchTabDrawer" id="skPaneSideNames">
+      <div class="skDrawerHead">
+        <span>Custom Outer Side Names</span>
+        <button type="button" class="edClose" data-close-sk="1" title="Close">&times;</button>
+      </div>
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">
+        Labels appear outside the main boundary lines, away from the edges.
+      </div>
+      <div id="skSideNamesList">Finish the field boundary first to name sides.</div>
+    </div>
+
+    <!-- Tab 3 Drawer: Split Portion Fill Colors, Transparency, Text Color, Font & Font Size -->
+    <div class="sketchTabDrawer" id="skPaneSplitStyle">
+      <div class="skDrawerHead">
+        <span>Split Portion Colors &amp; Text</span>
+        <button type="button" class="edClose" data-close-sk="1" title="Close">&times;</button>
+      </div>
+      <div id="skPartColorsList" style="display:flex;flex-direction:column;gap:5px"></div>
+      <div class="skStyleGrid">
+        <div class="skStyleField">
+          <label for="skAlphaSlider">Transparency (<span id="skAlphaPct">35%</span>)</label>
+          <input type="range" id="skAlphaSlider" min="5" max="95" value="35" step="1">
+        </div>
+        <div class="skStyleField">
+          <label for="skTextColorPicker">Text Color</label>
+          <input type="color" id="skTextColorPicker" value="#0f172a">
+        </div>
+        <div class="skStyleField">
+          <label for="skFontSelect">Font</label>
+          <select id="skFontSelect">
+            <option value="Arial, sans-serif" selected>Arial</option>
+            <option value="Georgia, serif">Georgia</option>
+            <option value="'Times New Roman', serif">Times New Roman</option>
+            <option value="'Courier New', monospace">Courier New</option>
+            <option value="Verdana, sans-serif">Verdana</option>
+          </select>
+        </div>
+        <div class="skStyleField">
+          <label for="skFontSizeSelect">Font Size</label>
+          <select id="skFontSizeSelect">
+            <option value="10">10 px</option>
+            <option value="11">11 px</option>
+            <option value="12" selected>12 px</option>
+            <option value="14">14 px</option>
+            <option value="16">16 px</option>
+            <option value="18">18 px</option>
+            <option value="20">20 px</option>
+          </select>
+        </div>
+      </div>
+      <div style="margin-top:7px;display:flex;gap:5px">
+        <button type="button" id="skQuickSplitBtn" class="primary smallBtn" style="flex:1;margin:0">Show / Update Split on Sketch</button>
+      </div>
+    </div>
+  </div>
+
   <!-- All sketch-related buttons & Total Area readout stacked VERTICALLY at TOP-RIGHT of the canvas -->
   <div class="canvasOverlayTopRight">
     <div class="scaleBadge" id="scaleBadge">Mode: Rough Sketch (Not to Scale)</div>
@@ -1154,6 +1412,10 @@ body.large-field-mode input, body.large-field-mode select{
       <button type="button" class="edClose" id="edCloseBtn" title="Close">&times;</button>
     </div>
     <div class="edRow">
+      <label for="edCustomName">Custom Side Name (optional)</label>
+      <input type="text" id="edCustomName" maxlength="32" placeholder="e.g. Road Side, Canal Edge">
+    </div>
+    <div class="edRow">
       <label for="edCompleteFt">Complete Value (Decimal Feet)</label>
       <input type="number" id="edCompleteFt" min="0" step="0.0001" placeholder="e.g. 45.50">
     </div>
@@ -1171,6 +1433,7 @@ body.large-field-mode input, body.large-field-mode select{
   </div>
 
   <canvas id="canvas" width="1000" height="620"></canvas>
+  <div class="canvasSplitBottomBar" id="canvasSplitBottomBar" aria-live="polite"></div>
 </div>
 
 <!-- Triangle Zoom / Select Bar (appears after Submit Sides & Adjust Shape) -->
@@ -1283,6 +1546,7 @@ body.large-field-mode input, body.large-field-mode select{
         <option value="sqft">Sq Ft</option>
         <option value="kanal">Kanal</option>
       </select>
+      <label style="font-size:11.5px;font-weight:700;display:inline-flex;align-items:center;gap:4px">Fill <input type="color" class="spFillColor" value="#2563eb" title="Portion Fill Color"></label>
     </div>
     <div class="splitRow">
       <input type="text" class="spName" value="Part B" placeholder="Part name">
@@ -1293,7 +1557,42 @@ body.large-field-mode input, body.large-field-mode select{
         <option value="sqft">Sq Ft</option>
         <option value="kanal">Kanal</option>
       </select>
+      <label style="font-size:11.5px;font-weight:700;display:inline-flex;align-items:center;gap:4px">Fill <input type="color" class="spFillColor" value="#d97706" title="Portion Fill Color"></label>
     </div>
+  </div>
+
+  <div class="splitStylePanel" id="splitStylePanel">
+    <span class="splitStyleItem">
+      <label for="splitAlphaSlider">Fill Transparency:</label>
+      <input type="range" id="splitAlphaSlider" min="5" max="95" value="35" step="1" style="width:95px;cursor:pointer">
+      <span id="splitAlphaVal">35%</span>
+    </span>
+    <span class="splitStyleItem">
+      <label for="splitTextColorPicker">Text Color:</label>
+      <input type="color" id="splitTextColorPicker" value="#0f172a" title="Split Label Text Color">
+    </span>
+    <span class="splitStyleItem">
+      <label for="splitFontFamilySelect">Font:</label>
+      <select id="splitFontFamilySelect">
+        <option value="Arial, sans-serif" selected>Arial</option>
+        <option value="Georgia, serif">Georgia</option>
+        <option value="'Times New Roman', serif">Times New Roman</option>
+        <option value="'Courier New', monospace">Courier New</option>
+        <option value="Verdana, sans-serif">Verdana</option>
+      </select>
+    </span>
+    <span class="splitStyleItem">
+      <label for="splitFontSizeSelect">Font Size:</label>
+      <select id="splitFontSizeSelect">
+        <option value="10">10 px</option>
+        <option value="11">11 px</option>
+        <option value="12" selected>12 px</option>
+        <option value="14">14 px</option>
+        <option value="16">16 px</option>
+        <option value="18">18 px</option>
+        <option value="20">20 px</option>
+      </select>
+    </span>
   </div>
   <div class="controls" style="margin-top:8px">
     <button id="addSplitPartBtn" class="secondary smallBtn" type="button">+ Add Part</button>
@@ -2650,6 +2949,8 @@ function resetCurrentWorkspace(startDrawing = true){
   drawingField = startDrawing;
   shapeAdjusted = false;
   triangulationComplete = false;
+  suggestedDivisionPlan = null;
+  if(typeof renderSplitBottomBar === "function") renderSplitBottomBar();
   zoomedTriangleId = null;
   panX = 0;
   panY = 0;
@@ -4573,7 +4874,13 @@ function renderEntireSketchForExport(){
   const kanalTxt = document.getElementById("kanal").textContent;
   const acreTxt = document.getElementById("acre").textContent;
   eCtx.font = "14px Arial";
-  eCtx.fillText(`Total Area (Kahan): ${sqftTxt} sq ft  |  Heron: ${heronTxt} sq ft  |  ${marlaTxt} Marla  |  ${kanalTxt} Kanal  |  ${acreTxt} Acre`, 22, canvas.height + 55);
+  eCtx.fillText(`Total Area (Kahan): ${sqftTxt} sq ft  |  Heron: ${heronTxt} sq ft  |  ${marlaTxt} Marla  |  ${kanalTxt} Kanal  |  ${acreTxt} Acre`, 22, canvas.height + 52);
+  if(suggestedDivisionPlan && Array.isArray(suggestedDivisionPlan.parts) && suggestedDivisionPlan.parts.length > 0){
+    const splitSummary = suggestedDivisionPlan.parts.map(p => `${p.name}: ${Number(p.sqft||0).toFixed(2)} sq ft (${(Number(p.sqft||0)/272.25).toFixed(2)} M)`).join("  |  ");
+    eCtx.font = "bold 12px Arial";
+    eCtx.fillStyle = "#fde68a";
+    eCtx.fillText(`Split Parts: ${splitSummary}`, 22, canvas.height + 70);
+  }
 
   prevCoords.forEach(saved => {
     const v = getVertex(saved.uid);
@@ -5662,8 +5969,10 @@ const suggestDivisionBtn = document.getElementById("suggestDivisionBtn");
 const clearDivisionBtn = document.getElementById("clearDivisionBtn");
 const splitSuggestionOutput = document.getElementById("splitSuggestionOutput");
 
+const DEFAULT_PART_HEX = ["#2563eb", "#d97706", "#7e22ce", "#be123c", "#0f766e", "#15803d", "#c2410c", "#4338ca"];
 addSplitPartBtn.addEventListener("click", function(){
   const idx = splitInputsList.querySelectorAll(".splitRow").length + 1;
+  const defHex = DEFAULT_PART_HEX[(idx - 1) % DEFAULT_PART_HEX.length];
   const row = document.createElement("div");
   row.className = "splitRow";
   row.innerHTML = `
@@ -5675,7 +5984,10 @@ addSplitPartBtn.addEventListener("click", function(){
       <option value="sqft">Sq Ft</option>
       <option value="kanal">Kanal</option>
     </select>
+    <label style="font-size:11.5px;font-weight:700;display:inline-flex;align-items:center;gap:4px">Fill <input type="color" class="spFillColor" value="${defHex}" title="Portion Fill Color"></label>
   `;
+  const cp = row.querySelector(".spFillColor");
+  if(cp) cp.addEventListener("input", syncSplitStylesFromUI);
   splitInputsList.appendChild(row);
 });
 
@@ -6006,6 +6318,7 @@ function clearDivisionFromSketch(){
   sketchSideValuePopupLocked = false;
   closeSketchSideEditor();
   suggestedDivisionPlan = null;
+  renderSplitBottomBar();
   divisionAlignPanel.style.display = "none";
   splitSuggestionOutput.style.display = "none";
   splitSuggestionOutput.innerHTML = "";
@@ -6091,6 +6404,54 @@ divResetLineBtn.addEventListener("click", function(){
 divClearSketchBtn.addEventListener("click", clearDivisionFromSketch);
 clearDivisionBtn.addEventListener("click", clearDivisionFromSketch);
 
+function hexToRgba(hex, alpha){
+  const clean = (hex || "#2563eb").replace("#", "");
+  if(clean.length !== 6) return `rgba(37, 99, 235, ${alpha})`;
+  const r = parseInt(clean.slice(0, 2), 16);
+  const g = parseInt(clean.slice(2, 4), 16);
+  const b = parseInt(clean.slice(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+function getSplitStyleSettings(){
+  const alphaPct = parseFloat(document.getElementById("splitAlphaSlider")?.value);
+  const alpha = Number.isFinite(alphaPct) ? Math.max(0.05, Math.min(0.95, alphaPct / 100)) : 0.35;
+  const textColor = document.getElementById("splitTextColorPicker")?.value || "#0f172a";
+  const fontFamily = document.getElementById("splitFontFamilySelect")?.value || "Arial, sans-serif";
+  const fontSize = parseInt(document.getElementById("splitFontSizeSelect")?.value, 10) || 12;
+  return { alpha, textColor, fontFamily, fontSize };
+}
+
+function syncSplitStylesFromUI(){
+  const alphaEl = document.getElementById("splitAlphaSlider");
+  const alphaValEl = document.getElementById("splitAlphaVal");
+  if(alphaEl && alphaValEl) alphaValEl.textContent = `${alphaEl.value}%`;
+
+  if(suggestedDivisionPlan && Array.isArray(suggestedDivisionPlan.parts)){
+    const rows = [...splitInputsList.querySelectorAll(".splitRow")];
+    let validIdx = 0;
+    rows.forEach(r => {
+      const val = parseFloat(r.querySelector(".spVal")?.value);
+      if(Number.isFinite(val) && val > 0 && suggestedDivisionPlan.parts[validIdx]){
+        const colorInp = r.querySelector(".spFillColor");
+        if(colorInp) suggestedDivisionPlan.parts[validIdx].fillHex = colorInp.value;
+        validIdx++;
+      }
+    });
+    if(typeof renderSplitBottomBar === "function") renderSplitBottomBar();
+    if(typeof redraw === "function") redraw();
+  }
+}
+
+document.querySelectorAll("#splitInputsList .spFillColor").forEach(inp => {
+  inp.addEventListener("input", syncSplitStylesFromUI);
+});
+["splitAlphaSlider", "splitTextColorPicker", "splitFontFamilySelect", "splitFontSizeSelect"].forEach(id => {
+  const el = document.getElementById(id);
+  if(el) el.addEventListener("input", syncSplitStylesFromUI);
+  if(el && el.tagName === "SELECT") el.addEventListener("change", syncSplitStylesFromUI);
+});
+
 suggestDivisionBtn.addEventListener("click", function(){
   const totals = computeCurrentTotalAreas();
   const totalSqFt = totals.totalKahan;
@@ -6098,16 +6459,18 @@ suggestDivisionBtn.addEventListener("click", function(){
 
   const rows = [...splitInputsList.querySelectorAll(".splitRow")];
   const validParts = [];
-  for(const r of rows){
+  for(let i = 0; i < rows.length; i++){
+    const r = rows[i];
     const name = (r.querySelector(".spName").value || "Part").trim();
     const val = parseFloat(r.querySelector(".spVal").value);
     const unit = r.querySelector(".spUnit").value;
+    const fillHex = r.querySelector(".spFillColor")?.value || DEFAULT_PART_HEX[i % DEFAULT_PART_HEX.length];
     if(!Number.isFinite(val) || val <= 0) continue;
     let sqft = val;
     if(unit === "pct") sqft = (val / 100) * totalSqFt;
     else if(unit === "marla") sqft = val * 272.25;
     else if(unit === "kanal") sqft = val * 5445;
-    validParts.push({ name, sqft, share: sqft / totalSqFt });
+    validParts.push({ name, sqft, share: sqft / totalSqFt, fillHex });
   }
   if(validParts.length === 0) return;
 
@@ -6189,6 +6552,33 @@ function divisionRegionPolygons(){
   }
   return regions;
 }
+function renderSplitBottomBar(){
+  const bar = document.getElementById("canvasSplitBottomBar");
+  if(!bar) return;
+  if(!suggestedDivisionPlan || !Array.isArray(suggestedDivisionPlan.parts) || suggestedDivisionPlan.parts.length === 0){
+    bar.innerHTML = `<span class="canvasSplitBottomTitle">Split Portion Areas:</span><span style="font-size:11.5px;color:#cbd5e1">No field division active yet — use <b>Split Fill &amp; Font</b> tab or <b>Suggest Division</b> to split and view each portion's area here.</span>`;
+    bar.classList.add("visible");
+    return;
+  }
+  const st = typeof getSplitStyleSettings === "function" ? getSplitStyleSettings() : { alpha: 0.35, textColor: "#ffffff", fontFamily: "Arial, sans-serif", fontSize: 12 };
+  const chips = suggestedDivisionPlan.parts.map((p, idx) => {
+    const col = DIV_COLORS[idx % DIV_COLORS.length];
+    const accentHex = p.fillHex || col.stroke;
+    const bgTint = typeof hexToRgba === "function" ? hexToRgba(accentHex, Math.max(0.18, st.alpha)) : "rgba(255,255,255,0.10)";
+    const sqft = Number(p.sqft || 0);
+    const marla = (sqft / 272.25).toFixed(4);
+    const kanal = (sqft / 5445).toFixed(4);
+    const pct = suggestedDivisionPlan.totalSqFt > 0 ? ((sqft / suggestedDivisionPlan.totalSqFt) * 100).toFixed(1) : "0.0";
+    return `<span class="canvasSplitPartChip" style="border-left-color:${accentHex};background:${bgTint};font-family:${st.fontFamily};font-size:${st.fontSize}px">
+      <strong>${p.name}:</strong>
+      <span class="spValMain">${sqft.toFixed(2)} sq ft</span>
+      <span class="spValSub">(${marla} Marla • ${kanal} Kanal • ${pct}%)</span>
+    </span>`;
+  }).join("");
+  bar.innerHTML = `<span class="canvasSplitBottomTitle">Split Portion Areas:</span>${chips}`;
+  bar.classList.add("visible");
+}
+
 function updateDivisionAreasFromSketch(){
   if(!suggestedDivisionPlan) return;
   const regs=divisionRegionPolygons();
@@ -6200,6 +6590,7 @@ function updateDivisionAreasFromSketch(){
     p.sqft=sqft; p.share=sqft/suggestedDivisionPlan.totalSqFt;
   });
   updateDivisionAreaReadout();
+  renderSplitBottomBar();
 }
 function pointOnDivisionHandle(p){
   if(!suggestedDivisionPlan || !suggestedDivisionPlan.linePoints) return null;
@@ -6404,14 +6795,27 @@ function drawSuggestedDivisionOnSketch(){
   const pVerts=getBoundaryVertices(); if(pVerts.length<3) return;
   if(!suggestedDivisionPlan.linePoints || suggestedDivisionPlan.linePoints.length!==suggestedDivisionPlan.parts.length-1) initializeDivisionGeometry();
   const regs=divisionRegionPolygons();
+  const st = getSplitStyleSettings();
   regs.forEach((poly,idx)=>{
     if(poly.length<3) return;
-    const col=DIV_COLORS[idx%DIV_COLORS.length];
+    const part = suggestedDivisionPlan.parts[idx] || {};
+    const fallbackCol = DIV_COLORS[idx%DIV_COLORS.length];
+    const fillHex = part.fillHex || fallbackCol.stroke;
     ctx.beginPath(); ctx.moveTo(poly[0].x,poly[0].y); for(let i=1;i<poly.length;i++) ctx.lineTo(poly[i].x,poly[i].y); ctx.closePath();
-    ctx.fillStyle=col.fill.replace(/0\.20\)/,'0.42)'); ctx.fill();
+    ctx.fillStyle = hexToRgba(fillHex, st.alpha);
+    ctx.fill();
     const cen=poly.reduce((a,p)=>({x:a.x+p.x,y:a.y+p.y}),{x:0,y:0}); cen.x/=poly.length; cen.y/=poly.length;
-    ctx.fillStyle=col.text; ctx.font='bold 12px Arial'; ctx.textAlign='center'; ctx.textBaseline='middle';
-    ctx.fillText(`${suggestedDivisionPlan.parts[idx].name}: ${suggestedDivisionPlan.parts[idx].sqft.toFixed(1)} sq ft (${(suggestedDivisionPlan.parts[idx].sqft/272.25).toFixed(2)} M)`,cen.x,cen.y);
+    ctx.save();
+    ctx.fillStyle = st.textColor;
+    ctx.font = `bold ${st.fontSize}px ${st.fontFamily}`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+    const labelStr = `${part.name}: ${Number(part.sqft||0).toFixed(1)} sq ft (${(Number(part.sqft||0)/272.25).toFixed(2)} M)`;
+    ctx.strokeText(labelStr, cen.x, cen.y);
+    ctx.fillText(labelStr, cen.x, cen.y);
+    ctx.restore();
   });
   drawBoundarySplitLengthLabels();
   suggestedDivisionPlan.linePoints.forEach((lp,i)=>{
@@ -7239,6 +7643,7 @@ if(liteModeBtn){
       for(let i = 0; i < n; i++){
         const row = document.createElement("div");
         row.className = "splitRow";
+        const defHex = (typeof DEFAULT_PART_HEX !== "undefined" ? DEFAULT_PART_HEX[i % DEFAULT_PART_HEX.length] : "#2563eb");
         row.innerHTML = `
           <input type="text" class="spName" value="Share ${i + 1}" placeholder="Part name">
           <input type="number" class="spVal" min="0" step="0.01" value="${pctEach}" placeholder="Area or %">
@@ -7248,7 +7653,10 @@ if(liteModeBtn){
             <option value="sqft">Sq Ft</option>
             <option value="kanal">Kanal</option>
           </select>
+          <label style="font-size:11.5px;font-weight:700;display:inline-flex;align-items:center;gap:4px">Fill <input type="color" class="spFillColor" value="${defHex}" title="Portion Fill Color"></label>
         `;
+        const cp = row.querySelector(".spFillColor");
+        if(cp && typeof syncSplitStylesFromUI === "function") cp.addEventListener("input", syncSplitStylesFromUI);
         list.appendChild(row);
       }
       const sEl = document.getElementById("advSharingStatus");
@@ -7351,6 +7759,342 @@ if(liteModeBtn){
       );
     });
   }
+})();
+
+
+/* ==========================================================
+   CUSTOM SIDE NAMING OUTSIDE MAIN BOUNDARY (AWAY FROM LINES)
+   ========================================================== */
+(function initCustomSideNames(){
+  const edCustomName = document.getElementById("edCustomName");
+
+  const origOpenEditor = openSketchSideEditor;
+  window.openSketchSideEditor = function(side){
+    origOpenEditor(side);
+    if(side && edCustomName){
+      edCustomName.value = side.customName || "";
+    }
+  };
+
+  if(edCustomName){
+    edCustomName.addEventListener("input", function(){
+      if(!activeEditingSideKey || typeof sideMap === "undefined") return;
+      const s = sideMap.get(activeEditingSideKey);
+      if(!s) return;
+      s.customName = this.value.trim();
+      if(typeof updateCalculatedCellsAndRegisters === "function") updateCalculatedCellsAndRegisters();
+      if(typeof redraw === "function") redraw();
+    });
+  }
+
+  // Add a Custom Name column to the Unique Side Register table header & rows
+  const sideHeadRow = document.querySelector("#sideTable thead tr");
+  if(sideHeadRow && !sideHeadRow.querySelector("th.custom-name-col")){
+    const th = document.createElement("th");
+    th.className = "custom-name-col";
+    th.textContent = "Custom Name";
+    sideHeadRow.insertBefore(th, sideHeadRow.children[2] || null);
+  }
+
+  const origUpdateCells = updateCalculatedCellsAndRegisters;
+  window.updateCalculatedCellsAndRegisters = function(){
+    origUpdateCells();
+    if(typeof sideMap === "undefined") return;
+    const rows = document.querySelectorAll("#sideTable tbody tr");
+    const sidesArr = [...sideMap.values()];
+    rows.forEach((tr, idx) => {
+      const s = sidesArr[idx];
+      if(!s || tr.querySelector("td.empty")) return;
+      let td = tr.querySelector("td.custom-name-cell");
+      if(!td){
+        td = document.createElement("td");
+        td.className = "custom-name-cell";
+        const inp = document.createElement("input");
+        inp.type = "text";
+        inp.maxLength = 32;
+        inp.placeholder = "Custom label";
+        inp.style.cssText = "width:118px;padding:4px 6px;font-size:11.5px;border:1px solid var(--border-color);border-radius:5px;background:var(--input-bg);color:var(--input-text);";
+        inp.value = s.customName || "";
+        inp.addEventListener("input", function(){
+          s.customName = this.value.trim();
+          if(typeof redraw === "function") redraw();
+          if(typeof saveOrUpdateCurrentSlot === "function" && typeof vertices !== "undefined" && vertices.length > 0){
+            saveOrUpdateCurrentSlot(true);
+          }
+        });
+        td.appendChild(inp);
+        tr.insertBefore(td, tr.children[2] || null);
+      } else {
+        const inp = td.querySelector("input");
+        if(inp && document.activeElement !== inp) inp.value = s.customName || "";
+      }
+    });
+  };
+
+  function drawOutsideCustomSideLabels(){
+    if(typeof sideMap === "undefined" || typeof getBoundaryVertices !== "function") return;
+    const poly = getBoundaryVertices();
+    if(poly.length < 2) return;
+
+    const polyCx = poly.reduce((acc, v) => acc + v.x, 0) / poly.length;
+    const polyCy = poly.reduce((acc, v) => acc + v.y, 0) / poly.length;
+
+    sideMap.forEach(s => {
+      const cname = (s.customName || "").trim();
+      if(!cname) return;
+      const v1 = getVertex(s.u1);
+      const v2 = getVertex(s.u2);
+      if(!v1 || !v2) return;
+
+      const mx = (v1.x + v2.x) / 2;
+      const my = (v1.y + v2.y) / 2;
+      const dx = v2.x - v1.x;
+      const dy = v2.y - v1.y;
+      const len = Math.max(1, Math.hypot(dx, dy));
+
+      // Outward normal away from polygon interior
+      let nx = -dy / len;
+      let ny = dx / len;
+      if((mx - polyCx) * nx + (my - polyCy) * ny < 0){
+        nx = -nx;
+        ny = -ny;
+      }
+
+      // Position well outside the boundary line (42px outward) so it stays away from the boundary line & side ID pill
+      const outDist = 42;
+      const tx = mx + nx * outDist;
+      const ty = my + ny * outDist;
+
+      ctx.save();
+      // Subtle dotted leader line from boundary midpoint toward outer custom label
+      ctx.strokeStyle = "rgba(30, 58, 138, 0.45)";
+      ctx.lineWidth = 1.2;
+      ctx.setLineDash([3, 3]);
+      ctx.beginPath();
+      ctx.moveTo(mx + nx * 16, my + ny * 16);
+      ctx.lineTo(tx, ty);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      const displayLabel = `${s.id}: ${cname}`;
+      ctx.font = "bold 11px Arial";
+      const tw = ctx.measureText(displayLabel).width + 14;
+      const th = 22;
+      const rx = tx - tw / 2;
+      const ry = ty - th / 2;
+
+      ctx.fillStyle = "#fef9c3";
+      ctx.strokeStyle = "#854d0e";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      if(ctx.roundRect) ctx.roundRect(rx, ry, tw, th, 6);
+      else ctx.rect(rx, ry, tw, th);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = "#713f12";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(displayLabel, tx, ty + 0.5);
+      ctx.restore();
+    });
+  }
+
+  const origRedraw = redraw;
+  window.redraw = function(){
+    origRedraw();
+    if(typeof fieldFinished !== "undefined" && fieldFinished && typeof ctx !== "undefined"){
+      ctx.save();
+      const zcx = canvas.width / 2;
+      const zcy = canvas.height / 2;
+      ctx.translate(zcx + (typeof panX === "number" ? panX : 0), zcy + (typeof panY === "number" ? panY : 0));
+      ctx.scale(typeof sketchZoom === "number" ? sketchZoom : 1, typeof sketchZoom === "number" ? sketchZoom : 1);
+      ctx.translate(-zcx, -zcy);
+      drawOutsideCustomSideLabels();
+      ctx.restore();
+    }
+  };
+
+  if(typeof redraw === "function") redraw();
+})();
+
+
+/* ==========================================================
+   ON-SKETCH INTERACTIVE TABS (OUTER SIDE NAMES & SPLIT STYLES)
+   ========================================================== */
+(function initOnSketchTabs(){
+  const tabBtns = document.querySelectorAll(".skTabBtn");
+  const drawers = document.querySelectorAll(".sketchTabDrawer");
+
+  function closeAllSketchDrawers(){
+    drawers.forEach(d => d.classList.remove("visible"));
+    tabBtns.forEach(b => b.classList.remove("active"));
+    const defaultBtn = document.querySelector('.skTabBtn[data-skpane="skPaneView"]');
+    if(defaultBtn) defaultBtn.classList.add("active");
+  }
+
+  function populateSketchOuterSideNames(){
+    const box = document.getElementById("skSideNamesList");
+    if(!box) return;
+    if(typeof sideMap === "undefined" || sideMap.size === 0){
+      box.innerHTML = `<div style="color:var(--text-muted);font-size:11.5px">Finish the field boundary first to name sides.</div>`;
+      return;
+    }
+    box.innerHTML = "";
+    sideMap.forEach(s => {
+      const row = document.createElement("div");
+      row.className = "skSideNameRow";
+      const lbl = document.createElement("span");
+      lbl.textContent = `${s.id} (${s.u1}–${s.u2})`;
+      const inp = document.createElement("input");
+      inp.type = "text";
+      inp.maxLength = 32;
+      inp.placeholder = "e.g. Road Side, North Wall";
+      inp.value = s.customName || "";
+      inp.addEventListener("input", function(){
+        s.customName = this.value.trim();
+        if(typeof updateCalculatedCellsAndRegisters === "function") updateCalculatedCellsAndRegisters();
+        if(typeof redraw === "function") redraw();
+      });
+      row.appendChild(lbl);
+      row.appendChild(inp);
+      box.appendChild(row);
+    });
+  }
+
+  function populateSketchSplitStyleDrawer(){
+    const listEl = document.getElementById("skPartColorsList");
+    if(!listEl) return;
+    listEl.innerHTML = "";
+
+    const rows = [...document.querySelectorAll("#splitInputsList .splitRow")];
+    if(rows.length === 0){
+      listEl.innerHTML = `<div style="font-size:11px;color:var(--text-muted)">Add split parts in Section 5 first.</div>`;
+    } else {
+      rows.forEach((r, idx) => {
+        const nameInp = r.querySelector(".spName");
+        const colInp = r.querySelector(".spFillColor");
+        const partName = (nameInp && nameInp.value.trim()) || `Part ${idx + 1}`;
+        const curHex = (colInp && colInp.value) || "#2563eb";
+
+        const item = document.createElement("div");
+        item.className = "skSideNameRow";
+        const lbl = document.createElement("span");
+        lbl.textContent = partName;
+        const cp = document.createElement("input");
+        cp.type = "color";
+        cp.value = curHex;
+        cp.style.cssText = "width:42px;height:26px;padding:0;border:1px solid var(--border-color);border-radius:5px;cursor:pointer;";
+        cp.addEventListener("input", function(){
+          if(colInp) colInp.value = this.value;
+          if(suggestedDivisionPlan && suggestedDivisionPlan.parts && suggestedDivisionPlan.parts[idx]){
+            suggestedDivisionPlan.parts[idx].fillHex = this.value;
+          }
+          if(typeof syncSplitStylesFromUI === "function") syncSplitStylesFromUI();
+          if(typeof renderSplitBottomBar === "function") renderSplitBottomBar();
+          if(typeof redraw === "function") redraw();
+        });
+        item.appendChild(lbl);
+        item.appendChild(cp);
+        listEl.appendChild(item);
+      });
+    }
+
+    // Sync controls from Section 5 state
+    const mainAlpha = document.getElementById("splitAlphaSlider");
+    const skAlpha = document.getElementById("skAlphaSlider");
+    const skAlphaPct = document.getElementById("skAlphaPct");
+    if(mainAlpha && skAlpha){
+      skAlpha.value = mainAlpha.value;
+      if(skAlphaPct) skAlphaPct.textContent = `${mainAlpha.value}%`;
+    }
+    const mainTxtCol = document.getElementById("splitTextColorPicker");
+    const skTxtCol = document.getElementById("skTextColorPicker");
+    if(mainTxtCol && skTxtCol) skTxtCol.value = mainTxtCol.value;
+
+    const mainFont = document.getElementById("splitFontFamilySelect");
+    const skFont = document.getElementById("skFontSelect");
+    if(mainFont && skFont) skFont.value = mainFont.value;
+
+    const mainSize = document.getElementById("splitFontSizeSelect");
+    const skSize = document.getElementById("skFontSizeSelect");
+    if(mainSize && skSize) skSize.value = mainSize.value;
+  }
+
+  tabBtns.forEach(btn => {
+    btn.addEventListener("click", () => {
+      const targetId = btn.dataset.skpane;
+      if(targetId === "skPaneView"){
+        closeAllSketchDrawers();
+        return;
+      }
+      const targetDrawer = document.getElementById(targetId);
+      const alreadyOpen = targetDrawer && targetDrawer.classList.contains("visible");
+      closeAllSketchDrawers();
+      if(!alreadyOpen && targetDrawer){
+        btn.classList.add("active");
+        const viewBtn = document.querySelector('.skTabBtn[data-skpane="skPaneView"]');
+        if(viewBtn) viewBtn.classList.remove("active");
+        if(targetId === "skPaneSideNames") populateSketchOuterSideNames();
+        if(targetId === "skPaneSplitStyle") populateSketchSplitStyleDrawer();
+        targetDrawer.classList.add("visible");
+      }
+    });
+  });
+
+  document.querySelectorAll("[data-close-sk]").forEach(btn => {
+    btn.addEventListener("click", closeAllSketchDrawers);
+  });
+
+  const skAlpha = document.getElementById("skAlphaSlider");
+  const skAlphaPct = document.getElementById("skAlphaPct");
+  if(skAlpha){
+    skAlpha.addEventListener("input", function(){
+      if(skAlphaPct) skAlphaPct.textContent = `${this.value}%`;
+      const mainAlpha = document.getElementById("splitAlphaSlider");
+      if(mainAlpha) mainAlpha.value = this.value;
+      if(typeof syncSplitStylesFromUI === "function") syncSplitStylesFromUI();
+    });
+  }
+
+  const skTxtCol = document.getElementById("skTextColorPicker");
+  if(skTxtCol){
+    skTxtCol.addEventListener("input", function(){
+      const mainTxtCol = document.getElementById("splitTextColorPicker");
+      if(mainTxtCol) mainTxtCol.value = this.value;
+      if(typeof syncSplitStylesFromUI === "function") syncSplitStylesFromUI();
+    });
+  }
+
+  const skFont = document.getElementById("skFontSelect");
+  if(skFont){
+    skFont.addEventListener("change", function(){
+      const mainFont = document.getElementById("splitFontFamilySelect");
+      if(mainFont) mainFont.value = this.value;
+      if(typeof syncSplitStylesFromUI === "function") syncSplitStylesFromUI();
+    });
+  }
+
+  const skSize = document.getElementById("skFontSizeSelect");
+  if(skSize){
+    skSize.addEventListener("change", function(){
+      const mainSize = document.getElementById("splitFontSizeSelect");
+      if(mainSize) mainSize.value = this.value;
+      if(typeof syncSplitStylesFromUI === "function") syncSplitStylesFromUI();
+    });
+  }
+
+  const skQuickSplitBtn = document.getElementById("skQuickSplitBtn");
+  if(skQuickSplitBtn){
+    skQuickSplitBtn.addEventListener("click", function(){
+      const sugBtn = document.getElementById("suggestDivisionBtn");
+      if(sugBtn) sugBtn.click();
+      populateSketchSplitStyleDrawer();
+    });
+  }
+
+  // Initialize bottom split bar immediately on load
+  if(typeof renderSplitBottomBar === "function") renderSplitBottomBar();
 })();
 
 /* ==========================================================
