@@ -880,6 +880,56 @@ body.lite-mode #fieldTab {
   background:#ffffff;color:#18212a;font-weight:700;
 }
 
+
+/* Upgrade Tier (Basic / Advanced) & 4 Upgrade Option Panels */
+.upgradeTierBar{
+  display:flex;flex-wrap:wrap;align-items:center;gap:8px;
+  margin-top:8px;padding:9px 12px;border-radius:10px;
+  background:var(--bg-subtle);border:1.5px solid var(--border-color);
+}
+.upgradeTierTitle{
+  font-size:12.5px;font-weight:800;color:var(--accent-primary);
+}
+.tierSegBtn{
+  padding:6px 12px;border-radius:7px;font-size:12px;font-weight:800;margin:0;min-height:32px;
+}
+.advSuiteBox{
+  display:none;margin-top:8px;padding:12px;border-radius:12px;
+  background:var(--bg-card);border:1.5px solid var(--accent-primary);
+  box-shadow:0 2px 8px rgba(0,0,0,.06);
+}
+.advSuiteBox.visible{display:block}
+.advOptionTabs{
+  display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;
+}
+.advOptBtn{
+  padding:7px 11px;border-radius:8px;font-size:12px;font-weight:800;margin:0;min-height:34px;
+}
+.advOptPane{
+  display:none;padding:10px;border-radius:10px;
+  background:var(--bg-subtle);border:1px solid var(--border-color);
+}
+.advOptPane.active{display:block}
+.advGrid2{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;margin-top:6px;
+}
+.advField{
+  display:flex;flex-direction:column;gap:3px;
+}
+.advField label{
+  font-size:11.5px;font-weight:700;color:var(--text-muted);
+}
+.advField input, .advField select{
+  width:100%;padding:7px 8px;border:1px solid var(--border-color);
+  border-radius:7px;background:var(--input-bg);color:var(--input-text);font-size:12.5px;
+}
+body.large-field-mode button{
+  min-height:46px;font-size:14px;padding:11px 15px;
+}
+body.large-field-mode input, body.large-field-mode select{
+  min-height:42px;font-size:14.5px;
+}
+
 </style>
 </head>
 <body>
@@ -960,6 +1010,118 @@ body.lite-mode #fieldTab {
 </div>
 
 <div class="status" id="fieldStatus">Start drawing the field boundary.</div>
+
+<!-- Upgrade Mode Selector (Basic vs Advanced with 4 Upgrade Options) -->
+<div class="upgradeTierBar" id="upgradeTierBar">
+  <span class="upgradeTierTitle">Workflow Mode:</span>
+  <button type="button" id="tierBasicBtn" class="tierSegBtn primary">Basic (Standard)</button>
+  <button type="button" id="tierAdvancedBtn" class="tierSegBtn secondary">Advanced (4 Upgrade Options)</button>
+  <span style="font-size:11.5px;color:var(--text-muted)">All existing field, triangle, division &amp; export features stay intact.</span>
+</div>
+
+<div class="advSuiteBox" id="advSuiteBox">
+  <div class="advOptionTabs" id="advOptionTabs">
+    <button type="button" class="advOptBtn primary" data-adv="advOptAccuracy">1. Survey &amp; Editing</button>
+    <button type="button" class="advOptBtn secondary" data-adv="advOptUnits">2. Regional Units</button>
+    <button type="button" class="advOptBtn secondary" data-adv="advOptSharing">3. Split &amp; Record Info</button>
+    <button type="button" class="advOptBtn secondary" data-adv="advOptAccess">4. Field Mode &amp; Samples</button>
+  </div>
+
+  <!-- Option 1: Survey Accuracy & Editing -->
+  <div id="advOptAccuracy" class="advOptPane active">
+    <div style="font-size:13px;font-weight:800;color:var(--accent-primary)">Survey Accuracy, Undo &amp; Slope/Setback Tools</div>
+    <div class="controls" style="margin-top:6px">
+      <button type="button" id="advUndoTriBtn" class="warning smallBtn">Undo Last Triangle</button>
+      <button type="button" id="advNudgeLeftBtn" class="secondary smallBtn">Nudge Selected Vertex &larr;</button>
+      <button type="button" id="advNudgeRightBtn" class="secondary smallBtn">Nudge Selected Vertex &rarr;</button>
+      <button type="button" id="advNudgeUpBtn" class="secondary smallBtn">Nudge &uarr;</button>
+      <button type="button" id="advNudgeDownBtn" class="secondary smallBtn">Nudge &darr;</button>
+      <button type="button" id="advCheckClosureBtn" class="accent smallBtn">Check Side &amp; Triangle Closure</button>
+    </div>
+    <div class="advGrid2">
+      <div class="advField">
+        <label for="advSlopeDeg">Land Slope Angle (&deg;, optional)</label>
+        <input type="number" id="advSlopeDeg" min="0" max="60" step="0.1" value="0" placeholder="0 = flat">
+      </div>
+      <div class="advField">
+        <label for="advSetbackFt">Boundary Setback / Margin (ft, optional)</label>
+        <input type="number" id="advSetbackFt" min="0" step="0.1" value="0" placeholder="e.g. 5">
+      </div>
+      <div class="advField">
+        <label for="advTargetVertex">Vertex for Nudge</label>
+        <select id="advTargetVertex"><option value="LAST">Last Vertex</option></select>
+      </div>
+    </div>
+    <div class="status" id="advAccuracyStatus" style="margin-top:8px">Slope: 0&deg; (Horizontal = Measured) • Setback: 0 ft</div>
+  </div>
+
+  <!-- Option 2: Regional & Local Land Units -->
+  <div id="advOptUnits" class="advOptPane">
+    <div style="font-size:13px;font-weight:800;color:var(--accent-primary)">Regional Land Units &amp; Custom Karam / Gaj</div>
+    <div class="advGrid2">
+      <div class="advField">
+        <label for="advRegUnitSelect">Regional Unit Preset</label>
+        <select id="advRegUnitSelect">
+          <option value="sqm" data-sqft="10.7639104">Sq Meter (10.7639 sq ft)</option>
+          <option value="sqyd" data-sqft="9">Sq Yard / Gaj (9 sq ft)</option>
+          <option value="hectare" data-sqft="107639.104">Hectare (107,639.1 sq ft)</option>
+          <option value="guntha" data-sqft="1089">Guntha (1,089 sq ft)</option>
+          <option value="cent" data-sqft="435.6">Cent (435.6 sq ft)</option>
+          <option value="ground" data-sqft="2400">Ground (2,400 sq ft)</option>
+          <option value="bigha_pucca" data-sqft="27225">Bigha Pucca (27,225 sq ft)</option>
+          <option value="bigha_kaccha" data-sqft="9075">Bigha Kaccha (9,075 sq ft)</option>
+          <option value="custom" data-sqft="100">Custom Unit (sq ft below)</option>
+        </select>
+      </div>
+      <div class="advField">
+        <label for="advCustomUnitSqFt">Unit Size in Sq Ft</label>
+        <input type="number" id="advCustomUnitSqFt" min="0.01" step="0.01" value="10.7639">
+      </div>
+      <div class="advField">
+        <label for="advKaramFt">Karam Length (ft, default 5.5 ft)</label>
+        <input type="number" id="advKaramFt" min="1" max="20" step="0.05" value="5.5">
+      </div>
+    </div>
+    <div class="status" id="advUnitsStatus" style="margin-top:8px">Regional Unit Readout: 0.0000 • 1 Karam = 5.5 ft (1 Marla = 9 sq Karam = 272.25 sq ft)</div>
+  </div>
+
+  <!-- Option 3: Smart Division & Record Metadata / Backup -->
+  <div id="advOptSharing" class="advOptPane">
+    <div style="font-size:13px;font-weight:800;color:var(--accent-primary)">Equal Division, Plot Metadata &amp; Full Backup</div>
+    <div class="advGrid2">
+      <div class="advField">
+        <label for="advKhasraNo">Khasra / Plot No.</label>
+        <input type="text" id="advKhasraNo" placeholder="e.g. Khasra 412/1">
+      </div>
+      <div class="advField">
+        <label for="advOwnerName">Owner / Village Note</label>
+        <input type="text" id="advOwnerName" placeholder="e.g. Owner name, Village">
+      </div>
+      <div class="advField">
+        <label for="advEqualPartsCount">Equal Split Parts (N)</label>
+        <input type="number" id="advEqualPartsCount" min="2" max="20" step="1" value="2">
+      </div>
+    </div>
+    <div class="controls" style="margin-top:8px">
+      <button type="button" id="advApplyEqualSplitBtn" class="accent smallBtn">Fill Equal Split Rows</button>
+      <button type="button" id="advExportAllJsonBtn" class="exportBtn smallBtn">Export All Saved Fields (JSON)</button>
+    </div>
+    <div class="status" id="advSharingStatus" style="margin-top:8px">Plot metadata is included in your field records and exports.</div>
+  </div>
+
+  <!-- Option 4: Field Accessibility & Guided Sample Plots -->
+  <div id="advOptAccess" class="advOptPane">
+    <div style="font-size:13px;font-weight:800;color:var(--accent-primary)">Large-Button Field Mode, Voice Readout &amp; Sample Plots</div>
+    <div class="controls" style="margin-top:6px">
+      <button type="button" id="advLargeBtnToggle" class="secondary smallBtn">Large Field Buttons: OFF</button>
+      <button type="button" id="advVoiceToggleBtn" class="secondary smallBtn">Voice Readout: OFF</button>
+      <button type="button" id="advSampleQuadBtn" class="primary smallBtn">Load Sample: 4-Corner Plot</button>
+      <button type="button" id="advSamplePentBtn" class="accent smallBtn">Load Sample: 5-Corner Field</button>
+    </div>
+    <div class="status" id="advAccessStatus" style="margin-top:8px">Load a sample plot anytime to test triangulation, side entry, shape adjustment, and division.</div>
+  </div>
+</div>
+
 
 <div class="canvasWrap" id="canvasWrap">
   <!-- All sketch-related buttons & Total Area readout stacked VERTICALLY at TOP-RIGHT of the canvas -->
@@ -6750,6 +6912,445 @@ if(liteModeBtn){
       setShapeZoom(id, st.scale + delta, e.clientX, e.clientY, canvasEl);
     }, { passive: false });
   });
+})();
+
+
+/* ==========================================================
+   MAIN FIELD SKETCH — HAND ZOOM (PINCH, 2-FINGER PAN & DOUBLE-TAP)
+   ========================================================== */
+(function initMainFieldHandZoom(){
+  const mainCanvas = document.getElementById("canvas");
+  if(!mainCanvas) return;
+
+  let activeTouchesCount = 0;
+  let pinchStartDist = 0;
+  let pinchStartScale = 1;
+  let pinchAnchorWorld = null;
+  let lastMidRaw = null;
+  let lastTapTime = 0;
+  let pinchMoved = false;
+
+  // Guard pointerdown on mainCanvas so multi-touch or pinch gestures do not place accidental points
+  mainCanvas.addEventListener("pointerdown", function(e){
+    if(e.pointerType === "touch" && activeTouchesCount >= 2){
+      e.stopImmediatePropagation();
+      e.preventDefault();
+    }
+  }, true);
+
+  function clientToCanvasRaw(cx, cy){
+    const rect = mainCanvas.getBoundingClientRect();
+    if(!rect.width || !rect.height) return { x: mainCanvas.width / 2, y: mainCanvas.height / 2 };
+    return {
+      x: (cx - rect.left) * (mainCanvas.width / rect.width),
+      y: (cy - rect.top) * (mainCanvas.height / rect.height)
+    };
+  }
+
+  function updateMainZoomIndicator(){
+    const sb = document.getElementById("scaleBadge");
+    if(!sb) return;
+    const pct = Math.round((sketchZoom || 1) * 100);
+    if(pct !== 100 && !sb.textContent.includes("%")){
+      sb.textContent = `${sb.textContent} • ${pct}%`;
+    }
+  }
+
+  mainCanvas.addEventListener("touchstart", function(e){
+    activeTouchesCount = e.touches.length;
+    if(e.touches.length >= 2){
+      pinchMoved = false;
+      if(typeof draggingSketchPan !== "undefined") draggingSketchPan = false;
+      if(typeof draggingPolygon !== "undefined") draggingPolygon = false;
+      if(typeof draggingDivisionHandle !== "undefined") draggingDivisionHandle = null;
+
+      const t0 = e.touches[0], t1 = e.touches[1];
+      const dx = t0.clientX - t1.clientX;
+      const dy = t0.clientY - t1.clientY;
+      pinchStartDist = Math.max(10, Math.hypot(dx, dy));
+      pinchStartScale = (typeof sketchZoom === "number") ? sketchZoom : 1;
+
+      const midRaw = clientToCanvasRaw((t0.clientX + t1.clientX) / 2, (t0.clientY + t1.clientY) / 2);
+      lastMidRaw = midRaw;
+      if(typeof canvasPointToWorld === "function"){
+        pinchAnchorWorld = canvasPointToWorld(midRaw);
+      }
+    } else if(e.touches.length === 1){
+      const now = Date.now();
+      if(now - lastTapTime < 280){
+        const rawPt = clientToCanvasRaw(e.touches[0].clientX, e.touches[0].clientY);
+        const worldPt = (typeof canvasPointToWorld === "function") ? canvasPointToWorld(rawPt) : rawPt;
+        const nearV = (typeof findNearestVertex === "function") ? findNearestVertex(worldPt, 22) : null;
+        if(!nearV){
+          if(sketchZoom > 1.05){
+            if(typeof resetSketchZoom === "function") resetSketchZoom();
+          } else if(typeof setSketchZoom === "function"){
+            setSketchZoom(1.8);
+          }
+          lastTapTime = 0;
+          return;
+        }
+      }
+      lastTapTime = now;
+    }
+  }, { passive: true });
+
+  mainCanvas.addEventListener("touchmove", function(e){
+    activeTouchesCount = e.touches.length;
+    if(e.touches.length >= 2){
+      e.preventDefault();
+      pinchMoved = true;
+      if(typeof draggingSketchPan !== "undefined") draggingSketchPan = false;
+      if(typeof draggingPolygon !== "undefined") draggingPolygon = false;
+
+      const t0 = e.touches[0], t1 = e.touches[1];
+      const dx = t0.clientX - t1.clientX;
+      const dy = t0.clientY - t1.clientY;
+      const dist = Math.max(10, Math.hypot(dx, dy));
+
+      if(pinchStartDist > 0){
+        const minZ = (typeof SKETCH_ZOOM_MIN === "number") ? SKETCH_ZOOM_MIN : 0.4;
+        const maxZ = (typeof SKETCH_ZOOM_MAX === "number") ? SKETCH_ZOOM_MAX : 4.0;
+        sketchZoom = Math.max(minZ, Math.min(maxZ, pinchStartScale * (dist / pinchStartDist)));
+      }
+
+      const midRaw = clientToCanvasRaw((t0.clientX + t1.clientX) / 2, (t0.clientY + t1.clientY) / 2);
+      if(pinchAnchorWorld){
+        const cx = mainCanvas.width / 2;
+        const cy = mainCanvas.height / 2;
+        panX = (midRaw.x - cx) - (pinchAnchorWorld.x - cx) * sketchZoom;
+        panY = (midRaw.y - cy) - (pinchAnchorWorld.y - cy) * sketchZoom;
+      } else if(lastMidRaw){
+        panX += midRaw.x - lastMidRaw.x;
+        panY += midRaw.y - lastMidRaw.y;
+      }
+      lastMidRaw = midRaw;
+
+      updateMainZoomIndicator();
+      if(typeof redraw === "function") redraw();
+    }
+  }, { passive: false });
+
+  mainCanvas.addEventListener("touchend", function(e){
+    activeTouchesCount = e.touches.length;
+    if(e.touches.length < 2){
+      pinchStartDist = 0;
+      pinchAnchorWorld = null;
+      lastMidRaw = null;
+      if(pinchMoved){
+        lastTapTime = 0;
+        pinchMoved = false;
+      }
+    }
+  });
+
+  mainCanvas.addEventListener("touchcancel", function(){
+    activeTouchesCount = 0;
+    pinchStartDist = 0;
+    pinchAnchorWorld = null;
+    lastMidRaw = null;
+    pinchMoved = false;
+  });
+})();
+
+
+/* ==========================================================
+   BASIC / ADVANCED WORKFLOW TIER & ALL 4 UPGRADE OPTIONS
+   ========================================================== */
+(function initBasicAndAdvancedUpgrades(){
+  const tierBasicBtn = document.getElementById("tierBasicBtn");
+  const tierAdvancedBtn = document.getElementById("tierAdvancedBtn");
+  const advSuiteBox = document.getElementById("advSuiteBox");
+
+  function setTier(isAdvanced){
+    if(tierBasicBtn) tierBasicBtn.className = "tierSegBtn " + (!isAdvanced ? "primary" : "secondary");
+    if(tierAdvancedBtn) tierAdvancedBtn.className = "tierSegBtn " + (isAdvanced ? "primary" : "secondary");
+    if(advSuiteBox) advSuiteBox.classList.toggle("visible", Boolean(isAdvanced));
+    if(isAdvanced){
+      refreshVertexDropdown();
+      updateAdvancedCalculations();
+    }
+  }
+
+  if(tierBasicBtn) tierBasicBtn.addEventListener("click", () => setTier(false));
+  if(tierAdvancedBtn) tierAdvancedBtn.addEventListener("click", () => setTier(true));
+
+  // Switch between the 4 upgrade option panes
+  document.querySelectorAll(".advOptBtn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".advOptBtn").forEach(b => b.className = "advOptBtn secondary");
+      btn.className = "advOptBtn primary";
+      document.querySelectorAll(".advOptPane").forEach(p => p.classList.remove("active"));
+      const pane = document.getElementById(btn.dataset.adv);
+      if(pane) pane.classList.add("active");
+      refreshVertexDropdown();
+      updateAdvancedCalculations();
+    });
+  });
+
+  function speakFieldNote(msg){
+    const voiceBtn = document.getElementById("advVoiceToggleBtn");
+    if(!voiceBtn || !voiceBtn.dataset.on || voiceBtn.dataset.on !== "1") return;
+    try{
+      if("speechSynthesis" in window){
+        window.speechSynthesis.cancel();
+        const utt = new SpeechSynthesisUtterance(msg);
+        utt.lang = "en-IN";
+        window.speechSynthesis.speak(utt);
+      }
+    } catch(_){}
+  }
+
+  function refreshVertexDropdown(){
+    const sel = document.getElementById("advTargetVertex");
+    if(!sel || typeof vertices === "undefined") return;
+    const prev = sel.value;
+    sel.innerHTML = "";
+    vertices.forEach(v => {
+      const opt = document.createElement("option");
+      opt.value = v.uid;
+      opt.textContent = v.uid;
+      sel.appendChild(opt);
+    });
+    if(vertices.length === 0){
+      const opt = document.createElement("option");
+      opt.value = "";
+      opt.textContent = "No vertices";
+      sel.appendChild(opt);
+    } else if([...sel.options].some(o => o.value === prev)){
+      sel.value = prev;
+    }
+  }
+
+  function nudgeSelectedVertex(dx, dy){
+    if(typeof vertices === "undefined" || vertices.length === 0) return;
+    const sel = document.getElementById("advTargetVertex");
+    const uid = sel && sel.value ? sel.value : vertices[vertices.length - 1].uid;
+    const v = vertices.find(item => item.uid === uid);
+    if(!v) return;
+    v.x += dx;
+    v.y += dy;
+    v.sketchX += dx;
+    v.sketchY += dy;
+    if(typeof redraw === "function") redraw();
+    if(typeof saveOrUpdateCurrentSlot === "function") saveOrUpdateCurrentSlot(true);
+    speakFieldNote(`Moved ${v.uid}`);
+  }
+
+  const advUndoTriBtn = document.getElementById("advUndoTriBtn");
+  if(advUndoTriBtn){
+    advUndoTriBtn.addEventListener("click", () => {
+      if(typeof triangles !== "undefined" && triangles.length > 0 && typeof deleteTriangle === "function"){
+        const lastT = triangles[triangles.length - 1];
+        deleteTriangle(lastT.id);
+        refreshVertexDropdown();
+        speakFieldNote(`Removed ${lastT.id}`);
+      }
+    });
+  }
+
+  const nL = document.getElementById("advNudgeLeftBtn");
+  const nR = document.getElementById("advNudgeRightBtn");
+  const nU = document.getElementById("advNudgeUpBtn");
+  const nD = document.getElementById("advNudgeDownBtn");
+  if(nL) nL.addEventListener("click", () => nudgeSelectedVertex(-6, 0));
+  if(nR) nR.addEventListener("click", () => nudgeSelectedVertex(6, 0));
+  if(nU) nU.addEventListener("click", () => nudgeSelectedVertex(0, -6));
+  if(nD) nD.addEventListener("click", () => nudgeSelectedVertex(0, 6));
+
+  const advCheckClosureBtn = document.getElementById("advCheckClosureBtn");
+  if(advCheckClosureBtn){
+    advCheckClosureBtn.addEventListener("click", () => {
+      const stEl = document.getElementById("advAccuracyStatus");
+      if(typeof triangles === "undefined" || triangles.length === 0){
+        if(stEl) stEl.textContent = "Add triangles and enter side lengths to check closure.";
+        return;
+      }
+      const missing = [];
+      triangles.forEach(t => {
+        const res = typeof getTriangleAreas === "function" ? getTriangleAreas(t) : { kahan: null };
+        if(res.kahan === null) missing.push(t.id);
+      });
+      if(stEl){
+        stEl.className = missing.length ? "status warn" : "status adjusted";
+        stEl.innerHTML = missing.length
+          ? `Incomplete/invalid sides in: <b>${missing.join(", ")}</b>. Check triangle side lengths.`
+          : `All <b>${triangles.length}</b> triangle(s) pass triangle-inequality &amp; area checks!`;
+      }
+      updateAdvancedCalculations();
+    });
+  }
+
+  const advRegUnitSelect = document.getElementById("advRegUnitSelect");
+  const advCustomUnitSqFt = document.getElementById("advCustomUnitSqFt");
+  const advKaramFt = document.getElementById("advKaramFt");
+  if(advRegUnitSelect && advCustomUnitSqFt){
+    advRegUnitSelect.addEventListener("change", () => {
+      const opt = advRegUnitSelect.options[advRegUnitSelect.selectedIndex];
+      const presetSqFt = opt ? parseFloat(opt.dataset.sqft) : NaN;
+      if(advRegUnitSelect.value !== "custom" && Number.isFinite(presetSqFt)){
+        advCustomUnitSqFt.value = String(presetSqFt);
+      }
+      updateAdvancedCalculations();
+    });
+  }
+  if(advCustomUnitSqFt) advCustomUnitSqFt.addEventListener("input", updateAdvancedCalculations);
+  if(advKaramFt) advKaramFt.addEventListener("input", updateAdvancedCalculations);
+
+  const advSlopeDeg = document.getElementById("advSlopeDeg");
+  const advSetbackFt = document.getElementById("advSetbackFt");
+  if(advSlopeDeg) advSlopeDeg.addEventListener("input", updateAdvancedCalculations);
+  if(advSetbackFt) advSetbackFt.addEventListener("input", updateAdvancedCalculations);
+
+  function updateAdvancedCalculations(){
+    const sqftText = document.getElementById("sqft")?.textContent || "0";
+    const baseSqFt = parseFloat(sqftText) || 0;
+    const slopeDeg = Math.max(0, Math.min(60, parseFloat(advSlopeDeg?.value) || 0));
+    const setbackFt = Math.max(0, parseFloat(advSetbackFt?.value) || 0);
+    const cosSlope = Math.cos(slopeDeg * Math.PI / 180);
+    const horizSqFt = baseSqFt * cosSlope;
+
+    const accEl = document.getElementById("advAccuracyStatus");
+    if(accEl){
+      accEl.innerHTML = `Measured Area: <b>${baseSqFt.toFixed(2)} sq ft</b> • Slope (${slopeDeg.toFixed(1)}&deg;) Horizontal Area: <b>${horizSqFt.toFixed(2)} sq ft</b> • Setback Margin: <b>${setbackFt.toFixed(2)} ft</b>`;
+    }
+
+    const unitSqFt = Math.max(0.0001, parseFloat(advCustomUnitSqFt?.value) || 10.7639);
+    const unitLabel = advRegUnitSelect ? advRegUnitSelect.options[advRegUnitSelect.selectedIndex].text.split(" (")[0] : "Unit";
+    const karam = Math.max(0.5, parseFloat(advKaramFt?.value) || 5.5);
+    const sarsahiSqFt = karam * karam;
+    const marlaFromKaram = sarsahiSqFt * 9;
+
+    const uEl = document.getElementById("advUnitsStatus");
+    if(uEl){
+      uEl.innerHTML = `<b>${unitLabel}:</b> ${(horizSqFt / unitSqFt).toFixed(4)} • <b>1 Karam = ${karam.toFixed(2)} ft</b> (1 Sarsahi = ${sarsahiSqFt.toFixed(2)} sq ft, 9 Sarsahi = ${marlaFromKaram.toFixed(2)} sq ft)`;
+    }
+  }
+
+  // Option 3: Equal Split & Export All Saved Fields
+  const advApplyEqualSplitBtn = document.getElementById("advApplyEqualSplitBtn");
+  if(advApplyEqualSplitBtn){
+    advApplyEqualSplitBtn.addEventListener("click", () => {
+      const n = Math.max(2, Math.min(20, parseInt(document.getElementById("advEqualPartsCount")?.value, 10) || 2));
+      const list = document.getElementById("splitInputsList");
+      if(!list) return;
+      list.innerHTML = "";
+      const pctEach = (100 / n).toFixed(2);
+      for(let i = 0; i < n; i++){
+        const row = document.createElement("div");
+        row.className = "splitRow";
+        row.innerHTML = `
+          <input type="text" class="spName" value="Share ${i + 1}" placeholder="Part name">
+          <input type="number" class="spVal" min="0" step="0.01" value="${pctEach}" placeholder="Area or %">
+          <select class="spUnit">
+            <option value="pct" selected>Percentage (%)</option>
+            <option value="marla">Marla</option>
+            <option value="sqft">Sq Ft</option>
+            <option value="kanal">Kanal</option>
+          </select>
+        `;
+        list.appendChild(row);
+      }
+      const sEl = document.getElementById("advSharingStatus");
+      if(sEl) sEl.innerHTML = `Prepared <b>${n}</b> equal split rows (${pctEach}% each). Click <b>Suggest Division</b> below to view dimensions.`;
+    });
+  }
+
+  const advExportAllJsonBtn = document.getElementById("advExportAllJsonBtn");
+  if(advExportAllJsonBtn){
+    advExportAllJsonBtn.addEventListener("click", async () => {
+      if(typeof saveOrUpdateCurrentSlot === "function") saveOrUpdateCurrentSlot(true);
+      const payload = {
+        exportedAt: new Date().toISOString(),
+        khasraNo: document.getElementById("advKhasraNo")?.value || "",
+        ownerNote: document.getElementById("advOwnerName")?.value || "",
+        savedFields: typeof savedSketches !== "undefined" ? savedSketches : []
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json;charset=utf-8" });
+      if(typeof triggerDownload === "function"){
+        await triggerDownload(blob, "Area_Measurement_All_Fields_Backup.json");
+      }
+      const sEl = document.getElementById("advSharingStatus");
+      if(sEl) sEl.innerHTML = `Exported <b>Area_Measurement_All_Fields_Backup.json</b> with all saved fields and plot notes.`;
+    });
+  }
+
+  // Option 4: Large Field Buttons, Voice Readout & Sample Plots
+  const advLargeBtnToggle = document.getElementById("advLargeBtnToggle");
+  if(advLargeBtnToggle){
+    advLargeBtnToggle.addEventListener("click", () => {
+      const on = document.body.classList.toggle("large-field-mode");
+      advLargeBtnToggle.textContent = on ? "Large Field Buttons: ON" : "Large Field Buttons: OFF";
+      advLargeBtnToggle.className = on ? "primary smallBtn" : "secondary smallBtn";
+    });
+  }
+
+  const advVoiceToggleBtn = document.getElementById("advVoiceToggleBtn");
+  if(advVoiceToggleBtn){
+    advVoiceToggleBtn.addEventListener("click", () => {
+      const on = advVoiceToggleBtn.dataset.on === "1" ? "0" : "1";
+      advVoiceToggleBtn.dataset.on = on;
+      advVoiceToggleBtn.textContent = on === "1" ? "Voice Readout: ON" : "Voice Readout: OFF";
+      advVoiceToggleBtn.className = on === "1" ? "primary smallBtn" : "secondary smallBtn";
+      if(on === "1") speakFieldNote("Voice readout enabled");
+    });
+  }
+
+  function loadSampleField(ptsArr, triDefs, sideLengths, sampleName){
+    if(typeof resetCurrentWorkspace === "function") resetCurrentWorkspace(false);
+    vertices = ptsArr.map((pt, i) => ({
+      uid: "P" + (i + 1), kind: "P", num: i + 1,
+      x: pt.x, y: pt.y, sketchX: pt.x, sketchY: pt.y, adjustedX: pt.x, adjustedY: pt.y
+    }));
+    boundaryCount = ptsArr.length;
+    drawingField = false;
+    fieldFinished = true;
+    triangles = triDefs.map((vList, idx) => ({ id: "T" + (idx + 1), v: vList }));
+    if(typeof buildSideRegister === "function") buildSideRegister();
+    if(sideLengths){
+      sideMap.forEach(s => {
+        if(sideLengths[s.id]){
+          s.length = sideLengths[s.id];
+          const p = typeof decimalFeetToFtIn === "function" ? decimalFeetToFtIn(s.length) : { ft: "", inch: "" };
+          s.feetPart = p.ft;
+          s.inchPart = p.inch;
+        }
+      });
+    }
+    if(typeof updateTriangulationLockUI === "function") updateTriangulationLockUI();
+    if(typeof updatePointList === "function") updatePointList();
+    if(typeof renderTables === "function") renderTables();
+    if(typeof redraw === "function") redraw();
+    refreshVertexDropdown();
+    updateAdvancedCalculations();
+    const accEl = document.getElementById("advAccessStatus");
+    if(accEl) accEl.innerHTML = `Loaded sample: <b>${sampleName}</b>. You can adjust shape, inspect triangles, or test field division.`;
+    speakFieldNote(`Loaded ${sampleName}`);
+  }
+
+  const advSampleQuadBtn = document.getElementById("advSampleQuadBtn");
+  if(advSampleQuadBtn){
+    advSampleQuadBtn.addEventListener("click", () => {
+      loadSampleField(
+        [{x:240,y:170},{x:560,y:170},{x:530,y:410},{x:260,y:400}],
+        [["P1","P2","P3"],["P1","P3","P4"]],
+        { B1: 120, B2: 95, B3: 110, B4: 90, D1: 148 },
+        "4-Corner Plot (2 Triangles)"
+      );
+    });
+  }
+
+  const advSamplePentBtn = document.getElementById("advSamplePentBtn");
+  if(advSamplePentBtn){
+    advSamplePentBtn.addEventListener("click", () => {
+      loadSampleField(
+        [{x:390,y:130},{x:600,y:230},{x:530,y:430},{x:260,y:430},{x:200,y:230}],
+        [["P1","P2","P3"],["P1","P3","P4"],["P1","P4","P5"]],
+        { B1: 95, B2: 88, B3: 105, B4: 92, B5: 86, D1: 132, D2: 150 },
+        "5-Corner Field (3 Triangles)"
+      );
+    });
+  }
 })();
 
 /* ==========================================================
